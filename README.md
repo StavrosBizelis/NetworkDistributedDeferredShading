@@ -1,2 +1,2 @@
 # NetworkDistributedDeferredShading
-Thesis for Ciy, University of London
+Thesis for City, University of London
