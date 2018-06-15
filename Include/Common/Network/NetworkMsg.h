@@ -1,0 +1,26 @@
+#pragma once
+
+#include <cstdint>
+
+/// size of char is 1 byte - we dont need more
+enum class MsgType : char 
+{
+  /// MESSAGE THAT IS SENT TO INFORM THE RECEIVER ABOUT THE NEXT MESSAGE SIZE - IT HAS A FIXED SIZE 
+  SIZE_MSG,
+  /// MESSAGE THAT IS SENT FROM THE SERVER TO THE CLIENTS TO SETUP THEIR PIPELINE ( RENDER SIZE - VIEWPORT OPTIONS ETC)
+  CLIENT_SETUP_MSG,
+  /// MESSAGE THAT IS SENT FROM THE SERVER TO THE CLIENTS TO UPDATE THEIR SCENE ( TRANSFORMATIONS OF OBJECTS)
+  CLIENT_SCENE_UPDATE_MSG,
+  /// 
+  
+  
+}
+
+class NetworkMsg
+{
+  char* m_data;
+  uint32_t m_size;
+  
+  
+  
+};
