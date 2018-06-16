@@ -4,7 +4,7 @@ namespace SceneControl
 {
 	
 	SceneNode::SceneNode(SceneNode* a_parent)
-		: m_parent(a_parent), m_posRel(0.f), m_orientRel(), m_scaleRel(1.f), m_dirty(true)
+		: m_parent(a_parent), m_id(0), m_posRel(0.f), m_orientRel(), m_scaleRel(1.f), m_dirty(true)
 	{
 		if (a_parent) a_parent->AddChild(this);
 		

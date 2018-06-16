@@ -19,6 +19,8 @@ namespace SceneControl
 		std::set<SceneNode*> m_children;
 		SceneNode* m_parent;		///< does not own this object - is owned by this object
 
+    unsigned int m_id;
+    
 		glm::vec3 m_posRel;			///< relative position
 		glm::mat4 m_orientRel;	///< relative rotation matrix
 		glm::vec3 m_scaleRel;	///< relative scale
@@ -46,6 +48,9 @@ namespace SceneControl
 
 		virtual ~SceneNode();
 		
+    inline void SetID(const unsigned int& a_id){ m_id = a_id;}
+    inline unsigned int GetID(){ return m_id;}
+
 
 		inline void AddChild(SceneNode* a_node) 
 		{ 
@@ -92,13 +97,13 @@ namespace SceneControl
 			if (!(a_index < m_material.size()))
 			{
 				m_material.resize(a_index + 1);
-				m_materialUniformsInt.resize(a_index + 1);;
-				m_materialUniformsFloat.resize(a_index + 1);;
-				m_materialUniformsVec2.resize(a_index + 1);;
-				m_materialUniformsVec3.resize(a_index + 1);;
-				m_materialUniformsVec4.resize(a_index + 1);;
-				m_materialUniformsMat3.resize(a_index + 1);;
-				m_materialUniformsMat4.resize(a_index + 1);;
+				m_materialUniformsInt.resize(a_index + 1);
+				m_materialUniformsFloat.resize(a_index + 1);
+				m_materialUniformsVec2.resize(a_index + 1);
+				m_materialUniformsVec3.resize(a_index + 1);
+				m_materialUniformsVec4.resize(a_index + 1);
+				m_materialUniformsMat3.resize(a_index + 1);
+				m_materialUniformsMat4.resize(a_index + 1);
 			}
 			m_material[a_index] = a_material;
 		}

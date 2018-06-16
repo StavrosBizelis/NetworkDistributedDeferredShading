@@ -18,6 +18,7 @@ env.Append(LIBS=list1)
 
 # in this list we add all the cpp files we need to compile seperated by space
 list=Split('Common/Core/MatrixStack.cpp \
+Common/Network/NetworkMsg.cpp \
 Common/Shapes/ACone.cpp Common/Shapes/ACube.cpp Common/Shapes/ARect.cpp Common/Shapes/ASkybox.cpp Common/Shapes/ASphere.cpp Common/Shapes/AOpenAssetImportMesh.cpp \
 Common/Textures/ACubemap.cpp Common/Textures/ATexture.cpp \
 Common/RenderControl/ADeferredShadingPass.cpp Common/RenderControl/Camera.cpp Common/RenderControl/RenderPassPipeline.cpp \

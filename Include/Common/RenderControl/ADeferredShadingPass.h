@@ -17,7 +17,7 @@ namespace RenderControl
 		SKYBOX = 1 << 5
 	};
 
-	enum LightTypeFlags
+	enum class LightTypeFlags : char
 	{
 		POINT_LIGHT = 0,
 		SPOT_LIGHT,
@@ -41,7 +41,7 @@ namespace RenderControl
 		virtual ~ADeferredShadingPass();
 
 
-		virtual bool AddRenderable(IRenderable* a_renderable, const GeometryPassMaterialFlags& a_geometryMaterialFlags = SIMPLE_GEOMETRY );
+		virtual bool AddRenderable(IRenderable* a_renderable, const GeometryPassMaterialFlags& a_geometryMaterialFlags = GeometryPassMaterialFlags::SIMPLE_GEOMETRY );
 		
 		inline void RemoveRenderable(IRenderable* a_renderable);
 		inline bool Exists(IRenderable* a_renderable) const;

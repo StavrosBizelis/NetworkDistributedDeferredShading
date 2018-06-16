@@ -161,15 +161,15 @@ namespace RenderControl
 	{
 		switch (a_lightType)
 		{
-		case POINT_LIGHT:
+		case LightTypeFlags::POINT_LIGHT:
 			a_light->SetMaterial( m_materialManager->GetStencilLightPassMaterial("",""), 1);
 			a_light->SetMaterial( m_materialManager->GetPointLightPassMaterial("",""), 0);
 			break;
-		case SPOT_LIGHT:
+		case LightTypeFlags::SPOT_LIGHT:
 			a_light->SetMaterial(m_materialManager->GetStencilLightPassMaterial("", ""), 1);
 			a_light->SetMaterial(m_materialManager->GetSpotLightPassMaterial("", ""), 0);
 			break;
-		case DIRECTIONAL_LIGHT:
+		case LightTypeFlags::DIRECTIONAL_LIGHT:
 			a_light->SetMaterial(m_materialManager->GetFullScreenLightPassMaterial("", "") );
 			break;
 		}
