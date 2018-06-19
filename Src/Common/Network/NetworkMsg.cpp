@@ -298,11 +298,11 @@ namespace Network
    * Returns: MsgType
    * Effects: 
    */
-  MsgType NetworkMsg::GetType(char* a_data, const uint32_t& a_dataSize) const
+  MsgType NetworkMsg::GetType( uint32_t& a_dataSize) const
   {
-    if( a_dataSize < 1 )
+    if( m_size < 1 )
       return MsgType::NONE;
-    return (MsgType)a_data[0];
+    return (MsgType)m_data[0];
   }
   /*
    *  Method: NetworkMsg::DeserializeSizeMsg
@@ -310,13 +310,13 @@ namespace Network
    * Returns: bool
    * Effects: 
    */
-  bool NetworkMsg::DeserializeSizeMsg(char* a_data, const uint32_t& a_dataSize, uint32_t& a_outSize) const
+  bool NetworkMsg::DeserializeSizeMsg(uint32_t& a_outSize) const 
   {
     
-    if( (MsgType)a_data[0] != MsgType::MSG_SIZE || a_dataSize != 5)
+    if( (MsgType)m_data[0] != MsgType::MSG_SIZE || m_size != 5)
       return false;
       
-    a_outSize = ((uint32_t)a_data[1] << 24) | ((uint32_t)a_data[2] << 16) | ((uint32_t)a_data[3] << 8) | (uint32_t)a_data[4];
+    a_outSize = ((uint32_t)m_data[1] << 24) | ((uint32_t)m_data[2] << 16) | ((uint32_t)m_data[3] << 8) | (uint32_t)m_data[4];
     return true;
   }
 
@@ -326,12 +326,12 @@ namespace Network
    * Returns: bool
    * Effects: 
    */
-  bool NetworkMsg::DeserializeEngineReadyMsg(char* a_data, const uint32_t& a_dataSize, uint32_t& a_outClientId) const
+  bool NetworkMsg::DeserializeEngineReadyMsg(uint32_t& a_outClientId) const 
   {
-    if( (MsgType)a_data[0] != MsgType::CLNT_ENGINE_READY || a_dataSize != 5)
+    if( (MsgType)m_data[0] != MsgType::CLNT_ENGINE_READY || m_size != 5)
       return false;
     
-    a_outClientId = ((uint32_t)a_data[1] << 24) | ((uint32_t)a_data[2] << 16) | ((uint32_t)a_data[3] << 8) | (uint32_t)a_data[4];
+    a_outClientId = ((uint32_t)m_data[1] << 24) | ((uint32_t)m_data[2] << 16) | ((uint32_t)m_data[3] << 8) | (uint32_t)m_data[4];
     return true;
   }
 
@@ -341,12 +341,12 @@ namespace Network
    * Returns: bool
    * Effects: 
    */
-  bool NetworkMsg::DeserializeGeometryPassMsg(char* a_data, const uint32_t& a_dataSize, uint32_t& a_outClientId, char* a_outTextureData, uint32_t& a_outTextureDataSize) const
+  bool NetworkMsg::DeserializeGeometryPassMsg( uint32_t& a_outClientId, char* a_outTextureData, uint32_t& a_outTextureDataSize) const 
   {
     char* l_pos = m_data;
-    if(a_dataSize < 9)
+    if(m_size < 9)
       return false;
-    if( (MsgType)a_data[0] != MsgType::CLNT_GEOMETRY_PASS )
+    if( (MsgType)m_data[0] != MsgType::CLNT_GEOMETRY_PASS )
       return false;
     
     ++l_pos;
@@ -366,10 +366,10 @@ namespace Network
    * Returns: bool
    * Effects: 
    */
-  bool NetworkMsg::DeserializeLightPassMsg(char* a_data, const uint32_t& a_dataSize, uint32_t& a_outClientId, char* a_outTextureData, uint32_t& a_outTextureDataSize) const
+  bool NetworkMsg::DeserializeLightPassMsg(uint32_t& a_outClientId, char* a_outTextureData, uint32_t& a_outTextureDataSize) const 
   {
-    char* l_pos = a_data;
-    if(a_dataSize < 9)
+    char* l_pos = m_data;
+    if(m_size < 9)
       return false;
     if( (MsgType)(*l_pos) != MsgType::CLNT_LIGHT_PASS )
       return false;
@@ -391,10 +391,10 @@ namespace Network
    * Returns: bool
    * Effects: 
    */
-  bool NetworkMsg::DeserializeSetupMsg(char* a_data, const uint32_t& a_dataSize, uint32_t& a_outClientId, glm::vec2& a_outGeometryPassTexSize, glm::vec4& a_outViewportInfo, glm::vec2& a_outLightPassTexSize) const
+  bool NetworkMsg::DeserializeSetupMsg( uint32_t& a_outClientId, glm::vec2& a_outGeometryPassTexSize, glm::vec4& a_outViewportInfo, glm::vec2& a_outLightPassTexSize) const 
   {
-    char* l_pos = a_data;
-    if(a_dataSize < 33)
+    char* l_pos = m_data;
+    if(m_size < 33)
       return false;
     if( (MsgType)(*l_pos) != MsgType::SRV_SETUP )
       return false;
@@ -440,10 +440,10 @@ namespace Network
    * Returns: bool
    * Effects: 
    */
-  bool NetworkMsg::DeserializeSceneUpdateMsg(char* a_data, const uint32_t& a_dataSize, std::vector<ObjAddInfo>& a_outObjsToAdd, std::vector<uint32_t>& a_outObjsToRemove, std::vector<ObjTransformInfo>& a_outObjsToTransform, std::vector<TextureChangeInfo>& a_outTextureChange)
+  bool NetworkMsg::DeserializeSceneUpdateMsg(std::vector<ObjAddInfo>& a_outObjsToAdd, std::vector<uint32_t>& a_outObjsToRemove, std::vector<ObjTransformInfo>& a_outObjsToTransform, std::vector<TextureChangeInfo>& a_outTextureChange)  const 
   {
-    char* l_pos = a_data;
-    if(a_dataSize < 33)
+    char* l_pos = m_data;
+    if(m_size < 33)
       return false;
     if( (MsgType)(*l_pos) != MsgType::SRV_SCENE_UPDATE )
       return false;
@@ -488,10 +488,10 @@ namespace Network
    * Returns: bool
    * Effects: 
    */
-  bool NetworkMsg::DeserializeGeometryPassPlusLightsMsg(char* a_data, const uint32_t& a_dataSize, char* a_outTextureData, uint32_t& a_outTextureDataSize, std::vector<ObjAddInfo>& a_outLightsToAdd, std::vector<uint32_t>& a_outLightsToRemove, std::vector<ObjTransformInfo>& a_outLightsToTransform )
+  bool NetworkMsg::DeserializeGeometryPassPlusLightsMsg( char* a_outTextureData, uint32_t& a_outTextureDataSize, std::vector<ObjAddInfo>& a_outLightsToAdd, std::vector<uint32_t>& a_outLightsToRemove, std::vector<ObjTransformInfo>& a_outLightsToTransform ) const 
   {
-    char* l_pos = a_data;
-    if(a_dataSize < 33)
+    char* l_pos = m_data;
+    if(m_size < 33)
       return false;
     if( (MsgType)(*l_pos) != MsgType::SRV_GEOMETRY_PASS_PLUS_LIGHTS )
       return false;

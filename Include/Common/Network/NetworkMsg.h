@@ -91,9 +91,12 @@ namespace Network
     NetworkMsg();
     ~NetworkMsg();
 
-    inline char* GetData() const{  return m_data;  }
+    inline char* GetData(){  return m_data;  }
+    inline const char* GetData() const{  return m_data;  }
     inline MsgType GetType() const{  return m_type;  }
     inline uint32_t GetSize() const{  return m_size; }
+    inline uint32_t& GetSize() {  return m_size; }
+    inline void SetSize(const uint32_t& a_size) {  Reset(a_size); m_size = a_size; }
     
     
     // create functions
@@ -109,16 +112,16 @@ namespace Network
     
     
     // deserialize functions
-    MsgType GetType(char* a_data, const uint32_t& a_dataSize) const;
-    bool DeserializeSizeMsg(char* a_data, const uint32_t& a_dataSize, uint32_t& a_outSize) const; ///< MSG_SIZE
-    // bool DeserializeClientRequestMsg(char* a_data, const uint32_t& a_dataSize, uint32_t& a_outSize) const; ///< CLNT_REQUEST
-    bool DeserializeEngineReadyMsg(char* a_data, const uint32_t& a_dataSize, uint32_t& a_outClientId) const; ///< CLNT_ENGINE_READY
-    bool DeserializeGeometryPassMsg(char* a_data, const uint32_t& a_dataSize, uint32_t& a_outClientId, char* a_outTextureData, uint32_t& a_outTextureDataSize) const; ///< CLNT_GEOMETRY_PASS
-    bool DeserializeLightPassMsg(char* a_data, const uint32_t& a_dataSize, uint32_t& a_outClientId, char* a_outTextureData, uint32_t& a_outTextureDataSize) const; ///< CLNT_LIGHT_PASS
+    MsgType GetType(uint32_t& a_dataSize) const;
+    bool DeserializeSizeMsg( uint32_t& a_outSize) const; ///< MSG_SIZE
+    // bool DeserializeClientRequestMsg( uint32_t& a_outSize) const; ///< CLNT_REQUEST
+    bool DeserializeEngineReadyMsg( uint32_t& a_outClientId) const; ///< CLNT_ENGINE_READY
+    bool DeserializeGeometryPassMsg( uint32_t& a_outClientId, char* a_outTextureData, uint32_t& a_outTextureDataSize) const; ///< CLNT_GEOMETRY_PASS
+    bool DeserializeLightPassMsg( uint32_t& a_outClientId, char* a_outTextureData, uint32_t& a_outTextureDataSize) const; ///< CLNT_LIGHT_PASS
     
-    bool DeserializeSetupMsg(char* a_data, const uint32_t& a_dataSize, uint32_t& a_outClientId, glm::vec2& a_outGeometryPassTexSize, glm::vec4& a_outViewportInfo, glm::vec2& a_outLightPassTexSize) const; ///< SRV_SETUP
-    bool DeserializeSceneUpdateMsg(char* a_data, const uint32_t& a_dataSize, std::vector<ObjAddInfo>& a_outObjsToAdd, std::vector<uint32_t>& a_outObjsToRemove, std::vector<ObjTransformInfo>& a_outObjsToTransform, std::vector<TextureChangeInfo>& a_outTextureChange);  ///< SRV_SCENE_UPDATE
-    bool DeserializeGeometryPassPlusLightsMsg(char* a_data, const uint32_t& a_dataSize, char* a_outTextureData, uint32_t& a_outTextureDataSize, std::vector<ObjAddInfo>& a_outLightsToAdd, std::vector<uint32_t>& a_outLightsToRemove, std::vector<ObjTransformInfo>& a_outLightsToTransform );  ///< SRV_GEOMETRY_PASS_PLUS_LIGHTS 
+    bool DeserializeSetupMsg( uint32_t& a_outClientId, glm::vec2& a_outGeometryPassTexSize, glm::vec4& a_outViewportInfo, glm::vec2& a_outLightPassTexSize) const; ///< SRV_SETUP
+    bool DeserializeSceneUpdateMsg( std::vector<ObjAddInfo>& a_outObjsToAdd, std::vector<uint32_t>& a_outObjsToRemove, std::vector<ObjTransformInfo>& a_outObjsToTransform, std::vector<TextureChangeInfo>& a_outTextureChange) const ;  ///< SRV_SCENE_UPDATE
+    bool DeserializeGeometryPassPlusLightsMsg( char* a_outTextureData, uint32_t& a_outTextureDataSize, std::vector<ObjAddInfo>& a_outLightsToAdd, std::vector<uint32_t>& a_outLightsToRemove, std::vector<ObjTransformInfo>& a_outLightsToTransform ) const ;  ///< SRV_GEOMETRY_PASS_PLUS_LIGHTS 
     
     /// reset the message creating an internal buffer of at least the given size
     /// the reasoning behind this function is that the internal buffer will be reallocated ONLY if it needs to grow (making a message object reusable and efficient)
