@@ -216,7 +216,11 @@ namespace Network
         SocketState& l_state = l_iter->second;
         // send messages        
         for( std::vector<NetworkMsg>::iterator l_message = l_state.m_outputMsgs.begin(); l_message != l_state.m_outputMsgs.end(); ++l_message )
+        {
+          m_sizeMsg.CreateSizeMsg( (uint32_t)l_message->GetSize() );
+          l_iter->first->send( asio::buffer(m_sizeMsg.GetData(), m_sizeMsg.GetSize() ) );
           l_iter->first->send( asio::buffer(l_message->GetData(), l_message->GetSize() ) );
+        }
         l_state.m_outputMsgs.clear();
         
         // receive messages

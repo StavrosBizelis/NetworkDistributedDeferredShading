@@ -48,7 +48,7 @@ namespace Network
     std::list< NetworkMsg > m_preInputMsgs;
     std::map< std::shared_ptr<asio::ip::tcp::socket> , SocketState > m_sockets;
     
-    
+    NetworkMsg m_sizeMsg; ///< a size msg use for sending messages
     
     
     std::mutex m_outMsgMut;
