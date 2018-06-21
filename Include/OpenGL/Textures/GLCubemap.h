@@ -21,4 +21,5 @@ public:
   virtual void SetSamplerObjectParameter(const unsigned int& parameter, const unsigned int& value);
 	virtual void SetSamplerObjectParameterf(const unsigned int& parameter, float value);
   
+  virtual void Release();
 };

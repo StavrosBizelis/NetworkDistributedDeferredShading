@@ -52,7 +52,7 @@ namespace RenderControl
 		inline virtual void SetCamera(const std::shared_ptr<CCamera>& a_cam) { m_camera = a_cam; }
 
 		inline virtual void SetMaterialManager(MaterialControl::IMaterialManager* a_materialManager) { m_materialManager = a_materialManager; }
-		inline MaterialControl::IMaterialManager* const GetMaterialManager() const { return m_materialManager; }
+		inline MaterialControl::IMaterialManager* GetMaterialManager() const { return m_materialManager; }
 
 		///	Every render pass implementation must initialize itself ( framebuffer setup - output textures - etc)
 		virtual bool Init() = 0;

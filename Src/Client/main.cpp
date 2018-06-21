@@ -13,19 +13,17 @@
 int main(int argc, const char * argv[] ) 
 {
   
-  
+  /*
   Network::ClientControl l_client("localhost", 50000);
   l_client.Connect();
   l_client.StartCommunication();
-  
-  //Network::NetworkMsg l_msg;
-  // l_msg.CreateClientRequestMsg();
-  
   
   for(;;)
   {
     l_client.Update();
   }
+  */
+  
   
   system("pause");
   return 0;

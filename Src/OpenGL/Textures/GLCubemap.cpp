@@ -114,3 +114,9 @@ GLCubemap::SetSamplerObjectParameterf(const unsigned int &parameter, float value
 }
 
 
+void GLCubemap::Release()
+{
+  glDeleteSamplers(1, &m_uiSampler);
+	glDeleteTextures(1, &m_uiTexture);
+} 
+

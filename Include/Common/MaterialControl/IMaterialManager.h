@@ -37,7 +37,7 @@ namespace MaterialControl
 		/// used for mesh lights ( point/spot lights etc...)
 		virtual std::shared_ptr<IShaderProgram> GetStencilLightPassMaterial(const std::string& a_vertShPath, const std::string& a_fragShPath) = 0;
 		/// used for mesh light ( point lights etc...)
-		virtual std::shared_ptr<IShaderProgram> GetPointLightPassMaterial(const std::string& a_vertShPath, const std::string& a_fragShPath = 0);
+		virtual std::shared_ptr<IShaderProgram> GetPointLightPassMaterial(const std::string& a_vertShPath, const std::string& a_fragShPath) = 0;
 		/// used for mesh light ( point lights etc...)
 		virtual std::shared_ptr<IShaderProgram> GetSpotLightPassMaterial(const std::string& a_vertShPath, const std::string& a_fragShPath) = 0;
 

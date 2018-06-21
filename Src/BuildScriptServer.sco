@@ -27,8 +27,9 @@ Common/SceneControl/SceneManager.cpp Common/SceneControl/SceneNode.cpp Common/Sc
 OpenGL/Core/VertexBufferObject.cpp OpenGL/Core/VertexBufferObjectIndexed.cpp \
 OpenGL/MaterialControl/GLMaterialManager.cpp OpenGL/MaterialControl/GLShaderProgram.cpp \
 OpenGL/RenderControl/GLDeferredShadingPass.cpp \
-OpenGL/Textures/GLTexture.cpp OpenGL/Textures/GLCubemap.cpp \
-OpenGL/Shapes/GLRect.cpp OpenGL/Shapes/GLSphere.cpp OpenGL/Shapes/GLCone.cpp OpenGL/Shapes/GLCube.cpp OpenGL/Shapes/GLSkybox.cpp OpenGL/Shapes/GLOpenAssetImportMesh.cpp \
+OpenGL/Textures/GLTextureFactory.cpp OpenGL/Textures/GLTexture.cpp OpenGL/Textures/GLCubemap.cpp \
+OpenGL/Shapes/GLShapeFactory.cpp OpenGL/Shapes/GLRect.cpp OpenGL/Shapes/GLSphere.cpp OpenGL/Shapes/GLCone.cpp OpenGL/Shapes/GLCube.cpp OpenGL/Shapes/GLSkybox.cpp OpenGL/Shapes/GLOpenAssetImportMesh.cpp \
+OpenGL/GLGraphicsEngine.cpp \
 \
 Server/main.cpp Server/GameWindow.cpp Server/ServerApp.cpp Server/ServerControl.cpp')
 

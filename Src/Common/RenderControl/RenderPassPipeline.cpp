@@ -3,7 +3,7 @@
 namespace RenderControl
 {
 
-	RenderPassPipeline::RenderPassPipeline(MaterialControl::IMaterialManager* a_materialManager) : m_materialManager(a_materialManager ) {}
+	RenderPassPipeline::RenderPassPipeline() : m_materialManager(nullptr) {}
 	
 	RenderPassPipeline::~RenderPassPipeline() 
 	{
@@ -54,7 +54,12 @@ namespace RenderControl
 		m_passes.clear();
 	}
 
-	MaterialControl::IMaterialManager* const RenderPassPipeline::GetMaterialManager() const
+  void RenderPassPipeline::SetMaterialManager(MaterialControl::IMaterialManager* a_materialManager)
+  {
+    m_materialManager = a_materialManager;
+  }
+  
+	MaterialControl::IMaterialManager* RenderPassPipeline::GetMaterialManager() const
 	{
 		return m_materialManager;
 	}
