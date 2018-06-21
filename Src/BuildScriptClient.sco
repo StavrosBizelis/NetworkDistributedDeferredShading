@@ -5,7 +5,7 @@ import os
 env=Environment( ENV = {'PATH' : os.environ['PATH']}, TARGET_ARCH='x86' )
 
 # here we add the include folders
-env.Append(CCFLAGS='/DWIN32 /Zi /Od /Gm /EHsc /MTd /W4 /DDEBUG  /I. /I"C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include" /I"../Include" /I"../Impt/"')
+env.Append(CCFLAGS='/DWIN32 /Zi /Od /Gm /EHsc /MTd /W4 /DDEBUG -D_WIN32_WINNT=0x0601 /I. /I"C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include" /I"../Include" /I"../Impt/"')
 # remember to change this for the various projects to the name you want
 env.Append(LINKFLAGS=' /DEBUG  /PDB:NDDSClient.pdb')
 # in here we add the library folders
@@ -17,7 +17,7 @@ env.Append(LIBS=list1)
 
 
 # in this list we add all the cpp files we need to compile seperated by space
-list=Split('Common/Core/MatrixStack.cpp Common/Core/HighResolutionTimer.cpp \
+list=Split('Common/Core/MatrixStack.cpp Common/Core/HighResolutionTimer.cpp Common/Core/MyUtilities.cpp \
 Common/Network/NetworkMsg.cpp \
 Common/Shapes/ACone.cpp Common/Shapes/ACube.cpp Common/Shapes/ARect.cpp Common/Shapes/ASkybox.cpp Common/Shapes/ASphere.cpp Common/Shapes/AOpenAssetImportMesh.cpp \
 Common/Textures/ACubemap.cpp Common/Textures/ATexture.cpp \
@@ -30,7 +30,7 @@ OpenGL/RenderControl/GLDeferredShadingPass.cpp \
 OpenGL/Textures/GLTexture.cpp OpenGL/Textures/GLCubemap.cpp \
 OpenGL/Shapes/GLRect.cpp OpenGL/Shapes/GLSphere.cpp OpenGL/Shapes/GLCone.cpp OpenGL/Shapes/GLCube.cpp OpenGL/Shapes/GLSkybox.cpp OpenGL/Shapes/GLOpenAssetImportMesh.cpp \
 \
-Client/main.cpp')
+Client/main.cpp Client/ClientControl.cpp ')
 
 # this creates a Library(lib)
 #could use env.SharedLibrary(...) to create shared library(dll+lib) - when use this option remember to have exported all the symbols

@@ -14,30 +14,30 @@
 #include <string>
 #include <map>
 #include <list>
-#include <atomic>
+
 #include <mutex>
 #include <memory>
+#include <deque>
 
 #include "Common/Network/NetworkMsg.h"
+#include "Common/Network/SocketState.h"
 
 
 
 
 namespace Network
 {
-  struct SocketState
-  {
-    std::atomic_bool m_isPolling;
-    std::pair<bool, NetworkMsg> m_expectingMessage;
-    std::vector<NetworkMsg> m_inputMsgs;
-    std::vector<NetworkMsg> m_outputMsgs;
-    
-    SocketState(): m_isPolling(false){}
-  };
 
   class ServerControl
   {
   private:
+    std::mutex m_outMsgMut;
+    std::mutex m_preInMsgMut;
+    std::mutex m_inMsgMut;
+    std::mutex m_socketsMut;
+    std::mutex m_expectingMessageMut;
+    
+    
     unsigned int m_hostPort;
     
     asio::io_context m_io;
@@ -45,17 +45,13 @@ namespace Network
     
 
     
-    std::list< NetworkMsg > m_preInputMsgs;
+    std::list< NetworkMsgPtr > m_preInputMsgs;
     std::map< std::shared_ptr<asio::ip::tcp::socket> , SocketState > m_sockets;
     
-    NetworkMsg m_sizeMsg; ///< a size msg use for sending messages
+    NetworkMsgPtr m_sizeMsgOut; ///< a size msg use for sending messages
+    std::deque<NetworkMsgPtr> m_sizeMsgIn; ///< a queue of Size MSGs used for receiving messages, one for each connection
     
     
-    std::mutex m_outMsgMut;
-    std::mutex m_preInMsgMut;
-    std::mutex m_inMsgMut;
-    std::mutex m_socketsMut;
-    std::mutex m_expectingMessageMut;
     bool m_acceptingNewConnections;
     bool m_waitsForNewConnections;
     bool m_communicatesWithClients;
@@ -83,19 +79,19 @@ namespace Network
     void StartClientCommunication();
     
     bool RegisterSocket( const std::shared_ptr<asio::ip::tcp::socket>& a_socket);
-    void RegisterMessage(const std::shared_ptr<asio::ip::tcp::socket>& a_socket, const std::list< NetworkMsg >::iterator&  a_message);
+    void RegisterMessage(const std::shared_ptr<asio::ip::tcp::socket>& a_socket, const std::list< NetworkMsgPtr >::iterator&  a_message);
     
     /**
     *   @brief send message to client with given id
     *   @param a_id: the id of the client
     *   @param a_msg: the message to send
     */
-    void PushMsg(const std::shared_ptr<asio::ip::tcp::socket>& a_socket, const NetworkMsg& a_msg);
+    void PushMsg(const std::shared_ptr<asio::ip::tcp::socket>& a_socket, const NetworkMsgPtr& a_msg);
     
     /**
     *   @brief return a map of the messages
     */
-    std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<NetworkMsg>> GetMsgs();
+    std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<NetworkMsgPtr>> GetMsgs();
     
     
     

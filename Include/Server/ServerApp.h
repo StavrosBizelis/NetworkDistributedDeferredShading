@@ -1,8 +1,12 @@
 #pragma once
 
-#include <windows.h>
-#include "Common/Core/HighResolutionTimer.h"
+
+#include "Server/ServerControl.h"
 #include "Server/Gamewindow.h"
+#include "Common/Core/HighResolutionTimer.h"
+
+#include <windows.h>
+
 
 class ServerApp
 {
@@ -23,6 +27,10 @@ private:
   double m_elapsedTime;   ///< used to count frames per second
   unsigned int m_frameCount;
   bool m_appActive;
+  
+  Network::ServerControl m_serverCtrl;
+  std::vector<std::shared_ptr<asio::ip::tcp::socket> > m_sockets;
+  
   
   void Update();
   void Initialise();

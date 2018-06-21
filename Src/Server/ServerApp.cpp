@@ -6,23 +6,14 @@
  ***********************************************************************/
 #include "Server/ServerApp.h"
 
-
-
-// #define ASIO_STANDALONE 
-// #define ASIO_HAS_STD_ADDRESSOF
-// #define ASIO_HAS_STD_ARRAY
-// #define ASIO_HAS_CSTDINT
-// #define ASIO_HAS_STD_SHARED_PTR
-// #define ASIO_HAS_STD_TYPE_TRAITS
-
-//#include <asio-1.12.1/include/asio.hpp>
+#include "Common/Core/MyUtilities.h"
 
 /***********************************************************************
  *  Method: ServerApp::ServerApp
  *  Params: 
  * Effects: 
  ***********************************************************************/
-ServerApp::ServerApp() : m_appActive(true), m_elapsedTime(0), m_dt(0),m_frameCount(0), m_pHighResolutionTimer(nullptr)
+ServerApp::ServerApp() : m_appActive(true), m_elapsedTime(0), m_dt(0),m_frameCount(0), m_pHighResolutionTimer(nullptr), m_serverCtrl(50000)
 {
 }
 
@@ -87,10 +78,22 @@ ServerApp::ProcessEvents(HWND window, UINT message, WPARAM w_param, LPARAM l_par
 		}
 		break;
 	case WM_KEYUP:
-		// switch (w_param) {
-		// case 'W': 
-			// break;
-		// }
+		switch (w_param) {
+      case VK_SPACE: 
+			  m_sockets = m_serverCtrl.StopAcceptingConnections();
+			  m_serverCtrl.StartClientCommunication();
+			break;
+      case 'W': 
+        char* l_data = new char [ 5 ];
+        for( char i = 0; i < 5; ++i)
+          l_data[i] = i+65;
+        
+        Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
+        l_msg->SetData(l_data, 5);
+        std::cout << "send data message " << (*l_msg) << std::endl;
+			  m_serverCtrl.PushMsg(m_sockets[0], l_msg);
+        break;
+		}
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -176,8 +179,9 @@ ServerApp::Update()
   /////////////////////////////////////////////
   // do here what need to be done /////////////
   /////////////////////////////////////////////
-  
   m_dt = m_pHighResolutionTimer->Elapsed();
+  m_serverCtrl.Update();
+  
   
   // framerate output
   m_frameCount++;
@@ -206,6 +210,8 @@ ServerApp::Initialise()
   /////////////////////////////////////////////
   // do here what need to be done /////////////
   /////////////////////////////////////////////
+  m_serverCtrl.AcceptConnections();
+  
 }
 
 

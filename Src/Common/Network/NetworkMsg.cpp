@@ -5,8 +5,82 @@
  *  DESCR: 
  ***********************************************************************/
 #include "Common/Network/NetworkMsg.h"
+#include "Common/Core/MyUtilities.h"
 namespace Network
 {
+  
+  
+  
+  void ObjAddInfo::Serialize(char* a_arrOut) const
+  {
+    ConsistentInt32ToCharArray(m_id, a_arrOut);
+    a_arrOut+=4;
+    memcpy(a_arrOut, (void*)&m_objType, 1);
+    a_arrOut+=1;
+    ConsistentInt32ToCharArray(m_materialFlags, a_arrOut);
+    a_arrOut+=4;
+    memcpy(a_arrOut, (void*)&m_lightFlags, 1);
+    a_arrOut+=1;
+      
+  }
+  void ObjAddInfo::Deserialize(char* a_arrIn)
+  {
+    m_id = ConsistentCharArrToInt32(a_arrIn);
+    a_arrIn+=4;
+    m_objType = (ObjectType)(*a_arrIn);
+    a_arrIn+=1;
+    m_materialFlags = (RenderControl::GeometryPassMaterialFlags)ConsistentCharArrToInt32(a_arrIn);
+    a_arrIn+=4;
+    m_lightFlags = (RenderControl::LightTypeFlags)(*a_arrIn);
+    a_arrIn+=1;
+  }
+  
+  size_t ObjAddInfo::Size() const
+  {
+    return sizeof(uint32_t) + sizeof(ObjectType) + sizeof(RenderControl::GeometryPassMaterialFlags) + sizeof(RenderControl::LightTypeFlags);
+  }
+  
+  void ObjTransformInfo::Serialize(char* a_arrOut) const
+  {
+    ConsistentInt32ToCharArray(m_id, a_arrOut);
+    a_arrOut+=4;
+    memcpy(a_arrOut, (void*)&m_transformType, 1);
+    a_arrOut+=1;
+    
+    ConsistentFloatToCharArray(x, a_arrOut);
+    a_arrOut+=4;
+    ConsistentFloatToCharArray(y, a_arrOut);
+    a_arrOut+=4;
+    ConsistentFloatToCharArray(z, a_arrOut);
+    a_arrOut+=4;
+    
+  }
+  void ObjTransformInfo::Deserialize(char* a_arrIn)
+  {
+    m_id = ConsistentCharArrToInt32(a_arrIn);
+    a_arrIn+=4;
+    m_transformType = (ObjectTransformType)(*a_arrIn);
+    a_arrIn+=1;
+    
+    x = ConsistentCharArrToFloat(a_arrIn);
+    a_arrIn+=4;
+    y = ConsistentCharArrToFloat(a_arrIn);
+    a_arrIn+=4;
+    z = ConsistentCharArrToFloat(a_arrIn);
+    a_arrIn+=4;
+  }
+  
+  size_t ObjTransformInfo::Size() const
+  {
+    return sizeof(uint32_t) + sizeof(ObjectTransformType) + 3* sizeof(float) ;
+  }
+  
+  
+
+  
+  
+  
+  
   /*
    *  Method: NetworkMsg::NetworkMsg
    *  Params: 
@@ -45,7 +119,7 @@ namespace Network
     *l_pos = (char)m_type;
     
     ++l_pos;
-    memcpy(l_pos, &a_size, 4);
+    ConsistentInt32ToCharArray(a_size, l_pos);
   } 
 
   /*
@@ -79,7 +153,7 @@ namespace Network
     *l_pos = (char)m_type;
     
     ++l_pos;
-    memcpy(l_pos, &a_clientId, 4);
+    ConsistentInt32ToCharArray(a_clientId, l_pos);
   }
 
   /*
@@ -98,13 +172,14 @@ namespace Network
     *l_pos = (char)m_type;
     ++l_pos;
     
-    memcpy(l_pos, &a_clientId, 4);
+    ConsistentInt32ToCharArray(a_clientId, l_pos);
     l_pos += 4;
 
-    memcpy(l_pos, &a_textureDataSize, 4);
+    ConsistentInt32ToCharArray(a_textureDataSize, l_pos);
     l_pos += 4;
 
     memcpy(l_pos, a_textureData, a_textureDataSize);
+    
   }
 
   /*
@@ -124,10 +199,10 @@ namespace Network
     *l_pos = (char)m_type;
     ++l_pos;
     
-    memcpy(l_pos, &a_clientId, 4);
+    ConsistentInt32ToCharArray(a_clientId, l_pos);
     l_pos += 4;
 
-    memcpy(l_pos, &a_textureDataSize, 4);
+    ConsistentInt32ToCharArray(a_textureDataSize, l_pos);
     l_pos += 4;
 
     memcpy(l_pos, a_textureData, a_textureDataSize);
@@ -149,30 +224,30 @@ namespace Network
     *l_pos = (char)m_type;
     ++l_pos;
     
-    memcpy(l_pos, &a_clientId, 4);
+    ConsistentInt32ToCharArray(a_clientId, l_pos);
     l_pos += 4;
     
     // a_geometryPassTexSize
-    memcpy(l_pos, &a_geometryPassTexSize.x, 4);
+    ConsistentInt32ToCharArray(a_geometryPassTexSize.x, l_pos);
     l_pos += 4;
     
-    memcpy(l_pos, &a_geometryPassTexSize.y, 4);
+    ConsistentInt32ToCharArray(a_geometryPassTexSize.y, l_pos);
     l_pos += 4;
     
     // a_viewportInfo
-    memcpy(l_pos, &a_viewportInfo.x, 4);
+    ConsistentInt32ToCharArray(a_viewportInfo.x, l_pos);
     l_pos += 4;
-    memcpy(l_pos, &a_viewportInfo.y, 4);
+    ConsistentInt32ToCharArray(a_viewportInfo.y, l_pos);
     l_pos += 4;
-    memcpy(l_pos, &a_viewportInfo.z, 4);
+    ConsistentInt32ToCharArray(a_viewportInfo.z, l_pos);
     l_pos += 4;
-    memcpy(l_pos, &a_viewportInfo.w, 4);
+    ConsistentInt32ToCharArray(a_viewportInfo.w, l_pos);
     l_pos += 4;
     
     // a_lightPassTexSize
-    memcpy(l_pos, &a_lightPassTexSize.x, 4);
+    ConsistentInt32ToCharArray(a_lightPassTexSize.x, l_pos);
     l_pos += 4;
-    memcpy(l_pos, &a_lightPassTexSize.y, 4);
+    ConsistentInt32ToCharArray(a_lightPassTexSize.y, l_pos);
   }
 
   /*
@@ -205,38 +280,43 @@ namespace Network
     
     
     // a_objsToAdd
-    uint32_t l_tmp = a_objsToAdd.size();
-    memcpy(l_pos, &l_tmp, sizeof(uint32_t) );
+    ConsistentInt32ToCharArray(a_objsToAdd.size(), l_pos);
     l_pos += 4;
-    memcpy(l_pos, &a_objsToAdd[0], a_objsToAdd.size() * sizeof(ObjAddInfo) );
-    l_pos += a_objsToAdd.size() * sizeof(ObjAddInfo);
+    for( unsigned int i = 0; i < a_objsToAdd.size(); ++i)
+    {
+      a_objsToAdd[i].Serialize(l_pos);
+      l_pos += a_objsToAdd[i].Size();      
+    }
     
     // a_objsToRemove
-    l_tmp = a_objsToRemove.size();
-    memcpy(l_pos, &l_tmp, sizeof(uint32_t) );
+    ConsistentInt32ToCharArray(a_objsToRemove.size(), l_pos);
     l_pos += 4;
-    memcpy(l_pos, &a_objsToRemove[0], a_objsToRemove.size() * sizeof(uint32_t) );
-    l_pos += a_objsToRemove.size() * sizeof(uint32_t);
+    for( unsigned int i = 0; i < a_objsToRemove.size(); ++i)
+    {
+      ConsistentInt32ToCharArray(a_objsToRemove[i], l_pos);
+      l_pos += sizeof(uint32_t);      
+    }
     
     // a_objsToTransform
-    l_tmp = a_objsToTransform.size();
-    memcpy(l_pos, &l_tmp, sizeof(uint32_t) );
+    ConsistentInt32ToCharArray(a_objsToTransform.size(), l_pos);
     l_pos += 4;
-    memcpy(l_pos, &a_objsToTransform[0], a_objsToTransform.size() * sizeof(ObjTransformInfo) );
-    l_pos += a_objsToTransform.size() * sizeof(ObjTransformInfo);
+    for( unsigned int i = 0; i < a_objsToTransform.size(); ++i)
+    {
+      a_objsToTransform[i].Serialize(l_pos);
+      l_pos += a_objsToTransform[i].Size();      
+    }
+    
     
     // a_textureChange
-    l_tmp = a_textureChange.size();
-    memcpy(l_pos, &l_tmp, sizeof(uint32_t) );
+    ConsistentInt32ToCharArray(a_textureChange.size(), l_pos);
     l_pos += 4;
     for(unsigned int i = 0; i < a_textureChange.size(); ++i)
     {
-      memcpy(l_pos, &(a_textureChange[i].m_id), 4);
+      ConsistentInt32ToCharArray(a_textureChange[i].m_id, l_pos);
       l_pos += 4;
-      memcpy(l_pos, &(a_textureChange[i].m_textureLayer), 4);
+      ConsistentInt32ToCharArray(a_textureChange[i].m_textureLayer, l_pos);
       l_pos += 4;
-      l_tmp = a_textureChange[i].m_path.length();
-      memcpy(l_pos, &l_tmp, 4);
+      ConsistentInt32ToCharArray(a_textureChange[i].m_path.length(), l_pos);
       l_pos += 4;
       memcpy(l_pos, &(a_textureChange[i].m_path[0]), a_textureChange[i].m_path.length());
       l_pos += a_textureChange[i].m_path.length();
@@ -265,30 +345,38 @@ namespace Network
     ++l_pos;
     
     // texture data
-    memcpy(l_pos, &a_textureDataSize, sizeof(uint32_t) );
+    ConsistentInt32ToCharArray(a_textureDataSize, l_pos);
     l_pos += 4;
     memcpy(l_pos, a_textureData, a_textureDataSize );
     l_pos += a_textureDataSize;
     
     // a_lightsToAdd
-    uint32_t l_tmp = a_lightsToAdd.size();
-    memcpy(l_pos, &l_tmp, sizeof(uint32_t) );
+    ConsistentInt32ToCharArray(a_lightsToAdd.size(), l_pos);
     l_pos += 4;
-    memcpy(l_pos, &a_lightsToAdd[0], a_lightsToAdd.size() * sizeof(ObjAddInfo) );
-    l_pos += a_lightsToAdd.size() * sizeof(ObjAddInfo);
+    for( unsigned int i = 0; i < a_lightsToAdd.size(); ++i)
+    {
+      a_lightsToAdd[i].Serialize(l_pos);
+      l_pos += sizeof(ObjAddInfo);      
+    }
     
     // a_lightsToRemove
-    l_tmp = a_lightsToRemove.size();
-    memcpy(l_pos, &l_tmp, sizeof(uint32_t) );
+    ConsistentInt32ToCharArray(a_lightsToRemove.size(), l_pos);
     l_pos += 4;
-    memcpy(l_pos, &a_lightsToRemove[0], a_lightsToRemove.size() * sizeof(uint32_t) );
-    l_pos += a_lightsToRemove.size() * sizeof(uint32_t);
+    for( unsigned int i = 0; i < a_lightsToRemove.size(); ++i)
+    {
+      ConsistentInt32ToCharArray(a_lightsToRemove[i], l_pos);
+      l_pos += sizeof(uint32_t);      
+    }
     
     // a_lightsToTransform
-    l_tmp = a_lightsToTransform.size();
-    memcpy(l_pos, &l_tmp, sizeof(uint32_t) );
+    ConsistentInt32ToCharArray(a_lightsToTransform.size(), l_pos);
     l_pos += 4;
     memcpy(l_pos, &a_lightsToTransform[0], a_lightsToTransform.size() * sizeof(ObjTransformInfo) );
+    for( unsigned int i = 0; i < a_lightsToTransform.size(); ++i)
+    {
+      a_lightsToTransform[i].Serialize(l_pos);
+      l_pos += sizeof(ObjTransformInfo);      
+    }
 
   }
 
@@ -298,12 +386,14 @@ namespace Network
    * Returns: MsgType
    * Effects: 
    */
-  MsgType NetworkMsg::GetType( uint32_t& a_dataSize) const
+  MsgType NetworkMsg::GetType() const
   {
     if( m_size < 1 )
       return MsgType::NONE;
     return (MsgType)m_data[0];
   }
+  
+  
   /*
    *  Method: NetworkMsg::DeserializeSizeMsg
    *  Params: 
@@ -316,7 +406,8 @@ namespace Network
     if( (MsgType)m_data[0] != MsgType::MSG_SIZE || m_size != 5)
       return false;
       
-    a_outSize = ((uint32_t)m_data[1] << 24) | ((uint32_t)m_data[2] << 16) | ((uint32_t)m_data[3] << 8) | (uint32_t)m_data[4];
+    // a_outSize = ((uint32_t)m_data[4] << 24) | ((uint32_t)m_data[3] << 16) | ((uint32_t)m_data[2] << 8) | (uint32_t)m_data[1];
+    a_outSize = ConsistentCharArrToInt32(&m_data[1]);
     return true;
   }
 
@@ -331,7 +422,7 @@ namespace Network
     if( (MsgType)m_data[0] != MsgType::CLNT_ENGINE_READY || m_size != 5)
       return false;
     
-    a_outClientId = ((uint32_t)m_data[1] << 24) | ((uint32_t)m_data[2] << 16) | ((uint32_t)m_data[3] << 8) | (uint32_t)m_data[4];
+    a_outClientId = ConsistentCharArrToInt32(&m_data[1]);
     return true;
   }
 
@@ -350,10 +441,10 @@ namespace Network
       return false;
     
     ++l_pos;
-    a_outClientId = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    a_outClientId = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
     
-    a_outTextureDataSize = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    a_outTextureDataSize = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
     
     memcpy(a_outTextureData, l_pos, a_outTextureDataSize);
@@ -375,10 +466,10 @@ namespace Network
       return false;
     
     ++l_pos;
-    a_outClientId = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    a_outClientId = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
     
-    a_outTextureDataSize = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    a_outTextureDataSize = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
     
     memcpy(a_outTextureData, l_pos, a_outTextureDataSize);
@@ -403,31 +494,31 @@ namespace Network
     
     ++l_pos;
     // a_outClientId
-    a_outClientId = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    a_outClientId = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
     
     // a_outGeometryPassTexSize
-    l_x = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    l_x = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
-    l_y = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    l_y = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
     a_outGeometryPassTexSize = glm::vec2(l_x, l_y);
     
     // a_outViewportInfo
-    l_x = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    l_x = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
-    l_y = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    l_y = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
-    l_z = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    l_z = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
-    l_w = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    l_w = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
     a_outViewportInfo = glm::vec4(l_x, l_y, l_z, l_w);
     
     // a_outLightPassTexSize
-    l_x = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    l_x = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
-    l_y = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    l_y = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
     a_outLightPassTexSize = glm::vec2(l_x, l_y);
     
@@ -450,14 +541,14 @@ namespace Network
     ++l_pos;
     
     // a_outObjsToAdd
-    uint32_t l_objectsToAddSize = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    uint32_t l_objectsToAddSize = ConsistentCharArrToInt32(l_pos);
     a_outObjsToAdd.resize(l_objectsToAddSize);
     l_pos += 4;  
     memcpy( &a_outObjsToAdd[0], l_pos, l_objectsToAddSize*sizeof(ObjAddInfo) );
     l_pos += l_objectsToAddSize*sizeof(ObjAddInfo);
     
     // a_outObjsToRemove
-    uint32_t l_outObjsToRemoveSize = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    uint32_t l_outObjsToRemoveSize = ConsistentCharArrToInt32(l_pos);
     a_outObjsToRemove.resize(l_outObjsToRemoveSize);
     l_pos += 4;
     memcpy( &a_outObjsToRemove[0], l_pos, l_outObjsToRemoveSize*sizeof(uint32_t) );
@@ -465,7 +556,7 @@ namespace Network
 
       
     // a_outObjsToTransform
-    uint32_t l_outObjsToTransformSize = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    uint32_t l_outObjsToTransformSize = ConsistentCharArrToInt32(l_pos);
     a_outObjsToTransform.resize(l_outObjsToTransformSize);
     l_pos += 4;  
     memcpy( &a_outObjsToTransform[0], l_pos, l_outObjsToTransformSize*sizeof(ObjTransformInfo) );
@@ -473,7 +564,7 @@ namespace Network
 
     
     // a_outTextureChange
-    uint32_t l_outTextureChangeSize = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    uint32_t l_outTextureChangeSize = ConsistentCharArrToInt32(l_pos);
     a_outTextureChange.resize(l_outTextureChangeSize);
     l_pos += 4;
     memcpy( &a_outTextureChange[0], l_pos, l_outTextureChangeSize*sizeof(TextureChangeInfo) );
@@ -498,31 +589,40 @@ namespace Network
     ++l_pos;
     
     // a_outTextureData
-    a_outTextureDataSize = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    a_outTextureDataSize = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
     memcpy( a_outTextureData, l_pos, a_outTextureDataSize );
     l_pos += a_outTextureDataSize;
     
     // a_outLightsToAdd
-    uint32_t l_outLightsToAddSize = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    uint32_t l_outLightsToAddSize = ConsistentCharArrToInt32(l_pos);
     a_outLightsToAdd.resize(l_outLightsToAddSize);
     l_pos += 4;
-    memcpy( &a_outLightsToAdd[0], l_pos, l_outLightsToAddSize * sizeof(ObjAddInfo) );
-    l_pos += l_outLightsToAddSize *sizeof(ObjAddInfo);
+    for( unsigned int i = 0; i < l_outLightsToAddSize; ++i)
+    {
+      a_outLightsToAdd[i].Deserialize(l_pos);
+      l_pos += sizeof(ObjAddInfo);
+    }
     
     // a_outLightsToRemove
-    uint32_t l_outLightsToRemoveSize = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    uint32_t l_outLightsToRemoveSize = ConsistentCharArrToInt32(l_pos);
     a_outLightsToRemove.resize(l_outLightsToRemoveSize);
     l_pos += 4;
-    memcpy( &a_outLightsToRemove[0], l_pos, l_outLightsToRemoveSize * sizeof(uint32_t) );
-    l_pos += l_outLightsToRemoveSize *sizeof(uint32_t);
+    for( unsigned int i = 0; i < l_outLightsToRemoveSize; ++i)
+    {
+      a_outLightsToRemove[i] = ConsistentCharArrToInt32(l_pos);
+      l_pos += sizeof(uint32_t);
+    }
     
     // a_outLightsToTransform
-    uint32_t l_outLightsToTransformSize = ((uint32_t)(*l_pos) << 24) | ((uint32_t)(*l_pos+1) << 16) | ((uint32_t)(*l_pos+2) << 8) | (uint32_t)(*l_pos+3);
+    uint32_t l_outLightsToTransformSize = ConsistentCharArrToInt32(l_pos);
     a_outLightsToTransform.resize(l_outLightsToTransformSize);
     l_pos += 4;
-    memcpy( &a_outLightsToTransform[0], l_pos, l_outLightsToTransformSize * sizeof(ObjTransformInfo) );
-    l_pos += l_outLightsToTransformSize *sizeof(ObjTransformInfo);
+    for( unsigned int i = 0; i < l_outLightsToTransformSize; ++i)
+    {
+      a_outLightsToTransform[i].Deserialize(l_pos);
+      l_pos += sizeof(ObjTransformInfo);
+    }
     
     return true;
   }
@@ -574,6 +674,38 @@ namespace Network
     m_type = MsgType::NONE;
     m_size = 0;
     m_trueSize = 0; 
+  }
+  
+  std::ostream& operator<<(std::ostream &strm, const NetworkMsg &a)
+  {
+    if( a.m_size > 0)
+    {
+      switch(a.m_data[0])
+      {
+        case MsgType::MSG_SIZE: 
+          uint32_t a_outSize;
+          a.DeserializeSizeMsg(a_outSize);
+          strm << "MSG_SIZE - "; 
+          strm << a_outSize;
+          break;
+        case MsgType::CLNT_REQUEST: strm << "CLNT_REQUEST - "; break;
+        case MsgType::CLNT_ENGINE_READY: strm << "CLNT_ENGINE_READY - "; break;
+        case MsgType::CLNT_GEOMETRY_PASS: strm << "CLNT_GEOMETRY_PASS - "; break;
+        case MsgType::CLNT_LIGHT_PASS: strm << "CLNT_LIGHT_PASS - "; break;
+        case MsgType::SRV_SETUP: strm << "SRV_SETUP - "; break;
+        case MsgType::SRV_SCENE_UPDATE: strm << "SRV_SCENE_UPDATE - "; break;
+        case MsgType::SRV_GEOMETRY_PASS_PLUS_LIGHTS: strm << "SRV_GEOMETRY_PASS_PLUS_LIGHTS - "; break;
+        default : strm << "NONE - ";
+      }
+    }  
+    else 
+    {
+      strm << "NONE" << std::endl;
+      return strm;
+    }
+    if( a.m_size > 1)
+      strm << std::string(&a.m_data[1], a.m_size-1) << std::endl;
+    return strm;
   }
   
 }

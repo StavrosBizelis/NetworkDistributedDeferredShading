@@ -6,6 +6,9 @@
 #include <glm/glm.hpp>
 #include "Common/RenderControl/ADeferredShadingPass.h"
 
+#include <iostream>
+#include <memory>
+
 namespace Network
 {
     
@@ -59,6 +62,10 @@ namespace Network
     ObjectType m_objType;
     RenderControl::GeometryPassMaterialFlags m_materialFlags;
     RenderControl::LightTypeFlags m_lightFlags;
+    
+    void Serialize(char* a_arrOut) const;
+    void Deserialize(char* a_arrIn);
+    size_t Size() const;
   };
 
   struct ObjTransformInfo
@@ -68,6 +75,10 @@ namespace Network
     float x;
     float y;
     float z;
+    
+    void Serialize(char* a_arrOut) const;
+    void Deserialize(char* a_arrIn);
+    size_t Size() const;
   };
 
 
@@ -79,7 +90,8 @@ namespace Network
   };
 
 
-
+  class NetworkMsg;
+  typedef std::shared_ptr<NetworkMsg> NetworkMsgPtr;
   class NetworkMsg
   {
     char* m_data;   /// the actual data that are being transfered
@@ -93,11 +105,19 @@ namespace Network
 
     inline char* GetData(){  return m_data;  }
     inline const char* GetData() const{  return m_data;  }
-    inline MsgType GetType() const{  return m_type;  }
+    MsgType GetType() const;
+    
     inline uint32_t GetSize() const{  return m_size; }
     inline uint32_t& GetSize() {  return m_size; }
     inline void SetSize(const uint32_t& a_size) {  Reset(a_size); m_size = a_size; }
     
+    void SetData(char* a_data, const uint32_t& a_size)
+    {
+      Clear();
+      m_data = a_data; 
+      m_trueSize = a_size;
+      m_size = a_size;
+    }
     
     // create functions
     void CreateSizeMsg(const uint32_t& a_size); ///< MSG_SIZE
@@ -112,7 +132,6 @@ namespace Network
     
     
     // deserialize functions
-    MsgType GetType(uint32_t& a_dataSize) const;
     bool DeserializeSizeMsg( uint32_t& a_outSize) const; ///< MSG_SIZE
     // bool DeserializeClientRequestMsg( uint32_t& a_outSize) const; ///< CLNT_REQUEST
     bool DeserializeEngineReadyMsg( uint32_t& a_outClientId) const; ///< CLNT_ENGINE_READY
@@ -127,6 +146,11 @@ namespace Network
     /// the reasoning behind this function is that the internal buffer will be reallocated ONLY if it needs to grow (making a message object reusable and efficient)
     void Reset(const uint32_t& a_sizeTrue = 0); 
     void Clear(); /// frees the internal buffer
+    
+    friend std::ostream& operator<<(std::ostream &strm, const NetworkMsg &a);
+    friend std::ostream& operator<<(std::ostream &strm, const NetworkMsg &a);
   };
+  
+  std::ostream& operator<<(std::ostream &strm, const NetworkMsg &a);
 
 }
