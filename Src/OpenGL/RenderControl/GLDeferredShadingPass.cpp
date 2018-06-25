@@ -7,13 +7,14 @@
 #include "OpenGL/RenderControl/GLDeferredShadingPass.h"
 #include "gl/include/glew.h"
 #include "gl/gl.h"
+#include <iostream>
 /*
  *  Method: RenderControl::GLDeferredShadingPass::GLDeferredShadingPass
  *  Params: const glm::vec2 &a_resolution
  * Effects: 
  */
 RenderControl::GLDeferredShadingPass::GLDeferredShadingPass(const glm::vec2 &a_resolution)
-  : ADeferredShadingPass(a_resolution), m_fbo(0)
+  : ADeferredShadingPass(a_resolution), m_resolutionPart(a_resolution), m_viewPortSetting(0, 0, a_resolution.x, a_resolution.y), m_fbo(0)
 {
   m_outputTextures.resize(5, 0);
   m_outputSamplers.resize(5, 0);
@@ -27,16 +28,7 @@ RenderControl::GLDeferredShadingPass::GLDeferredShadingPass(const glm::vec2 &a_r
  */
 RenderControl::GLDeferredShadingPass::~GLDeferredShadingPass()
 {
-  if (m_fbo != 0)
-    glDeleteFramebuffers(1, &m_fbo);
-
-  for (int i = 0; i < 5; ++i)
-  {
-    if (m_outputTextures[i])
-      glDeleteTextures(1, &m_outputTextures[i]);
-    if (m_outputSamplers[i])
-      glDeleteSamplers(1, &m_outputSamplers[i]);
-  }
+  Clear();
 }
 
 
@@ -67,7 +59,7 @@ bool RenderControl::GLDeferredShadingPass::Init()
 	//	glScissor(0, 400, 300, 600);
 
 //		glm::vec2 l_res( 128, 648);
-		glm::vec2 l_res = m_resolution;
+		glm::vec2 l_res = m_resolutionPart;
 		//l_res.y /= 2.f;
 		// setup geometry frame buffer object and its textures
 		glGenFramebuffers(1, &m_fbo);
@@ -150,6 +142,13 @@ void RenderControl::GLDeferredShadingPass::OutputOnScreen()
   glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 }
 
+void RenderControl::GLDeferredShadingPass::UpdateViewportSettings(const glm::vec2& a_resolutionPart, const glm::vec4& a_viewportSettings)
+{
+  Clear();
+  m_resolutionPart = a_resolutionPart;
+  m_viewPortSetting = a_viewportSettings;
+  Init();
+}
 
 void RenderControl::GLDeferredShadingPass::GeometryPass()
 {
@@ -168,7 +167,8 @@ void RenderControl::GLDeferredShadingPass::GeometryPass()
 
 
   glm::vec2 l_resolution = GetResolution();
-  glViewport(0, 0 - (GLsizei)l_resolution.y / 2, (GLsizei)l_resolution.x, (GLsizei)l_resolution.y);
+  glViewport( (GLsizei)m_viewPortSetting.x, (GLsizei)m_viewPortSetting.y, 
+              (GLsizei)m_viewPortSetting.z, (GLsizei)m_viewPortSetting.w);
 
 
 
@@ -251,7 +251,6 @@ void RenderControl::GLDeferredShadingPass::LightPass()
   {
     std::shared_ptr<IShaderProgram> l_lightMaterial = (*l_iter)->GetMaterial(0);
     std::shared_ptr<IShaderProgram> l_nullMaterial = (*l_iter)->GetMaterial(1);
-
     glm::mat4 l_invProjViewMat = glm::inverse(projModelViewMatrixStack.Top() );
 
     if (l_lightMaterial)
@@ -281,10 +280,121 @@ void RenderControl::GLDeferredShadingPass::LightPass()
 
     }
 
-
+    
     (*l_iter)->Render(projModelViewMatrixStack);
   }
   glDisable(GL_DEPTH_CLAMP);
+}
+
+void RenderControl::GLDeferredShadingPass::Clear()
+{
+  if (m_fbo != 0)
+  {
+    glDeleteFramebuffers(1, &m_fbo);
+    m_fbo = 0;
+  }
+  for (int i = 0; i < 5; ++i)
+  {
+    if (m_outputTextures[i])
+    {
+      glDeleteTextures(1, &m_outputTextures[i]);
+      m_outputTextures[i] = 0;
+    }
+    if (m_outputSamplers[i])
+    {
+      glDeleteSamplers(1, &m_outputSamplers[i]);
+      m_outputSamplers[i] = 0;
+    }
+  }
+}
+
+void RenderControl::GLDeferredShadingPass::SetMaterialManager(MaterialControl::IMaterialManager* a_materialManager)
+{
+  ADeferredShadingPass::SetMaterialManager(a_materialManager);
+  // initiate materials
+  std::shared_ptr<IShaderProgram> GeometryMaterial =
+    a_materialManager->GetGeometryPassMaterial(
+      "..\\Assets\\GLSL_shaders\\GeometryShader.vert",
+      "..\\Assets\\GLSL_shaders\\GeometryShader.frag"
+    );
+
+  std::shared_ptr<IShaderProgram> GeometryMaterialEmissiveMap =
+    GetMaterialManager()->GetEmissiveGeometryPassMaterial(
+      "..\\Assets\\GLSL_shaders\\GeometryShader.vert",
+      "..\\Assets\\GLSL_shaders\\GeometryEmissiveShader.frag"
+    );
+
+  std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseMap =
+    a_materialManager->GetColourGeometryPassMaterial(
+      "..\\Assets\\GLSL_shaders\\GeometryShader.vert",
+      "..\\Assets\\GLSL_shaders\\GeometryColourShader.frag"
+    );
+
+  std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseNormalMap =
+    a_materialManager->GetColourNormalGeometryPassMaterial(
+      "..\\Assets\\GLSL_shaders\\GeometryShader.vert",
+      "..\\Assets\\GLSL_shaders\\GeometryColourNormalShader.frag"
+    );
+
+  std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseNormalSpecMap =
+    a_materialManager->GetColourNormalSpecGeometryPassMaterial(
+      "..\\Assets\\GLSL_shaders\\GeometryShader.vert",
+      "..\\Assets\\GLSL_shaders\\GeometryColourNormalSpecShader.frag"
+    );
+
+  std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseNormalSpecHardnessMap =
+    a_materialManager->GetColourNormalSpecHardnessGeometryPassMaterial(
+      "..\\Assets\\GLSL_shaders\\GeometryShader.vert",
+      "..\\Assets\\GLSL_shaders\\GeometryColourNormalSpecHardnessShader.frag"
+    );
+
+  std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseNormalSpecHardnessEmissionMap =
+    a_materialManager->GetColourNormalSpecHardnessEmissionGeometryPassMaterial(
+      "..\\Assets\\GLSL_shaders\\GeometryShader.vert",
+      "..\\Assets\\GLSL_shaders\\GeometryColourNormalSpecHardnessEmissiveShader.frag"
+    );
   
 
+  std::shared_ptr<IShaderProgram> GeometrySkybox =
+    a_materialManager->GetSkyCubeMaterial(
+      "..\\Assets\\GLSL_shaders\\GeometrySkyBoxShader.vert",
+      "..\\Assets\\GLSL_shaders\\GeometrySkyBoxShader.frag"
+    );
+
+  // create appropriate keys
+  m_toRender[GeometryMaterialDiffuseNormalSpecHardnessEmissionMap];
+  m_toRender[GeometryMaterialDiffuseNormalSpecHardnessMap];
+  m_toRender[GeometryMaterialDiffuseNormalSpecMap];
+  m_toRender[GeometryMaterialDiffuseNormalMap];
+  m_toRender[GeometryMaterialDiffuseMap];
+  m_toRender[GeometryMaterialEmissiveMap];
+  m_toRender[GeometryMaterial];
+  m_toRender[GeometrySkybox];
+
+
+  std::shared_ptr<IShaderProgram> l_nullMaterial =
+    a_materialManager->GetStencilLightPassMaterial(
+      "..\\Assets\\GLSL_shaders\\NullShader.vert",
+      "..\\Assets\\GLSL_shaders\\NullShader.frag"
+    );
+
+  std::shared_ptr<IShaderProgram> l_pointLightMaterial =
+    a_materialManager->GetPointLightPassMaterial(
+      "..\\Assets\\GLSL_shaders\\PointLightShader.vert",
+      "..\\Assets\\GLSL_shaders\\PointLightShader.frag"
+    );
+
+  std::shared_ptr<IShaderProgram> l_spotLightMaterial =
+    a_materialManager->GetSpotLightPassMaterial(
+      "..\\Assets\\GLSL_shaders\\SpotLightShader.vert",
+      "..\\Assets\\GLSL_shaders\\SpotLightShader.frag"
+    );
+
+  std::shared_ptr<IShaderProgram> l_directionalLightMaterial =
+    a_materialManager->GetFullScreenLightPassMaterial(
+      "..\\Assets\\GLSL_shaders\\DirectionalLightShader.vert",
+      "..\\Assets\\GLSL_shaders\\DirectionalLightShader.frag"
+    );
+  
 }
+

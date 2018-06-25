@@ -21,8 +21,6 @@ namespace Network
     m_sizeMsgOut = std::make_shared<NetworkMsg>();
     m_sizeMsgOut->CreateSizeMsg(0);
     
-    
-
   }
 
 

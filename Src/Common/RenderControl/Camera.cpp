@@ -15,6 +15,7 @@ CCamera::CCamera()
 	m_view = glm::vec3(0.0f, 0.0f, 0.0f);
 	m_upVector = glm::vec3(0.0f, 1.0f, 0.0f);
 	m_speed = 0.025f;
+  m_dim = glm::vec2(0);
 }
 CCamera::~CCamera()
 {}
@@ -108,7 +109,7 @@ void CCamera::Update(double dt)
 	glm::vec3 vector = glm::cross(m_view - m_position, m_upVector);
 	m_strafeVector = glm::normalize(vector);
 
-	SetViewByMouse();
+	SetViewByMouse(m_dim.x/2, m_dim.y/2);
 	TranslateByKeyboard(dt);
 }
 

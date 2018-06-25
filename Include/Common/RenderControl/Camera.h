@@ -37,6 +37,11 @@ public:
 	FrustumData GetFrustumData() const;
 
 
+  void SetDimentsions(const glm::vec2& a_dim)
+  {
+    m_dim = a_dim;
+  }
+  
 	// Set the camera position, viewpoint, and up vector
 	void Set(glm::vec3 &position, glm::vec3 &viewpoint, glm::vec3 &upVector);
 	
@@ -73,7 +78,8 @@ private:
 	glm::vec3 m_strafeVector;		// The camera's strafe vector
 
 	float m_speed;					// How fast the camera moves
-
+  glm::vec2 m_dim;
+  
 	glm::mat4 m_perspectiveProjectionMatrix;		// Perspective projection matrix
 	glm::mat4 m_orthographicProjectionMatrix;		// Orthographic projection matrix
 

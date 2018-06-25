@@ -114,7 +114,7 @@ bool GameWindow::InitGLEW()
 }
 
 // Initialise GLEW and create the real game window
-HDC GameWindow::Init(HINSTANCE hinstance) 
+HDC GameWindow::Init(HINSTANCE hinstance, const glm::vec2& a_dimensions) 
 {
 	m_hinstance = hinstance;
 	if(!InitGLEW())
@@ -122,7 +122,7 @@ HDC GameWindow::Init(HINSTANCE hinstance)
 
 	m_appName = "OpenGL";
 
-	CreateGameWindow("OpenGL Template");
+	CreateGameWindow("OpenGL Template", a_dimensions);
 
 	// If we never got a valid window handle, quit the program
 	if(m_hwnd == NULL) {
@@ -133,7 +133,7 @@ HDC GameWindow::Init(HINSTANCE hinstance)
 }
 
 // Create the game window
-void GameWindow::CreateGameWindow(std::string sTitle) 
+void GameWindow::CreateGameWindow(std::string sTitle, const glm::vec2& a_dimensions) 
 {
 	WNDCLASSEX wcex;
 	memset(&wcex, 0, sizeof(WNDCLASSEX));
@@ -157,7 +157,7 @@ void GameWindow::CreateGameWindow(std::string sTitle)
 	
 	// Windowed mode.  Uncomment text below to have a choice between windowed mode and full screen mode
 	m_hwnd = CreateWindowEx(0, m_appName.c_str(), sTitle.c_str(), WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
-								0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, NULL, NULL, m_hinstance, NULL);
+								0, 0, a_dimensions.x, a_dimensions.y, NULL, NULL, m_hinstance, NULL);
 								
 								
 	/*

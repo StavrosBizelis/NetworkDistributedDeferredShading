@@ -2,7 +2,7 @@
 
 #include <windows.h>
 #include <string>
-
+#include "glm/glm.hpp"
 LRESULT CALLBACK WinProc(HWND hWnd,UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 class GameWindow {
@@ -10,12 +10,7 @@ public:
 	static GameWindow& GetInstance();
 	GameWindow();
 
-	enum {
-		SCREEN_WIDTH = 800,
-		SCREEN_HEIGHT = 600,
-	};
-
-	HDC Init(HINSTANCE hinstance);
+	HDC Init(HINSTANCE hinstance, const glm::vec2& a_dimensions);
 	void Deinit();
 
 	void SetDimensions(RECT dimensions) {m_dimensions = dimensions;}
@@ -33,7 +28,7 @@ private:
 	GameWindow(const GameWindow&);
 	void operator=(const GameWindow&);
 
-	void CreateGameWindow(std::string title);
+	void CreateGameWindow(std::string title, const glm::vec2& a_dimensions);
 	void InitOpenGL();
 	bool InitGLEW();
 	void RegisterSimpleOpenGLClass(HINSTANCE hInstance);

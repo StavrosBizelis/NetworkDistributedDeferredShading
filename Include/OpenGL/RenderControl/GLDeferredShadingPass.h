@@ -13,8 +13,12 @@ namespace RenderControl
   protected:
     unsigned int m_fbo;
 
+    glm::vec2 m_resolutionPart;
+    glm::vec4 m_viewPortSetting;
+
     void GeometryPass();
     void LightPass();
+    void Clear();
     
 	public:
 		GLDeferredShadingPass(const glm::vec2& a_resolution);
@@ -24,7 +28,10 @@ namespace RenderControl
 		virtual void Render() override;
 		virtual void OutputOnScreen() override;
 		virtual unsigned int GetFBO() override { return m_fbo; }
+    
+    virtual void UpdateViewportSettings(const glm::vec2& a_resolution, const glm::vec4& a_viewportSettings);
 
+    virtual void SetMaterialManager(MaterialControl::IMaterialManager* a_materialManager);
 	};
 
 }

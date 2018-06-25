@@ -36,7 +36,8 @@ GLRect::~GLRect()
 void
 GLRect::Render()
 {
-  	// render light mesh for stencil pass
+  
+  // render light mesh for stencil pass
 	// bind the vao and vbo in the beginning  because we will draw these vertices twice 
 	glBindVertexArray(m_vao);
 	glEnableVertexAttribArray(0);
@@ -81,6 +82,7 @@ void
 GLRect::Create()
 {
   ARect::Create();
+  
   
   glGenVertexArrays(1, &m_vao);
 	glBindVertexArray(m_vao);

@@ -12,23 +12,28 @@
 void GLShapeFactory::Init()
 {
   m_cone = std::make_shared<GLCone>();
+  m_cone->Create();
   m_cube = std::make_shared<GLCube>();
+  m_cube->Create();
   m_rect = std::make_shared<GLRect>();
+  m_rect->Create();
   m_skybox = std::make_shared<GLSkybox>();
+  m_skybox->Create();
   m_sphere = std::make_shared<GLSphere>();
+  m_sphere->Create();
 }
-std::shared_ptr<IMesh> GLShapeFactory::GetCone()
+std::shared_ptr<ACone> GLShapeFactory::GetCone()
 {
   return m_cone;
 }
-std::shared_ptr<IMesh> GLShapeFactory::GetCube()
+std::shared_ptr<ACube> GLShapeFactory::GetCube()
 {
   return m_cube;  
 }
-std::shared_ptr<IMesh> GLShapeFactory::GetOpenAssetImportMesh(const std::string& a_filename)
+std::shared_ptr<AOpenAssetImportMesh> GLShapeFactory::GetOpenAssetImportMesh(const std::string& a_filename)
 {
   // if already exists return it
-  std::map<std::string, std::shared_ptr<IMesh> >::iterator l_iter = m_meshes.find(a_filename);
+  std::map<std::string, std::shared_ptr<AOpenAssetImportMesh> >::iterator l_iter = m_meshes.find(a_filename);
   if( l_iter != m_meshes.end() )
     return l_iter->second;
   // otherwise create it
@@ -39,15 +44,15 @@ std::shared_ptr<IMesh> GLShapeFactory::GetOpenAssetImportMesh(const std::string&
   return l_mesh;
 }
 
-std::shared_ptr<IMesh> GLShapeFactory::GetRectangle()
+std::shared_ptr<ARect> GLShapeFactory::GetRectangle()
 {
   return m_rect;
 }
-std::shared_ptr<IMesh> GLShapeFactory::GetSkybox()
+std::shared_ptr<ASkybox> GLShapeFactory::GetSkybox()
 {
   return m_skybox;
 }
-std::shared_ptr<IMesh> GLShapeFactory::GetSphere()
+std::shared_ptr<ASphere> GLShapeFactory::GetSphere()
 {
   return m_sphere;
 }

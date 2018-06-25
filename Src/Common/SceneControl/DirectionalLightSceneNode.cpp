@@ -1,5 +1,7 @@
 #include "Common/SceneControl/DirectionalLightSceneNode.h"
 #include <algorithm> 
+#include <iostream> 
+
 namespace SceneControl
 {
 
@@ -28,7 +30,6 @@ namespace SceneControl
 																		// cannot render without the proper materials
 		if (!l_material0 )
 			return;
-
 
 
 		// apply absolute tranformation and push it in the 

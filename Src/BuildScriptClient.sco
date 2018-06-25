@@ -31,7 +31,7 @@ OpenGL/Textures/GLTextureFactory.cpp OpenGL/Textures/GLTexture.cpp OpenGL/Textur
 OpenGL/Shapes/GLShapeFactory.cpp OpenGL/Shapes/GLRect.cpp OpenGL/Shapes/GLSphere.cpp OpenGL/Shapes/GLCone.cpp OpenGL/Shapes/GLCube.cpp OpenGL/Shapes/GLSkybox.cpp OpenGL/Shapes/GLOpenAssetImportMesh.cpp \
 OpenGL/GLGraphicsEngine.cpp \
 \
-Client/main.cpp Client/ClientControl.cpp ')
+Client/main.cpp Client/ClientApp.cpp Client/ClientControl.cpp ')
 
 # this creates a Library(lib)
 #could use env.SharedLibrary(...) to create shared library(dll+lib) - when use this option remember to have exported all the symbols

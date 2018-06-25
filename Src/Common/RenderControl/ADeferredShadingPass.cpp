@@ -5,7 +5,10 @@
 namespace RenderControl
 {
 	ADeferredShadingPass::ADeferredShadingPass(const glm::vec2& a_resolution)
-		:IRenderPass(a_resolution){}
+		:IRenderPass(a_resolution)
+    {
+      GetCamera()->SetDimentsions(a_resolution);
+    }
 
 
 	ADeferredShadingPass::~ADeferredShadingPass()
@@ -68,92 +71,6 @@ namespace RenderControl
 	void ADeferredShadingPass::SetMaterialManager(MaterialControl::IMaterialManager * a_materialManager)
 	{
 		IRenderPass::SetMaterialManager(a_materialManager);
-
-		// initiate materials
-		std::shared_ptr<IShaderProgram> GeometryMaterial =
-			a_materialManager->GetGeometryPassMaterial(
-				"resources\\shaders\\GeometryShader.vert",
-				"resources\\shaders\\GeometryShader.frag"
-			);
-
-		std::shared_ptr<IShaderProgram> GeometryMaterialEmissiveMap =
-			GetMaterialManager()->GetEmissiveGeometryPassMaterial(
-				"resources\\shaders\\GeometryShader.vert",
-				"resources\\shaders\\GeometryEmissiveShader.frag"
-			);
-
-		std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseMap =
-			a_materialManager->GetColourGeometryPassMaterial(
-				"resources\\shaders\\GeometryShader.vert",
-				"resources\\shaders\\GeometryColourShader.frag"
-			);
-
-		std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseNormalMap =
-			a_materialManager->GetColourNormalGeometryPassMaterial(
-				"resources\\shaders\\GeometryShader.vert",
-				"resources\\shaders\\GeometryColourNormalShader.frag"
-			);
-
-		std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseNormalSpecMap =
-			a_materialManager->GetColourNormalSpecGeometryPassMaterial(
-				"resources\\shaders\\GeometryShader.vert",
-				"resources\\shaders\\GeometryColourNormalSpecShader.frag"
-			);
-
-		std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseNormalSpecHardnessMap =
-			a_materialManager->GetColourNormalSpecHardnessGeometryPassMaterial(
-				"resources\\shaders\\GeometryShader.vert",
-				"resources\\shaders\\GeometryColourNormalSpecHardnessShader.frag"
-			);
-
-		std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseNormalSpecHardnessEmissionMap =
-			a_materialManager->GetColourNormalSpecHardnessEmissionGeometryPassMaterial(
-				"resources\\shaders\\GeometryShader.vert",
-				"resources\\shaders\\GeometryColourNormalSpecHardnessEmissiveShader.frag"
-			);
-		
-
-		std::shared_ptr<IShaderProgram> GeometrySkybox =
-			a_materialManager->GetSkyCubeMaterial(
-				"resources\\shaders\\GeometrySkyBoxShader.vert",
-				"resources\\shaders\\GeometrySkyBoxShader.frag"
-			);
-
-		// create appropriate keys
-		m_toRender[GeometryMaterialDiffuseNormalSpecHardnessEmissionMap];
-		m_toRender[GeometryMaterialDiffuseNormalSpecHardnessMap];
-		m_toRender[GeometryMaterialDiffuseNormalSpecMap];
-		m_toRender[GeometryMaterialDiffuseNormalMap];
-		m_toRender[GeometryMaterialDiffuseMap];
-		m_toRender[GeometryMaterialEmissiveMap];
-		m_toRender[GeometryMaterial];
-		m_toRender[GeometrySkybox];
-
-
-		std::shared_ptr<IShaderProgram> l_nullMaterial =
-			a_materialManager->GetStencilLightPassMaterial(
-				"resources\\shaders\\NullShader.vert",
-				"resources\\shaders\\NullShader.frag"
-			);
-
-		std::shared_ptr<IShaderProgram> l_pointLightMaterial =
-			a_materialManager->GetPointLightPassMaterial(
-				"resources\\shaders\\PointLightShader.vert",
-				"resources\\shaders\\PointLightShader.frag"
-			);
-
-		std::shared_ptr<IShaderProgram> l_spotLightMaterial =
-			a_materialManager->GetSpotLightPassMaterial(
-				"resources\\shaders\\SpotLightShader.vert",
-				"resources\\shaders\\SpotLightShader.frag"
-			);
-
-		std::shared_ptr<IShaderProgram> l_directionalLightMaterial =
-			a_materialManager->GetFullScreenLightPassMaterial(
-				"resources\\shaders\\DirectionalLightShader.vert",
-				"resources\\shaders\\DirectionalLightShader.frag"
-			);
-
 
 	}
 

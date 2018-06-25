@@ -7,7 +7,11 @@
 #  define IFDBG(x)
 #endif
 
-
+enum class ImplTech
+{
+  OPENGL = 0,
+  VULKAN
+};
 
 
 // following code taken from https://www.ibm.com/developerworks/aix/library/au-endianc/index.html

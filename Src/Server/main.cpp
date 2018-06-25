@@ -12,7 +12,7 @@
 
 #include "Server/ServerApp.h"
 
-ServerApp g_serverApp;
+ServerApp g_serverApp( glm::vec2(680, 420) );
 
 LRESULT CALLBACK WinProc(HWND window, UINT message, WPARAM w_param, LPARAM l_param)
 {

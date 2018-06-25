@@ -27,10 +27,11 @@ void GLGraphicsEngine::Init()
   
   m_deferredShadingPass = new RenderControl::GLDeferredShadingPass( m_dimensions );
   m_deferredShadingPass->Init();
-	m_deferredShadingPass->SetSceenOutputAttachment(0);
+	m_deferredShadingPass->SetSceenOutputAttachment(3);
 	m_renderPassPipeline->PushBack(m_deferredShadingPass);
   
   m_shapeFactory = new GLShapeFactory();
+  m_shapeFactory->Init();
   m_textureFactory = new GLTextureFactory();
 }
 

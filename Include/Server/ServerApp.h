@@ -4,14 +4,15 @@
 #include "Server/ServerControl.h"
 #include "Server/Gamewindow.h"
 #include "Common/Core/HighResolutionTimer.h"
-
+#include "Common/Core/MyUtilities.h"
+#include "Common/AGraphicsEngine.h"
 #include <windows.h>
 
 
 class ServerApp
 {
 public:
-  ServerApp();
+  ServerApp(const glm::vec2& a_dimensions, const ImplTech& a_implTech = ImplTech::OPENGL);
   ~ServerApp();
   
   
@@ -30,7 +31,9 @@ private:
   
   Network::ServerControl m_serverCtrl;
   std::vector<std::shared_ptr<asio::ip::tcp::socket> > m_sockets;
-  
+  AGraphicsEngine* m_graphics;
+  ImplTech m_implTech;
+
   
   void Update();
   void Initialise();
