@@ -18,10 +18,10 @@ class GLShapeFactory : public IShapeFactory
 public:
   virtual void Init();
 
-  virtual std::shared_ptr<ACone> GetCone();
-  virtual std::shared_ptr<ACube> GetCube();
+  virtual std::shared_ptr<ACone> GetCone() const;
+  virtual std::shared_ptr<ACube> GetCube() const;
   virtual std::shared_ptr<AOpenAssetImportMesh> GetOpenAssetImportMesh(const std::string& a_filename);
-  virtual std::shared_ptr<ARect> GetRectangle();
-  virtual std::shared_ptr<ASkybox> GetSkybox();
-  virtual std::shared_ptr<ASphere> GetSphere();
+  virtual std::shared_ptr<ARect> GetRectangle() const;
+  virtual std::shared_ptr<ASkybox> GetSkybox() const;
+  virtual std::shared_ptr<ASphere> GetSphere() const;
 };

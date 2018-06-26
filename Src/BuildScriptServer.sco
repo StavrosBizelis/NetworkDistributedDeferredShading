@@ -21,12 +21,12 @@ list=Split('Common/Core/MatrixStack.cpp Common/Core/HighResolutionTimer.cpp Comm
 Common/Network/NetworkMsg.cpp \
 Common/Shapes/ACone.cpp Common/Shapes/ACube.cpp Common/Shapes/ARect.cpp Common/Shapes/ASkybox.cpp Common/Shapes/ASphere.cpp Common/Shapes/AOpenAssetImportMesh.cpp \
 Common/Textures/ACubemap.cpp Common/Textures/ATexture.cpp \
-Common/RenderControl/ADeferredShadingPass.cpp Common/RenderControl/Camera.cpp Common/RenderControl/RenderPassPipeline.cpp \
+Common/RenderControl/ADeferredShadingPass.cpp Common/RenderControl/ACompositionPass.cpp Common/RenderControl/Camera.cpp Common/RenderControl/RenderPassPipeline.cpp \
 Common/SceneControl/SceneManager.cpp Common/SceneControl/SceneNode.cpp Common/SceneControl/CameraSceneNode.cpp Common/SceneControl/MeshSceneNode.cpp Common/SceneControl/DirectionalLightSceneNode.cpp Common/SceneControl/PointLightSceneNode.cpp Common/SceneControl/SpotLightSceneNode.cpp \
 \
 OpenGL/Core/VertexBufferObject.cpp OpenGL/Core/VertexBufferObjectIndexed.cpp \
 OpenGL/MaterialControl/GLMaterialManager.cpp OpenGL/MaterialControl/GLShaderProgram.cpp \
-OpenGL/RenderControl/GLDeferredShadingPass.cpp \
+OpenGL/RenderControl/GLDeferredShadingPass.cpp OpenGL/RenderControl/GLCompositionPass.cpp \
 OpenGL/Textures/GLTextureFactory.cpp OpenGL/Textures/GLTexture.cpp OpenGL/Textures/GLCubemap.cpp \
 OpenGL/Shapes/GLShapeFactory.cpp OpenGL/Shapes/GLRect.cpp OpenGL/Shapes/GLSphere.cpp OpenGL/Shapes/GLCone.cpp OpenGL/Shapes/GLCube.cpp OpenGL/Shapes/GLSkybox.cpp OpenGL/Shapes/GLOpenAssetImportMesh.cpp \
 OpenGL/GLGraphicsEngine.cpp \

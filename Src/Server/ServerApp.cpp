@@ -15,10 +15,9 @@
  * Effects: 
  ***********************************************************************/
 ServerApp::ServerApp(const glm::vec2& a_dimensions, const ImplTech& a_implTech)
-  : m_appActive(true), m_elapsedTime(0), m_dt(0), m_frameCount(0), m_pHighResolutionTimer(nullptr), m_serverCtrl(50000), m_implTech(a_implTech)
+  : m_appActive(true), m_elapsedTime(0), m_dt(0), m_frameCount(0), m_dimensions(a_dimensions), m_pHighResolutionTimer(nullptr), m_graphics(nullptr), m_serverCtrl(50000), m_implTech(a_implTech)
 {
-  if( m_implTech == ImplTech::OPENGL )
-    m_graphics = new GLGraphicsEngine(a_dimensions);
+
 }
 
 
@@ -29,8 +28,10 @@ ServerApp::ServerApp(const glm::vec2& a_dimensions, const ImplTech& a_implTech)
  ***********************************************************************/
 ServerApp::~ServerApp()
 {
-  if( m_pHighResolutionTimer)
-    delete m_pHighResolutionTimer;
+ if( m_pHighResolutionTimer)
+   delete m_pHighResolutionTimer;
+ if( m_graphics )
+   delete m_graphics;
 }
 
 
@@ -136,13 +137,17 @@ ServerApp::SetHinstance(HINSTANCE hinstance)
  ***********************************************************************/
 WPARAM ServerApp::Execute()
 {
-  
+
   m_pHighResolutionTimer = new CHighResolutionTimer;
   
-  m_gameWindow.Init(m_hInstance, m_graphics->GetDimensions() );
+  m_gameWindow.Init(m_hInstance, m_dimensions );
   if(!m_gameWindow.Hdc()) {
 		return 1;
 	}
+  
+  RECT dimensions = m_gameWindow.GetDimensions();
+  if( m_implTech == ImplTech::OPENGL )  
+    m_graphics = new GLGraphicsEngine( glm::vec2( glm::abs(dimensions.right - dimensions.left) , glm::abs(dimensions.top - dimensions.bottom) ) );
   
   
   Initialise();
@@ -222,8 +227,11 @@ ServerApp::Initialise()
   /////////////////////////////////////////////
   // do here what need to be done /////////////
   /////////////////////////////////////////////
-  m_graphics->Init();
-
+  
+  
+  
+  m_graphics->Init(true, 4);
+/*
   m_graphics->GetDeferredRenderPass()->GetCamera()->Set(glm::vec3(5, 0, 5) , glm::vec3(0), glm::vec3(0,1,0) );
   // m_graphics->GetSceneManager()->AddCameraSceneNode( m_graphics->GetDeferredRenderPass()->GetCamera() );
   
@@ -265,7 +273,7 @@ ServerApp::Initialise()
     l_light->SetAmbient(glm::vec3(0.1, 0.05, 0.1)*glm::vec3(0.08));
     m_graphics->GetDeferredRenderPass()->AddLight(l_light, RenderControl::LightTypeFlags::DIRECTIONAL_LIGHT);
   }
-
+*/
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// m_serverCtrl.AcceptConnections();
 }

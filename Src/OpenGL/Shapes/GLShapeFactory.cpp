@@ -22,11 +22,11 @@ void GLShapeFactory::Init()
   m_sphere = std::make_shared<GLSphere>();
   m_sphere->Create();
 }
-std::shared_ptr<ACone> GLShapeFactory::GetCone()
+std::shared_ptr<ACone> GLShapeFactory::GetCone() const
 {
   return m_cone;
 }
-std::shared_ptr<ACube> GLShapeFactory::GetCube()
+std::shared_ptr<ACube> GLShapeFactory::GetCube() const
 {
   return m_cube;  
 }
@@ -44,15 +44,15 @@ std::shared_ptr<AOpenAssetImportMesh> GLShapeFactory::GetOpenAssetImportMesh(con
   return l_mesh;
 }
 
-std::shared_ptr<ARect> GLShapeFactory::GetRectangle()
+std::shared_ptr<ARect> GLShapeFactory::GetRectangle() const
 {
   return m_rect;
 }
-std::shared_ptr<ASkybox> GLShapeFactory::GetSkybox()
+std::shared_ptr<ASkybox> GLShapeFactory::GetSkybox() const
 {
   return m_skybox;
 }
-std::shared_ptr<ASphere> GLShapeFactory::GetSphere()
+std::shared_ptr<ASphere> GLShapeFactory::GetSphere() const
 {
   return m_sphere;
 }

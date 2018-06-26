@@ -50,12 +50,11 @@ namespace RenderControl
 		/// in a deferred shading technique lights are renderable meshes
 		/// however the material and mesh must be set before adding it to the renderer
 		void AddLight(IRenderable* a_light, const LightTypeFlags& a_lightType);
-
     virtual void UpdateViewportSettings(const glm::vec2& a_resolution, const glm::vec4& a_viewportSettings) = 0;
-//		virtual bool Init() override;
-//		virtual void Render() override;
-//		virtual void OutputOnScreen() override;
-//		virtual unsigned int GetFBO() override { return m_fbo; }
+		// virtual bool Init() override;
+		// virtual void Render() override;
+		// virtual void OutputOnScreen() override;
+		// virtual unsigned int GetFBO() override { return m_fbo; }
 
 	};
 

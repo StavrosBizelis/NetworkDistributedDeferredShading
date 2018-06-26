@@ -3,6 +3,7 @@
 #include "Common/SceneControl/SceneManager.h"
 #include "Common/RenderControl/RenderPassPipeline.h"
 #include "Common/RenderControl/ADeferredShadingPass.h"
+#include "Common/RenderControl/ACompositionPass.h"
 #include "Common/Shapes/IShapeFactory.h"
 #include "Common/Textures/ITextureFactory.h"
 #include "Common/MaterialControl/IMaterialManager.h"
@@ -19,15 +20,19 @@ public:
   AGraphicsEngine(const glm::vec2& a_dimensions): m_dimensions(a_dimensions), m_sceneManager(nullptr), m_renderPassPipeline(nullptr){}
   virtual ~AGraphicsEngine()
   {
-    if( m_sceneManager ) 
-      delete m_sceneManager;
     if( m_renderPassPipeline ) 
       delete m_renderPassPipeline;
+    if( m_sceneManager ) 
+      delete m_sceneManager;
   }  
-  virtual void Init()
+  
+  /**
+  *  @param a_composite : if true, it will work as a compositor, false as a deferred renderer
+  */
+  virtual void Init(bool a_composite = false, unsigned int a_subpartsCount = 0) 
   {
-    m_sceneManager = new SceneControl::SceneManager();
     m_renderPassPipeline = new RenderControl::RenderPassPipeline();
+    m_sceneManager = new SceneControl::SceneManager();
   }
   
   virtual void Update(const double& a_deltaTime)
@@ -49,6 +54,7 @@ public:
   }
   
   virtual RenderControl::ADeferredShadingPass* GetDeferredRenderPass() const = 0;
+  virtual RenderControl::ACompositionPass* GetCompositionPass() const = 0;
   
   virtual IShapeFactory* GetShapeFactory() const = 0;
   virtual ITextureFactory* GetTextureFactory() const = 0;

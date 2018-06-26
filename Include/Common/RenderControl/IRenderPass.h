@@ -61,7 +61,8 @@ namespace RenderControl
 		/// blit the selected output attachment to the default framebuffer
 		virtual void OutputOnScreen() = 0;
 		virtual unsigned int GetFBO() = 0;
-		/// in case of more than one colour attachments - choose which is to be rendered on screen
+    
+    /// in case of more than one colour attachments - choose which is to be rendered on screen
 		virtual void SetSceenOutputAttachment(const unsigned int& a_attachmentIndex) { m_attachmentIndex = a_attachmentIndex;  }
 		
 

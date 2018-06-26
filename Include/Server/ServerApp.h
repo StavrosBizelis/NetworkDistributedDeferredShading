@@ -28,6 +28,7 @@ private:
   double m_elapsedTime;   ///< used to count frames per second
   unsigned int m_frameCount;
   bool m_appActive;
+  glm::vec2 m_dimensions;
   
   Network::ServerControl m_serverCtrl;
   std::vector<std::shared_ptr<asio::ip::tcp::socket> > m_sockets;

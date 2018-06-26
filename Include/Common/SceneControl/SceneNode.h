@@ -58,8 +58,39 @@ namespace SceneControl
 			a_node->m_parent = this;
 			m_children.insert(a_node); 
 		}
-		inline void RemoveChild(SceneNode* a_node) { m_children.erase(a_node); a_node->m_parent = GetRoot(); }
+    
+    /// removes child node from the hierarchy - does not delete, caller is the new owner
+		inline void RemoveChild(SceneNode* a_node) { m_children.erase(a_node); a_node->m_parent = nullptr; }
 
+    /// removes and deletes node making it unusable if it is direct child of *this
+    inline bool DetachChild(SceneNode* a_node) 
+    { 
+      if( m_children.erase(a_node) ) 
+      { 
+        delete a_node; 
+        return true;
+      }
+      else return false;
+    }
+    
+    /// removes and deletes node making it unusable if it is a descendant of the caller node
+    inline bool DetachDescendant(SceneNode* a_node) 
+    { 
+      std::set<SceneNode*>::iterator l_iter = m_children.find(a_node); 
+      if( l_iter!= m_children.end() )
+      {
+        m_children.erase(l_iter);
+        delete a_node; 
+        return true;
+      }
+
+      for( std::set<SceneNode*>::iterator l_iter2 = m_children.begin(); l_iter2 != m_children.end(); ++l_iter2)
+        if( (*l_iter2)->DetachDescendant(a_node) )
+          return true;
+      return false; // if we get here this node does not exist under the ancestor node
+    }
+    
+    
 		inline SceneNode* GetChild(const unsigned int& a_index) const
 		{
 			if( m_children.size() > a_index)

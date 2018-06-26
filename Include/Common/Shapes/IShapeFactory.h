@@ -14,10 +14,10 @@ class IShapeFactory
 {
 public:
   virtual void Init() = 0;
-  virtual std::shared_ptr<ACone> GetCone() = 0;
-  virtual std::shared_ptr<ACube> GetCube() = 0;
+  virtual std::shared_ptr<ACone> GetCone() const = 0;
+  virtual std::shared_ptr<ACube> GetCube() const = 0;
   virtual std::shared_ptr<AOpenAssetImportMesh> GetOpenAssetImportMesh(const std::string& a_filename) = 0;
-  virtual std::shared_ptr<ARect> GetRectangle() = 0;
-  virtual std::shared_ptr<ASkybox> GetSkybox() = 0;
-  virtual std::shared_ptr<ASphere> GetSphere() = 0;
+  virtual std::shared_ptr<ARect> GetRectangle() const = 0;
+  virtual std::shared_ptr<ASkybox> GetSkybox() const = 0;
+  virtual std::shared_ptr<ASphere> GetSphere() const = 0;
 };

@@ -32,17 +32,24 @@ namespace SceneControl
 			if (m_sceneRoot) 
 				m_sceneRoot->Update(a_deltaTime); 
 		}
+    
+    /// removes and deletes scene node if it exists under this hierarchy
+    /// @return - true for success
+    bool DetachNode(SceneNode* a_node);
 
-		// TODO
-		/// a_parent = nullptr, then root is the parent
-		/// @return - if null a_parent is not part of the scene
+		/// @return - if null, a_parent is not part of the scene
 		SceneNode* AddSceneNode(SceneNode* a_parent = nullptr);
+		/// @return - if null, a_parent is not part of the scene
 		MeshSceneNode* AddMeshSceneNode(const std::shared_ptr<IMesh>& a_mesh, SceneNode* a_parent = nullptr);
 
+		/// @return - if null, a_parent is not part of the scene
 		CameraSceneNode* AddCameraSceneNode(const std::shared_ptr<CCamera>& a_camera, const CameraType& a_type = FPS_CAMERA, SceneNode* a_parent = nullptr);
 		
+		/// @return - if null, a_parent is not part of the scene
 		PointLightSceneNode* AddPointLightSceneNode( const std::shared_ptr<ASphere>& a_sphere, SceneNode* a_parent = nullptr);
+		/// @return - if null, a_parent is not part of the scene
 		SpotLightSceneNode* AddSpotLightSceneNode( const std::shared_ptr<ACone>& a_cone, SceneNode* a_parent = nullptr);
+		/// @return - if null, a_parent is not part of the scene
 		DirectionalLightSceneNode* AddDirectionalLightSceneNode( const std::shared_ptr<ARect>& a_rect, SceneNode* a_parent = nullptr);
 	};
 

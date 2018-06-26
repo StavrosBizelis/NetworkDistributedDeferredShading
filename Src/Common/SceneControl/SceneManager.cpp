@@ -19,6 +19,11 @@ namespace SceneControl
 	{
 		return m_sceneRoot;
 	}
+  
+  bool SceneManager::DetachNode(SceneNode* a_node)
+  {
+    return m_sceneRoot->DetachDescendant(a_node);
+  }
 
 	SceneNode* SceneManager::AddSceneNode(SceneNode* a_parent )
 	{
