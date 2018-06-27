@@ -7,7 +7,12 @@
 #include "OpenGL/Shapes/GLShapeFactory.h"
 #include "OpenGL/Textures/GLTextureFactory.h"
 
-GLGraphicsEngine::GLGraphicsEngine(const glm::vec2& a_dimensions ) : AGraphicsEngine(a_dimensions), m_deferredShadingPass(nullptr), m_compositionPass(nullptr) {}
+
+GLGraphicsEngine::GLGraphicsEngine(const glm::vec2& a_resolution)
+: GLGraphicsEngine(a_resolution, a_resolution, glm::vec4(0,0, a_resolution.x, a_resolution.y) ) {}
+
+GLGraphicsEngine::GLGraphicsEngine(const glm::vec2& a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings ) 
+  : AGraphicsEngine(a_resolution, a_partialResolution, a_viewportSettings), m_deferredShadingPass(nullptr), m_compositionPass(nullptr) {}
 
 GLGraphicsEngine::~GLGraphicsEngine()
 {
@@ -31,15 +36,17 @@ void GLGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
   
   if(a_composite)
   {
-    std::shared_ptr<ITexture> l_text = m_textureFactory->GetTexture("..\\Assets\\Models\\Asteroid\\diffuse.jpg");
-    m_compositionPass = new RenderControl::GLCompositionPass(m_dimensions, m_sceneManager, m_shapeFactory, a_subparts, l_text);
+    std::shared_ptr<ITexture> l_text = m_textureFactory->GetTexture("..\\Assets\\Skybox\\spacebox\\DX+.jpg");
+    l_text->SetSamplerObjectParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    l_text->SetSamplerObjectParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    m_compositionPass = new RenderControl::GLCompositionPass(m_resolution, m_sceneManager, m_shapeFactory, a_subparts, l_text);
     m_compositionPass->Init();
     m_compositionPass->SetSceenOutputAttachment(0);
     m_renderPassPipeline->PushBack(m_compositionPass);
   }
   else
   {
-    m_deferredShadingPass = new RenderControl::GLDeferredShadingPass( m_dimensions );
+    m_deferredShadingPass = new RenderControl::GLDeferredShadingPass( m_resolution, m_resolutionPart, m_viewPortSettings );
     m_deferredShadingPass->Init();
     m_deferredShadingPass->SetSceenOutputAttachment(3);
     m_renderPassPipeline->PushBack(m_deferredShadingPass);    

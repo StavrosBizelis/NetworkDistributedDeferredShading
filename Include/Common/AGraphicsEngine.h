@@ -14,10 +14,13 @@ protected:
   SceneControl::SceneManager* m_sceneManager;
   RenderControl::RenderPassPipeline* m_renderPassPipeline;
   
-  glm::vec2 m_dimensions;
+  glm::vec2 m_resolution;
+  glm::vec2 m_resolutionPart;
+  glm::vec4 m_viewPortSettings;
 public:
 
-  AGraphicsEngine(const glm::vec2& a_dimensions): m_dimensions(a_dimensions), m_sceneManager(nullptr), m_renderPassPipeline(nullptr){}
+  AGraphicsEngine(const glm::vec2& a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings)
+    : m_resolution(a_resolution), m_resolutionPart(a_partialResolution), m_viewPortSettings(a_viewportSettings), m_sceneManager(nullptr), m_renderPassPipeline(nullptr){}
   virtual ~AGraphicsEngine()
   {
     if( m_renderPassPipeline ) 
@@ -46,10 +49,11 @@ public:
   RenderControl::RenderPassPipeline* GetRenderManager() const { return m_renderPassPipeline; }
   SceneControl::SceneManager* GetSceneManager() const { return m_sceneManager; }
   MaterialControl::IMaterialManager* GetMaterialManager() const { if( m_renderPassPipeline ) return m_renderPassPipeline->GetMaterialManager(); return nullptr; }
-  glm::vec2 GetDimensions() const { return m_dimensions; }
-  virtual void SetDimensions(const glm::vec2& a_dim) 
+  
+  glm::vec2 GetResolution() const { return m_resolution; }
+  virtual void SetResolution(const glm::vec2& a_dim) 
   { 
-    m_dimensions = a_dim;
+    m_resolution = a_dim;
     GetDeferredRenderPass()->GetCamera()->SetDimentsions(a_dim);
   }
   

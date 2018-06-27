@@ -34,10 +34,11 @@ namespace RenderControl
 		/// Render pass does not own IRenderable objects
 		std::unordered_map< std::shared_ptr<IShaderProgram>, std::vector<IRenderable*> > m_toRender;
 
-
+    glm::vec2 m_resolutionPart;
+    glm::vec4 m_viewPortSetting;
 
 	public:
-		ADeferredShadingPass(const glm::vec2& a_resolution);
+		ADeferredShadingPass(const glm::vec2& a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings);
 		virtual ~ADeferredShadingPass();
 
     

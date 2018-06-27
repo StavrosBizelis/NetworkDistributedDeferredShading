@@ -63,12 +63,12 @@ RenderControl::ACompositionPass::UpdateSubpartsSettings()
   unsigned int l_countToGo = m_subpartsSettings.size();
   unsigned int l_rows = std::floor( sqrt(l_countToGo) );
   
-  
   unsigned int l_remainingHeight = (unsigned int)m_resolution.y;
   int l_shiftY = 0;
   unsigned int l_index = 0;
   for( unsigned int i = l_rows; i > 0; --i)
   {
+    
     unsigned int l_countThisRow = l_countToGo/i; // both are int so we get the floor of the division
     unsigned int l_currentHeight = l_remainingHeight/i; // both are int so we get the floor of the division
     int l_shiftX = 0;
@@ -77,6 +77,7 @@ RenderControl::ACompositionPass::UpdateSubpartsSettings()
     
     for( unsigned int j = l_countThisRow; j > 0; --j)
     {
+      
       unsigned int l_currentWidth = l_remainingWidth/j;
       
       // set the viewport settings and the resolution for this block
@@ -90,15 +91,13 @@ RenderControl::ACompositionPass::UpdateSubpartsSettings()
                                             /*m_resolution.y */ ( (l_currentHeight/2)+l_shiftY), 1 ) );
       
       m_subpartRects[l_index]->SetScale( glm::vec3(
-                                            m_resolution.x * ( (float)l_currentWidth/m_resolution.x ), 
-                                            m_resolution.y * ( (float)l_currentHeight/m_resolution.y ), 1 ) );
+                                            /*m_resolution.x */ ( (float)l_currentWidth/2.f/*m_resolution.x*/ ), 
+                                            /*m_resolution.y */ ( (float)l_currentHeight/2.f/*m_resolution.y*/ ), 1 ) );
+      
+      // m_subpartRects[l_index]->SetPos(glm::vec3(m_resolution.x/2, m_resolution.y/2,0) );
+      // m_subpartRects[l_index]->SetScale(glm::vec3(m_resolution.x/2, m_resolution.y/2, 1) );
       ++l_index;
 
-      IFDBG( 
-          std::cout << "test: " << m_resolution.x <<  " " << l_currentWidth/2 << " " << l_shiftX << std::endl;
-          std::cout << "rect: " << /*m_resolution.x */ ( (l_currentWidth/2)+l_shiftX) << ", " <<  /*m_resolution.y */ ( (l_currentHeight/2)+l_shiftY) << std::endl;
-          std::cout << "scale: " << /*m_resolution.x */ ( (float)l_currentWidth/m_resolution.x ) << ", " << /*m_resolution.y */ ( (float)l_currentHeight/m_resolution.y ) << std::endl;
-      );
       
       l_shiftX += l_currentWidth;
       l_remainingWidth -= l_currentWidth;
@@ -109,13 +108,13 @@ RenderControl::ACompositionPass::UpdateSubpartsSettings()
     l_countToGo -= l_countThisRow;
   }
   
-  // IFDBG(
-    // std::cout << "Composition pass resolution: " << m_resolution.x << ", " << m_resolution.y << std::endl;
-    // for(unsigned int i =0; i < m_subpartsSettings.size(); ++i)
-    // {
-      // std::cout << "block :"<<i << std::endl <<"viewport settings :"<<m_subpartsSettings[i].m_viewport.x << "," << m_subpartsSettings[i].m_viewport.y << "," << m_subpartsSettings[i].m_viewport.z << "," << m_subpartsSettings[i].m_viewport.w << std::endl;
-    // }  
-  // );
+  IFDBG(
+    std::cout << "Composition pass resolution: " << m_resolution.x << ", " << m_resolution.y << std::endl;
+    for(unsigned int i =0; i < m_subpartsSettings.size(); ++i)
+    {
+      std::cout << "block :"<<i << std::endl <<"viewport settings :"<<m_subpartsSettings[i].m_viewport.x << "," << m_subpartsSettings[i].m_viewport.y << "," << m_subpartsSettings[i].m_viewport.z << "," << m_subpartsSettings[i].m_viewport.w << std::endl;
+    }  
+  );
 }
 
 /***********************************************************************
@@ -130,6 +129,29 @@ RenderControl::ACompositionPass::GetSubpartsSettings() const
   return m_subpartsSettings;
 }
 
+/***********************************************************************
+ *  Method: RenderControl::ACompositionPass::GetSubpartsRects
+ *  Params: 
+ * Returns: const std::vector< SceneControl::MeshSceneNode* >&
+ * Effects: 
+ ***********************************************************************/
+const std::vector< SceneControl::MeshSceneNode* >& 
+RenderControl::ACompositionPass::GetSubpartsRects() const
+{
+  return m_subpartRects;
+}
+
+/***********************************************************************
+ *  Method: RenderControl::ACompositionPass::GetSubpartsRects
+ *  Params: 
+ * Returns: std::vector< SceneControl::MeshSceneNode* >&
+ * Effects: 
+ ***********************************************************************/
+std::vector< SceneControl::MeshSceneNode* >& 
+RenderControl::ACompositionPass::GetSubpartsRects()
+{
+  return m_subpartRects;
+}
 
 /***********************************************************************
  *  Method: RenderControl::ACompositionPass::SetMaterialManager

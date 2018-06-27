@@ -13,8 +13,8 @@
  *  Params: const glm::vec2 &a_resolution
  * Effects: 
  */
-RenderControl::GLDeferredShadingPass::GLDeferredShadingPass(const glm::vec2 &a_resolution)
-  : ADeferredShadingPass(a_resolution), m_resolutionPart(a_resolution), m_viewPortSetting(0, 0, a_resolution.x, a_resolution.y), m_fbo(0)
+RenderControl::GLDeferredShadingPass::GLDeferredShadingPass(const glm::vec2 &a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings)
+  : ADeferredShadingPass(a_resolution, a_partialResolution, a_viewportSettings), m_fbo(0)
 {
   m_outputTextures.resize(5, 0);
   m_outputSamplers.resize(5, 0);

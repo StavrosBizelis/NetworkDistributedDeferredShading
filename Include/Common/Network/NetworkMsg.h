@@ -22,16 +22,12 @@ namespace Network
     CLNT_REQUEST,
     /// MESSAGE THAT IS SENT FROM THE CLIENT TO THE SERVER AFTER INITIALIZING ITS GRAPHICS ENGINE
     CLNT_ENGINE_READY,
-    /// MESSAGE THAT IS SENT FROM THE CLIENT TO THE SERVER AND CONTAINS THE GEOMETRY PASS RESULT
-    CLNT_GEOMETRY_PASS,
-    /// MESSAGE THAT IS SENT FROM THE CLIENT TO THE SERVER AND CONTAINS THE LIGHT PASS TEXTURES
-    CLNT_LIGHT_PASS,
+    /// MESSAGE THAT IS SENT FROM THE CLIENT TO THE SERVER AND CONTAINS THE RENDERING RESULT
+    CLNT_RENDER_RESULT,
     /// MESSAGE THAT IS SENT FROM THE SERVER TO THE CLIENTS TO SETUP THEIR PIPELINE ( CLIENT ID, RENDER SIZE - VIEWPORT OPTIONS ETC)
     SRV_SETUP,
-    /// MESSAGE THAT IS SENT FROM THE SERVER TO THE CLIENTS TO UPDATE THEIR SCENE ( LOAD + UNLOAD + TRANSFORMATIONS OF OBJECTS) - NOT LIGHTS
-    SRV_SCENE_UPDATE,
-    /// MESSAGE THAT IS SENT FROM THE SERVER TO THE CLIENTS THAT INCLUDE THE GEOMETRY PASS TEXTURE + LIGHT OBJECTS INFORMATION
-    SRV_GEOMETRY_PASS_PLUS_LIGHTS
+    /// MESSAGE THAT IS SENT FROM THE SERVER TO THE CLIENTS TO UPDATE THEIR SCENE ( LOAD + UNLOAD + TRANSFORMATIONS OF OBJECTS) + LIGHTS
+    SRV_SCENE_UPDATE
   };
 
 
@@ -122,32 +118,46 @@ namespace Network
     // create functions
     void CreateSizeMsg(const uint32_t& a_size); ///< MSG_SIZE
     void CreateClientRequestMsg(); ///< CLNT_REQUEST
-    void CreateEngineReadyMsg(const uint32_t& a_clientId); ///< CLNT_ENGINE_READY
-    void CreateGeometryPassMsg(const uint32_t& a_clientId, char* a_textureData, const uint32_t& a_textureDataSize);  ///< CLNT_GEOMETRY_PASS
-    void CreateLightPassMsg(const uint32_t& a_clientId, char* a_textureData, const uint32_t& a_textureDataSize);  ///< CLNT_LIGHT_PASS
+    void CreateEngineReadyMsg(); ///< CLNT_ENGINE_READY
+    void CreateRenderResultMsg(char* a_textureData, const uint32_t& a_textureDataSize);  ///< CLNT_RENDER_RESULT
     
-    void CreateSetupMsg(const uint32_t& a_clientId, const glm::vec2& a_geometryPassTexSize, const glm::vec4& a_viewportInfo, const glm::vec2& a_lightPassTexSize ); ///< SRV_SETUP
-    void CreateSceneUpdateMsg(const std::vector<ObjAddInfo>& a_objsToAdd, const std::vector<uint32_t>& a_objsToRemove, const std::vector<ObjTransformInfo>& a_objsToTransform, const std::vector<TextureChangeInfo>& a_textureChange);  ///< SRV_SCENE_UPDATE
-    void CreateGeometryPassPlusLightsMsg(char* a_textureData, const uint32_t& a_textureDataSize, const std::vector<ObjAddInfo>& a_lightsToAdd, const std::vector<uint32_t>& a_lightsToRemove, const std::vector<ObjTransformInfo>& a_lightsToTransform );  ///< SRV_GEOMETRY_PASS_PLUS_LIGHTS
+    void CreateSetupMsg( const glm::vec4& a_viewportInfo, const glm::vec2& a_partialResolution, const glm::vec2& a_resolution ); ///< SRV_SETUP
+    void CreateSceneUpdateMsg(
+      const std::vector<ObjAddInfo>& a_objsToAdd, 
+      const std::vector<uint32_t>& a_objsToRemove, 
+      const std::vector<ObjTransformInfo>& a_objsToTransform, 
+      const std::vector<TextureChangeInfo>& a_textureChange,
+      
+      const std::vector<ObjAddInfo>& a_lightsToAdd,
+      const std::vector<uint32_t>& a_lightsToRemove,
+      const std::vector<ObjTransformInfo>& a_lightsToTransform
+      );  ///< SRV_SCENE_UPDATE
     
     
     // deserialize functions
     bool DeserializeSizeMsg( uint32_t& a_outSize) const; ///< MSG_SIZE
     // bool DeserializeClientRequestMsg( uint32_t& a_outSize) const; ///< CLNT_REQUEST
-    bool DeserializeEngineReadyMsg( uint32_t& a_outClientId) const; ///< CLNT_ENGINE_READY
-    bool DeserializeGeometryPassMsg( uint32_t& a_outClientId, char* a_outTextureData, uint32_t& a_outTextureDataSize) const; ///< CLNT_GEOMETRY_PASS
-    bool DeserializeLightPassMsg( uint32_t& a_outClientId, char* a_outTextureData, uint32_t& a_outTextureDataSize) const; ///< CLNT_LIGHT_PASS
+    // bool DeserializeEngineReadyMsg() const; ///< CLNT_ENGINE_READY
+    bool DeserializeRenderResultMsg( char* a_outTextureData, uint32_t& a_outTextureDataSize) const; ///< CLNT_RENDER_RESULT
     
-    bool DeserializeSetupMsg( uint32_t& a_outClientId, glm::vec2& a_outGeometryPassTexSize, glm::vec4& a_outViewportInfo, glm::vec2& a_outLightPassTexSize) const; ///< SRV_SETUP
-    bool DeserializeSceneUpdateMsg( std::vector<ObjAddInfo>& a_outObjsToAdd, std::vector<uint32_t>& a_outObjsToRemove, std::vector<ObjTransformInfo>& a_outObjsToTransform, std::vector<TextureChangeInfo>& a_outTextureChange) const ;  ///< SRV_SCENE_UPDATE
-    bool DeserializeGeometryPassPlusLightsMsg( char* a_outTextureData, uint32_t& a_outTextureDataSize, std::vector<ObjAddInfo>& a_outLightsToAdd, std::vector<uint32_t>& a_outLightsToRemove, std::vector<ObjTransformInfo>& a_outLightsToTransform ) const ;  ///< SRV_GEOMETRY_PASS_PLUS_LIGHTS 
+    bool DeserializeSetupMsg( glm::vec4& a_outViewportInfo, glm::vec2& a_outPartialResolution, glm::vec2& a_outResolution ) const; ///< SRV_SETUP
+    bool DeserializeSceneUpdateMsg( 
+      std::vector<ObjAddInfo>& a_outObjsToAdd, 
+      std::vector<uint32_t>& a_outObjsToRemove, 
+      std::vector<ObjTransformInfo>& a_outObjsToTransform, 
+      std::vector<TextureChangeInfo>& a_outTextureChange,
+      
+      std::vector<ObjAddInfo>& a_outLightsToAdd, 
+      std::vector<uint32_t>& a_outLightsToRemove, 
+      std::vector<ObjTransformInfo>& a_outLightsToTransform
+      ) const ;  ///< SRV_SCENE_UPDATE
+    
     
     /// reset the message creating an internal buffer of at least the given size
     /// the reasoning behind this function is that the internal buffer will be reallocated ONLY if it needs to grow (making a message object reusable and efficient)
     void Reset(const uint32_t& a_sizeTrue = 0); 
     void Clear(); /// frees the internal buffer
     
-    friend std::ostream& operator<<(std::ostream &strm, const NetworkMsg &a);
     friend std::ostream& operator<<(std::ostream &strm, const NetworkMsg &a);
   };
   

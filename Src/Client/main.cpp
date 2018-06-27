@@ -8,21 +8,20 @@
 #include <asio-1.12.1/include/asio.hpp>
 
 #include <windows.h>
-#include "Client/ClientControl.h"
+#include "Client/ClientApp.h"
 
 int main(int argc, const char * argv[] ) 
 {
   
-  /*
-  Network::ClientControl l_client("localhost", 50000);
-  l_client.Connect();
-  l_client.StartCommunication();
+  
+  ClientApp l_app("localhost", 50000);
+  l_app.Initialise();
   
   for(;;)
   {
-    l_client.Update();
+    l_app.Update();
   }
-  */
+ 
   
   
   system("pause");

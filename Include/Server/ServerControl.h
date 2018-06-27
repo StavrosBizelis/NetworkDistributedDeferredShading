@@ -55,7 +55,7 @@ namespace Network
     bool m_acceptingNewConnections;
     bool m_waitsForNewConnections;
     bool m_communicatesWithClients;
-    unsigned int m_nextID;
+    
     
     
   public:
@@ -66,6 +66,8 @@ namespace Network
     *   @brief Starts accepting connections phase
     */
     void AcceptConnections();
+    
+    unsigned int GetConnectedClientsCount();
     
     /**
     *   @brief Ends accepting connections phase
@@ -78,8 +80,8 @@ namespace Network
     */
     void StartClientCommunication();
     
-    bool RegisterSocket( const std::shared_ptr<asio::ip::tcp::socket>& a_socket);
-    void RegisterMessage(const std::shared_ptr<asio::ip::tcp::socket>& a_socket, const std::list< NetworkMsgPtr >::iterator&  a_message);
+    bool RegisterSocket( const std::shared_ptr<asio::ip::tcp::socket>& a_socket); ///< do not use - used by internal lambdas
+    void RegisterMessage(const std::shared_ptr<asio::ip::tcp::socket>& a_socket, const std::list< NetworkMsgPtr >::iterator&  a_message); ///< do not use - used by internal lambdas
     
     /**
     *   @brief send message to client with given id
@@ -91,7 +93,7 @@ namespace Network
     /**
     *   @brief return a map of the messages
     */
-    std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<NetworkMsgPtr>> GetMsgs();
+    std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<NetworkMsgPtr> > GetMsgs();
     
     
     

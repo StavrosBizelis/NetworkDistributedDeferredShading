@@ -9,12 +9,12 @@ class ClientApp
 {
 private:
   ImplTech m_implTech;
-  Network::ClientControl* m_client;
+  Network::ClientControl m_client;
   AGraphicsEngine* m_graphics;
 
   
 public:
-  ClientApp( const glm::vec2& a_dimensions, const ImplTech& a_implTech = ImplTech::OPENGL);
+  ClientApp( const std::string &a_hostName, const unsigned int &a_hostPort, const ImplTech& a_implTech = ImplTech::OPENGL);
   ~ClientApp();
   
   void Initialise();

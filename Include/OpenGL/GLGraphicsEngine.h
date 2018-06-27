@@ -12,7 +12,8 @@ private:
   ITextureFactory* m_textureFactory;
   
 public:
-  GLGraphicsEngine(const glm::vec2& a_dimensions);
+  GLGraphicsEngine(const glm::vec2& a_resolution);
+  GLGraphicsEngine(const glm::vec2& a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings);
   virtual ~GLGraphicsEngine();
   
   virtual void Init(bool a_composite = false, unsigned int a_subparts = 0);

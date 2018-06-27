@@ -8,17 +8,17 @@
 #include "Common/SceneControl/MeshSceneNode.h"
 
 #include "OpenGL/GLGraphicsEngine.h"
-
+#include "Common/Core/MyUtilities.h"
+#include <algorithm>
 /***********************************************************************
  *  Method: ServerApp::ServerApp
  *  Params: 
  * Effects: 
  ***********************************************************************/
-ServerApp::ServerApp(const glm::vec2& a_dimensions, const ImplTech& a_implTech)
-  : m_appActive(true), m_elapsedTime(0), m_dt(0), m_frameCount(0), m_dimensions(a_dimensions), m_pHighResolutionTimer(nullptr), m_graphics(nullptr), m_serverCtrl(50000), m_implTech(a_implTech)
-{
-
-}
+ServerApp::ServerApp(const glm::vec2& a_dimensions, const ImplTech& a_implTech, const unsigned int& a_clientsCount)
+  : m_appActive(true), m_elapsedTime(0), m_dt(0), m_frameCount(0), m_dimensions(a_dimensions), m_pHighResolutionTimer(nullptr), m_graphics(nullptr), m_serverCtrl(50000), m_implTech(a_implTech),
+    m_clientsCount(a_clientsCount)
+{}
 
 
 /***********************************************************************
@@ -67,7 +67,7 @@ ServerApp::ProcessEvents(HWND window, UINT message, WPARAM w_param, LPARAM l_par
 			RECT dimensions;
 			GetClientRect(window, &dimensions);
 			m_gameWindow.SetDimensions(dimensions);
-      m_graphics->SetDimensions(glm::vec2( glm::abs(dimensions.right - dimensions.left) , glm::abs(dimensions.top - dimensions.bottom) ) );
+      m_graphics->SetResolution(glm::vec2( glm::abs(dimensions.right - dimensions.left) , glm::abs(dimensions.top - dimensions.bottom) ) );
       
 		break;
 
@@ -228,9 +228,87 @@ ServerApp::Initialise()
   // do here what need to be done /////////////
   /////////////////////////////////////////////
   
+  // SETUP:
+  // 1) SERVER STARTS - READY TO ACCEPT CONNECTIONS
+  // 2) CLIENT STARTS - CONNECTS TO SERVER - SENDS REQUEST *
+  // 3) SERVER COLLECTS REQUESTS
+  // 4) SERVER FINALIZES GETTING REQUESTS
+  // 5) SERVER GENERATES AND SENDS RENDERING INFO TO CLIENTS *
+  // 6) CLIENTS SETUP ENGINES 
+  // 7) CLIENTS SEND CLIENT READY SIGNALS *
+  
+  // SERVER STARTS - READY TO ACCEPT CONNECTIONS
+  IFDBG( std::cout << " Start accepting connections " << std::endl; );
+  
+  m_serverCtrl.AcceptConnections();
+  while( m_serverCtrl.GetConnectedClientsCount() < m_clientsCount )
+    m_serverCtrl.Update();
+  IFDBG( std::cout << " Stop accepting connections " << std::endl; );
+  m_serverCtrl.StopAcceptingConnections();
   
   
-  m_graphics->Init(true, 4);
+  IFDBG( std::cout << " Start Client Communication " << std::endl; );
+  m_serverCtrl.StartClientCommunication();
+  
+  // SERVER COLLECTS REQUESTS - collecting a request from a specific socket indicates its a rendering client
+  while( m_clients.size() < m_clientsCount )
+  {
+    m_serverCtrl.Update();
+    // get any new messages
+    std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<Network::NetworkMsgPtr> > l_msgs = m_serverCtrl.GetMsgs();
+    // for each socket that has sent a message
+    for( std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<Network::NetworkMsgPtr> >::iterator l_iter = l_msgs.begin(); l_iter != l_msgs.end(); ++l_iter)
+      // if this socket is not registered and
+      if( std::find(m_clients.begin(), m_clients.end(), l_iter->first ) == m_clients.end() )   
+        // there is only one message from each socket, a Network::MsgType::CLNT_REQUEST
+        if( l_iter->second.size() == 1 )
+          if( l_iter->second[0]->GetType() == Network::MsgType::CLNT_REQUEST )
+          {
+            // register the socket
+            IFDBG( std::cout << " Register Client: " << l_iter->first << std::endl; );
+            m_clients.push_back(l_iter->first);
+          }
+  }
+  
+  
+  
+  IFDBG( std::cout << " Finalize request collection... " << std::endl; );
+  IFDBG( std::cout << " Initialise graphics engine... " << std::endl; );
+  IFDBG( std::cout << " Send  " << std::endl; );
+  // SERVER GENERATES AND SENDS RENDERING INFO TO CLIENTS
+  m_graphics->Init(true, m_clientsCount);
+  const std::vector< RenderControl::CompositionEntity >& l_compositionSettings = m_graphics->GetCompositionPass()->GetSubpartsSettings();
+  for( unsigned int i = 0; i < l_compositionSettings.size(); ++i)
+  {
+    Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
+    l_msg->CreateSetupMsg( l_compositionSettings[i].m_viewport ,l_compositionSettings[i].m_resolution, m_graphics->GetResolution() );
+    
+    IFDBG( std::cout << "send " << (*l_msg) << std::endl << "to " << m_clients[i] << "." << std::endl ; );
+    m_serverCtrl.PushMsg(m_clients[i], l_msg);
+  }
+  
+  // wait to receive ready signals from all clients
+  std::set<std::shared_ptr<asio::ip::tcp::socket>> l_clients(m_clients.begin(), m_clients.end());
+  while( l_clients.size() > 0 )
+  {
+    m_serverCtrl.Update();
+    // get any new messages
+    std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<Network::NetworkMsgPtr> > l_msgs = m_serverCtrl.GetMsgs();
+    // for each socket that has sent a message
+    for( std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<Network::NetworkMsgPtr> >::iterator l_iter = l_msgs.begin(); l_iter != l_msgs.end(); ++l_iter)
+      // if this socket is registered and
+      if( l_clients.find( l_iter->first ) != l_clients.end() )
+        // there is only one message from each socket, a Network::MsgType::CLNT_ENGINE_READY
+        if( l_iter->second.size() == 1 )
+          if( l_iter->second[0]->GetType() == Network::MsgType::CLNT_ENGINE_READY )
+          {
+            // register the socket
+            IFDBG( std::cout << " Client: " << l_iter->first << "is ready to render." << std::endl; );
+            l_clients.erase(l_iter->first);
+          }
+  }
+  
+  
 /*
   m_graphics->GetDeferredRenderPass()->GetCamera()->Set(glm::vec3(5, 0, 5) , glm::vec3(0), glm::vec3(0,1,0) );
   // m_graphics->GetSceneManager()->AddCameraSceneNode( m_graphics->GetDeferredRenderPass()->GetCamera() );
@@ -275,7 +353,6 @@ ServerApp::Initialise()
   }
 */
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// m_serverCtrl.AcceptConnections();
 }
 
 

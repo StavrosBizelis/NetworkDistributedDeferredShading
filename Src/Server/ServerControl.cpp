@@ -16,7 +16,7 @@ namespace Network
    ***********************************************************************/
   ServerControl::ServerControl(const unsigned int &a_hostPort)
   : m_hostPort(a_hostPort), m_io(), m_acceptor( m_io, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), m_hostPort) ), 
-    m_acceptingNewConnections(false), m_waitsForNewConnections(false), m_nextID(0), m_communicatesWithClients(false)
+    m_acceptingNewConnections(false), m_waitsForNewConnections(false), m_communicatesWithClients(false)
   {
     m_sizeMsgOut = std::make_shared<NetworkMsg>();
     m_sizeMsgOut->CreateSizeMsg(0);
@@ -48,7 +48,17 @@ namespace Network
     m_waitsForNewConnections = false;
     IFDBG( std::cout << "Start Accepting connections" << std::endl );
   }
-
+  /***********************************************************************
+   *  Method: ServerControl::GetConnectedClientsCount
+   *  Params: 
+   * Returns: unsigned int
+   * Effects: 
+   ***********************************************************************/
+  unsigned int ServerControl::GetConnectedClientsCount()
+  {
+    std::lock_guard<std::mutex> guard(m_socketsMut);
+    return m_sockets.size();
+  }
 
   /***********************************************************************
    *  Method: ServerControl::StopAcceptingConnections
@@ -85,7 +95,9 @@ namespace Network
     m_communicatesWithClients = true;
     IFDBG( std::cout << "Start Client Communication" << std::endl );
   }
+  
 
+  
   /***********************************************************************
    *  Method: ServerControl::RegisterSocket
    *  Params: const asio::ip::tcp::socket& a_socket
@@ -182,8 +194,11 @@ namespace Network
     m_inMsgMut.lock();
     for( std::map< std::shared_ptr<asio::ip::tcp::socket> , SocketState >::iterator l_iter = m_sockets.begin();l_iter != m_sockets.end(); ++l_iter)
     {
-      l_tmp[l_iter->first] = std::move( l_iter->second.m_inputMsgs );
-      l_iter->second.m_inputMsgs.clear();
+      if( l_iter->second.m_inputMsgs.size() > 0 )
+      {
+        l_tmp[l_iter->first] = std::move( l_iter->second.m_inputMsgs );
+        l_iter->second.m_inputMsgs.clear();
+      }
     }
     m_inMsgMut.unlock();
     

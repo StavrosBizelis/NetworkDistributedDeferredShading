@@ -52,6 +52,8 @@ RenderControl::GLCompositionPass::SetMaterialManager(MaterialControl::IMaterialM
       "..\\Assets\\GLSL_shaders\\HUDImage.vert",
       "..\\Assets\\GLSL_shaders\\HUDImage.frag"
     );
+  for( unsigned int i = 0; i < m_subpartRects.size(); ++i)
+    m_subpartRects[i]->SetMaterial(m_material);
 }
 
 

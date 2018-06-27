@@ -32,6 +32,8 @@ namespace RenderControl
     
     
     const std::vector< CompositionEntity >& GetSubpartsSettings() const;
+    const std::vector< SceneControl::MeshSceneNode* >& GetSubpartsRects() const;
+    std::vector< SceneControl::MeshSceneNode* >& GetSubpartsRects();
     void UpdateSubpartsSettings();
     
     

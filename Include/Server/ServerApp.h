@@ -12,7 +12,7 @@
 class ServerApp
 {
 public:
-  ServerApp(const glm::vec2& a_dimensions, const ImplTech& a_implTech = ImplTech::OPENGL);
+  ServerApp(const glm::vec2& a_dimensions, const ImplTech& a_implTech = ImplTech::OPENGL, const unsigned int& a_clientsCount = 1);
   ~ServerApp();
   
   
@@ -31,11 +31,11 @@ private:
   glm::vec2 m_dimensions;
   
   Network::ServerControl m_serverCtrl;
-  std::vector<std::shared_ptr<asio::ip::tcp::socket> > m_sockets;
+  std::vector<std::shared_ptr<asio::ip::tcp::socket> > m_clients;
   AGraphicsEngine* m_graphics;
   ImplTech m_implTech;
-
-  
+  unsigned int m_clientsCount;
+   
   void Update();
   void Initialise();
 
