@@ -183,7 +183,7 @@ namespace Network
    */
   void NetworkMsg::CreateSetupMsg( const glm::vec4& a_viewportInfo, const glm::vec2& a_partialResolution, const glm::vec2& a_resolution  )
   {
-    uint32_t l_size = 25; /// 1 char type + 16(4*32bits) a_viewportInfo + 8(2*32bits) a_resolution, 25 bytes
+    uint32_t l_size = 33; /// 1 char type + 16(4*32bits) a_viewportInfo + 8(2*32bits) a_partialResolution + 8(2*32bits) a_resolution, 33 bytes
     Reset(l_size);
     m_type = MsgType::SRV_SETUP;
     m_size = l_size; 
@@ -192,25 +192,31 @@ namespace Network
     ++l_pos;
         
     // a_viewportInfo
-    ConsistentInt32ToCharArray(a_viewportInfo.x, l_pos);
+    ConsistentInt32ToCharArray( (uint32_t)a_viewportInfo.x, l_pos);
     l_pos += 4;
-    ConsistentInt32ToCharArray(a_viewportInfo.y, l_pos);
-    l_pos += 4;
-    ConsistentInt32ToCharArray(a_viewportInfo.z, l_pos);
-    l_pos += 4;
-    ConsistentInt32ToCharArray(a_viewportInfo.w, l_pos);
-    l_pos += 4;
+    ConsistentInt32ToCharArray( (uint32_t)a_viewportInfo.y, l_pos);
     
-    // a_partialResolution
-    ConsistentInt32ToCharArray(a_partialResolution.x, l_pos);
     l_pos += 4;
-    ConsistentInt32ToCharArray(a_partialResolution.y, l_pos);
+    ConsistentInt32ToCharArray( (uint32_t)a_viewportInfo.z, l_pos);
+    
+    l_pos += 4;
+    ConsistentInt32ToCharArray( (uint32_t)a_viewportInfo.w, l_pos);
+    
+    l_pos += 4;
+    // a_partialResolution
+    ConsistentInt32ToCharArray( (uint32_t)a_partialResolution.x, l_pos);
+    
+    l_pos += 4;
+    ConsistentInt32ToCharArray( (uint32_t)a_partialResolution.y, l_pos);
+    
     l_pos += 4;
     
     // a_resolution
-    ConsistentInt32ToCharArray(a_resolution.x, l_pos);
+    ConsistentInt32ToCharArray( (uint32_t)a_resolution.x, l_pos);
+    
     l_pos += 4;
-    ConsistentInt32ToCharArray(a_resolution.y, l_pos);
+    ConsistentInt32ToCharArray( (uint32_t)a_resolution.y, l_pos);
+    
 
   }
 
@@ -396,7 +402,7 @@ namespace Network
   bool NetworkMsg::DeserializeSetupMsg( glm::vec4& a_outViewportInfo, glm::vec2& a_outPartialResolution, glm::vec2& a_outResolution   ) const 
   {
     char* l_pos = m_data;
-    if(m_size < 25)
+    if(m_size < 33)
       return false;
     if( (MsgType)(*l_pos) != MsgType::SRV_SETUP )
       return false;
@@ -579,13 +585,13 @@ namespace Network
         case MsgType::MSG_SIZE: 
           uint32_t a_outSize;
           a.DeserializeSizeMsg(a_outSize);
-          strm << "MSG_SIZE - "; 
+          strm << "MSG_SIZE"; 
           strm << a_outSize;
           break;
-        case MsgType::CLNT_REQUEST: strm << "CLNT_REQUEST - "; break;
-        case MsgType::CLNT_ENGINE_READY: strm << "CLNT_ENGINE_READY - "; break;
-        case MsgType::CLNT_RENDER_RESULT: strm << "CLNT_RENDER_RESULT - "; break;
-        case MsgType::SRV_SETUP: 
+        case MsgType::CLNT_REQUEST: strm << "CLNT_REQUEST"; break;
+        case MsgType::CLNT_ENGINE_READY: strm << "CLNT_ENGINE_READY"; break;
+        case MsgType::CLNT_RENDER_RESULT: strm << "CLNT_RENDER_RESULT"; break;
+        case MsgType::SRV_SETUP:
         {
           strm << "SRV_SETUP - " << std::endl; 
           glm::vec4 l_viewport;
@@ -593,9 +599,9 @@ namespace Network
           glm::vec2 l_res;
           a.DeserializeSetupMsg(l_viewport, l_resPart, l_res);
           
-          strm << "Viewport settings " << l_viewport.x << ", " << l_viewport.y << ", " << l_viewport.z << ", " << l_viewport.w << std::endl;
-          strm << "partial resolution " << l_resPart.x << ", " << l_resPart.y;
-          strm << "resolution " << l_res.x << ", " << l_res.y;
+          strm << "Viewport settings " << (uint32_t)l_viewport.x << ", " << (uint32_t)l_viewport.y << ", " << (uint32_t)l_viewport.z << ", " << (uint32_t)l_viewport.w << std::endl;
+          strm << "partial resolution " << (uint32_t)l_resPart.x << ", " << (uint32_t)l_resPart.y << std::endl;
+          strm << "resolution " << (uint32_t) l_res.x << ", " << (uint32_t)l_res.y;
           return strm;
         }
         case MsgType::SRV_SCENE_UPDATE: strm << "SRV_SCENE_UPDATE - "; break;

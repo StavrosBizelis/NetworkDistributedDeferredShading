@@ -7,6 +7,10 @@
 #include "OpenGL/Shapes/GLShapeFactory.h"
 #include "OpenGL/Textures/GLTextureFactory.h"
 
+#include "gl/include/glew.h"
+#include "gl/include/wglew.h"
+#include <iostream>
+
 
 GLGraphicsEngine::GLGraphicsEngine(const glm::vec2& a_resolution)
 : GLGraphicsEngine(a_resolution, a_resolution, glm::vec4(0,0, a_resolution.x, a_resolution.y) ) {}
@@ -24,7 +28,8 @@ GLGraphicsEngine::~GLGraphicsEngine()
 
 void GLGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
 {
-  AGraphicsEngine::Init(a_composite);  
+
+  AGraphicsEngine::Init(a_composite, a_subparts);  
   
   MaterialControl::IMaterialManager* l_materialManager = new MaterialControl::GLMaterialManager();
   m_renderPassPipeline->SetMaterialManager(l_materialManager);
@@ -46,10 +51,10 @@ void GLGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
   }
   else
   {
-    m_deferredShadingPass = new RenderControl::GLDeferredShadingPass( m_resolution, m_resolutionPart, m_viewPortSettings );
-    m_deferredShadingPass->Init();
-    m_deferredShadingPass->SetSceenOutputAttachment(3);
-    m_renderPassPipeline->PushBack(m_deferredShadingPass);    
+    // m_deferredShadingPass = new RenderControl::GLDeferredShadingPass( m_resolution, m_resolutionPart, m_viewPortSettings );
+    // m_deferredShadingPass->Init();
+    // m_deferredShadingPass->SetSceenOutputAttachment(3);
+    // m_renderPassPipeline->PushBack(m_deferredShadingPass);    
   }
   
 

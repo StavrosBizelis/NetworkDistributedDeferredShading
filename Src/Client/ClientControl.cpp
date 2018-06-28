@@ -49,7 +49,7 @@ namespace Network
     m_socket = std::make_shared<asio::ip::tcp::socket>(m_io);
     asio::connect(*m_socket, l_endpoints);
     m_connected = true;
-    IFDBG( std::cout << "Connected to " << m_hostName  << "/" << std::to_string(m_hostPort) << std::endl );
+    IFDBG( std::cout << "Connected to " << m_hostName  << "/" << std::to_string(m_hostPort) << std::endl << std::endl; );
   }
 
 
@@ -65,7 +65,7 @@ namespace Network
     if( !m_connected )
       return false;
     m_communicatesWithServer = true;
-    IFDBG( std::cout << "Start Communication" << std::endl );
+    IFDBG( std::cout << "Start Communication" << std::endl << std::endl; );
     return true;
   }
 
@@ -85,7 +85,7 @@ namespace Network
     // check if it is size message
     if( (*a_message)->GetType() == MsgType::MSG_SIZE )
     {
-      IFDBG( std::cout << "Input Msg Message" << (**a_message) << std::endl );
+      // IFDBG( std::cout << "Input Msg Message" << (**a_message) << std::endl );
       // if it is a size message - then we should expect another message after it with the given size
       uint32_t l_size;
       (*a_message)->DeserializeSizeMsg( l_size );
@@ -98,7 +98,7 @@ namespace Network
     }
     else
     {
-      IFDBG( std::cout << "Input Message" << (**a_message) << std::endl );
+      // IFDBG( std::cout << "Input Message" << (**a_message) << std::endl );
       // add the message to m_inputMsgs
       std::lock_guard<std::mutex> guard(m_inMsgMut);
       l_state.m_inputMsgs.push_back( *a_message );
@@ -121,7 +121,7 @@ namespace Network
     std::lock_guard<std::mutex> guard(m_outMsgMut);
     m_socketState.m_outputMsgs.push_back(a_msg);
     
-    IFDBG( std::cout << "Push message" << *a_msg << std::endl );
+    // IFDBG( std::cout << "Push message" << *a_msg << std::endl );
   }
 
     /***********************************************************************

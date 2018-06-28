@@ -33,6 +33,57 @@ ClientApp::~ClientApp()
 
 
 /***********************************************************************
+ *  Method: ClientApp::SetHinstance
+ *  Params: HINSTANCE hinstance
+ * Returns: void
+ * Effects: 
+ ***********************************************************************/
+void
+ClientApp::SetHinstance(HINSTANCE hinstance)
+{
+  m_hInstance = hinstance;
+}
+
+/***********************************************************************
+ *  Method: ClientApp::Execute
+ *  Params: 
+ * Returns: WPARAM
+ * Effects: 
+ ***********************************************************************/
+WPARAM ClientApp::Execute()
+{
+
+  m_gameWindow.Init(m_hInstance, glm::vec2(10,10) );
+  if(!m_gameWindow.Hdc()) {
+		return 1;
+	}
+  
+  Initialise();
+ 
+  MSG msg;
+
+	while(1) {													
+		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { 
+			if(msg.message == WM_QUIT) {
+				break;
+			}
+
+			TranslateMessage(&msg);	
+			DispatchMessage(&msg);
+		} 
+    else 
+    {
+			Update();
+		} 
+	}
+
+	m_gameWindow.Deinit();
+
+	return(msg.wParam);
+  
+}
+
+/***********************************************************************
  *  Method: ClientApp::Initialise
  *  Params: 
  * Returns: void
@@ -49,7 +100,15 @@ ClientApp::Initialise()
   // 5) SERVER GENERATES AND SENDS RENDERING INFO TO CLIENTS *
   // 6) CLIENTS SETUP ENGINES 
   // 7) CLIENTS SEND CLIENT READY SIGNALS *
-  
+
+   // SETUP ENGINE
+   // glm::vec4 l_viewport; 
+  // glm::vec2 l_res;
+  // glm::vec2 l_partialRes;
+  // if( m_implTech == ImplTech::OPENGL )  
+    // m_graphics = new GLGraphicsEngine( l_res, l_partialRes, l_viewport );
+  // m_graphics->Init();
+  // system("pause");
   // CONNECTS TO SERVER
   m_client.Connect();
   
@@ -58,7 +117,7 @@ ClientApp::Initialise()
   // SENDS REQUEST
   Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
   l_msg->CreateClientRequestMsg();
-  IFDBG( std::cout << "send " << (*l_msg) << std::endl; );
+  IFDBG( std::cout << "Send: " << (*l_msg) << std::endl << std::endl; );
   m_client.PushMsg( l_msg );
   
   // wait for a rendering info from the server
@@ -76,20 +135,22 @@ ClientApp::Initialise()
       {
         l_msgs[0]->DeserializeSetupMsg(l_viewport, l_partialRes, l_res);
         l_wait = false;
+        
+        IFDBG( std::cout << "Received: " << (*l_msgs[0]) << std::endl << std::endl; );
       }
   }
   
-  
-  // SETUP ENGINE
+   // SETUP ENGINE
   if( m_implTech == ImplTech::OPENGL )  
     m_graphics = new GLGraphicsEngine( l_res, l_partialRes, l_viewport );
-  m_graphics->Init();
+  m_graphics->Init(); 
   
   // CLIENT SEND CLIENT READY SIGNAL
   l_msg = std::make_shared<Network::NetworkMsg>();
   l_msg->CreateEngineReadyMsg();
   m_client.PushMsg(l_msg);
   
+  IFDBG( std::cout << "send: " << (*l_msg) << std::endl << std::endl; );
 }
 
 

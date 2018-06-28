@@ -9,22 +9,42 @@
 
 #include <windows.h>
 #include "Client/ClientApp.h"
+#include "Common/Core/Gamewindow.h"
+// int main(int argc, const char * argv[] ) 
+// {
 
-int main(int argc, const char * argv[] ) 
-{
+
+  // ClientApp l_app("localhost", 50000);
+  // l_app.Initialise();
   
-  
-  ClientApp l_app("localhost", 50000);
-  l_app.Initialise();
-  
-  for(;;)
-  {
-    l_app.Update();
-  }
+  // for(;;)
+  // {
+    // l_app.Update();
+  // }
  
   
-  
-  system("pause");
-  return 0;
+  // l_gameWindow.Deinit();
+  // system("pause");
+  // return 0;
 
+// }
+
+
+
+ClientApp g_app("localhost", 50000);
+
+LRESULT CALLBACK WinProc(HWND window, UINT message, WPARAM w_param, LPARAM l_param)
+{
+  LRESULT result = 0;
+	return result;
+}
+
+int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE, PSTR, int) 
+{
+  // create a console to print program output
+  AllocConsole();
+  freopen("CONOUT$", "w", stdout);
+  
+  g_app.SetHinstance(hinstance); 
+  return g_app.Execute();
 }

@@ -82,7 +82,7 @@ RenderControl::ACompositionPass::UpdateSubpartsSettings()
       
       // set the viewport settings and the resolution for this block
       CompositionEntity l_entity;
-      l_entity.m_resolution = glm::vec2(l_currentHeight, l_currentWidth);
+      l_entity.m_resolution = glm::vec2(l_currentWidth, l_currentHeight);
       l_entity.m_viewport = glm::vec4(-l_shiftX, -l_shiftY, l_currentWidth, l_currentHeight);
       m_subpartsSettings[l_index] = std::move(l_entity);
       // set the position and scale of the current block rectangle

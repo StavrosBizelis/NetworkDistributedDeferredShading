@@ -17,7 +17,7 @@ env.Append(LIBS=list1)
 
 
 # in this list we add all the cpp files we need to compile seperated by space
-list=Split('Common/Core/MatrixStack.cpp Common/Core/HighResolutionTimer.cpp Common/Core/MyUtilities.cpp \
+list=Split('Common/Core/MatrixStack.cpp Common/Core/HighResolutionTimer.cpp Common/Core/MyUtilities.cpp Common/Core/GameWindow.cpp \
 Common/Network/NetworkMsg.cpp \
 Common/Shapes/ACone.cpp Common/Shapes/ACube.cpp Common/Shapes/ARect.cpp Common/Shapes/ASkybox.cpp Common/Shapes/ASphere.cpp Common/Shapes/AOpenAssetImportMesh.cpp \
 Common/Textures/ACubemap.cpp Common/Textures/ATexture.cpp \
@@ -31,7 +31,7 @@ OpenGL/Textures/GLTextureFactory.cpp OpenGL/Textures/GLTexture.cpp OpenGL/Textur
 OpenGL/Shapes/GLShapeFactory.cpp OpenGL/Shapes/GLRect.cpp OpenGL/Shapes/GLSphere.cpp OpenGL/Shapes/GLCone.cpp OpenGL/Shapes/GLCube.cpp OpenGL/Shapes/GLSkybox.cpp OpenGL/Shapes/GLOpenAssetImportMesh.cpp \
 OpenGL/GLGraphicsEngine.cpp \
 \
-Server/main.cpp Server/GameWindow.cpp Server/ServerApp.cpp Server/ServerControl.cpp')
+Server/main.cpp Server/ServerApp.cpp Server/ServerControl.cpp')
 
 # this creates a Library(lib)
 #could use env.SharedLibrary(...) to create shared library(dll+lib) - when use this option remember to have exported all the symbols

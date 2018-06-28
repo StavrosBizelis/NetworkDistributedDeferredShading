@@ -2,7 +2,7 @@
 
 
 #include "Server/ServerControl.h"
-#include "Server/Gamewindow.h"
+#include "Common/Core/Gamewindow.h"
 #include "Common/Core/HighResolutionTimer.h"
 #include "Common/Core/MyUtilities.h"
 #include "Common/AGraphicsEngine.h"

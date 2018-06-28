@@ -8,9 +8,10 @@
 #include "OpenGL/Shapes/GLSkybox.h"
 #include "OpenGL/Shapes/GLSphere.h"
 
-
+  
 void GLShapeFactory::Init()
 {
+
   m_cone = std::make_shared<GLCone>();
   m_cone->Create();
   m_cube = std::make_shared<GLCube>();

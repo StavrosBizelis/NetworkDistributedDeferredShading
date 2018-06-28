@@ -1,4 +1,4 @@
-#include "Server/Gamewindow.h"
+#include "Common/Core/Gamewindow.h"
 
 #include "gl/include/glew.h"
 #include "gl/include/wglew.h"

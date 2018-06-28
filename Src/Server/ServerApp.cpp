@@ -238,16 +238,18 @@ ServerApp::Initialise()
   // 7) CLIENTS SEND CLIENT READY SIGNALS *
   
   // SERVER STARTS - READY TO ACCEPT CONNECTIONS
-  IFDBG( std::cout << " Start accepting connections " << std::endl; );
+
+  
+  IFDBG( std::cout << "Start accepting connections " << std::endl; );
   
   m_serverCtrl.AcceptConnections();
   while( m_serverCtrl.GetConnectedClientsCount() < m_clientsCount )
     m_serverCtrl.Update();
-  IFDBG( std::cout << " Stop accepting connections " << std::endl; );
+  IFDBG( std::cout << "Stop accepting connections " << std::endl << std::endl; );
   m_serverCtrl.StopAcceptingConnections();
   
   
-  IFDBG( std::cout << " Start Client Communication " << std::endl; );
+  IFDBG( std::cout << "Start Client Communication " << std::endl; );
   m_serverCtrl.StartClientCommunication();
   
   // SERVER COLLECTS REQUESTS - collecting a request from a specific socket indicates its a rendering client
@@ -265,16 +267,16 @@ ServerApp::Initialise()
           if( l_iter->second[0]->GetType() == Network::MsgType::CLNT_REQUEST )
           {
             // register the socket
-            IFDBG( std::cout << " Register Client: " << l_iter->first << std::endl; );
+            IFDBG( std::cout << "Register Client: " << l_iter->first << std::endl; );
             m_clients.push_back(l_iter->first);
           }
   }
   
   
   
-  IFDBG( std::cout << " Finalize request collection... " << std::endl; );
-  IFDBG( std::cout << " Initialise graphics engine... " << std::endl; );
-  IFDBG( std::cout << " Send  " << std::endl; );
+  IFDBG( std::cout << "Finalize request collection... " << std::endl << std::endl; );
+  IFDBG( std::cout << "Initialise graphics engine... " << std::endl << std::endl;; );
+  IFDBG( std::cout << "Send: " << std::endl; );
   // SERVER GENERATES AND SENDS RENDERING INFO TO CLIENTS
   m_graphics->Init(true, m_clientsCount);
   const std::vector< RenderControl::CompositionEntity >& l_compositionSettings = m_graphics->GetCompositionPass()->GetSubpartsSettings();
@@ -283,11 +285,11 @@ ServerApp::Initialise()
     Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
     l_msg->CreateSetupMsg( l_compositionSettings[i].m_viewport ,l_compositionSettings[i].m_resolution, m_graphics->GetResolution() );
     
-    IFDBG( std::cout << "send " << (*l_msg) << std::endl << "to " << m_clients[i] << "." << std::endl ; );
+    IFDBG( std::cout << "Send: " << (*l_msg) << std::endl << "to " << m_clients[i] << "." << std::endl ; );
     m_serverCtrl.PushMsg(m_clients[i], l_msg);
   }
   
-  // wait to receive ready signals from all clients
+  // // wait to receive ready signals from all clients
   std::set<std::shared_ptr<asio::ip::tcp::socket>> l_clients(m_clients.begin(), m_clients.end());
   while( l_clients.size() > 0 )
   {
@@ -303,7 +305,7 @@ ServerApp::Initialise()
           if( l_iter->second[0]->GetType() == Network::MsgType::CLNT_ENGINE_READY )
           {
             // register the socket
-            IFDBG( std::cout << " Client: " << l_iter->first << "is ready to render." << std::endl; );
+            IFDBG( std::cout << "Client: " << l_iter->first << "is ready to render." << std::endl; );
             l_clients.erase(l_iter->first);
           }
   }

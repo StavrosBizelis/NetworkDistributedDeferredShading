@@ -11,13 +11,13 @@ env.Append(LINKFLAGS=' /DEBUG  /PDB:NDDSClient.pdb')
 # in here we add the library folders
 env.Append(LIBPATH='C:\Program Files (x86)\Microsoft SDKs\Windows\\v7.0A\lib;C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\lib;../Bin/Debug;../Impt/assimp/lib;../Impt/freeimage/lib;../Impt/gl/lib')
 # in this list we add all the libraries we want to link to our code seperated by space
-list1=Split(' kernel32.lib user32.lib gdi32.lib glew32.lib opengl32.lib assimp.lib FreeImage.lib FreeImage.lib glew32.lib')
+list1=Split(' kernel32.lib User32.lib gdi32.lib glew32.lib opengl32.lib assimp.lib FreeImage.lib FreeImage.lib glew32.lib')
 env.Append(LIBS=list1)
 
 
 
 # in this list we add all the cpp files we need to compile seperated by space
-list=Split('Common/Core/MatrixStack.cpp Common/Core/HighResolutionTimer.cpp Common/Core/MyUtilities.cpp \
+list=Split('Common/Core/MatrixStack.cpp Common/Core/HighResolutionTimer.cpp Common/Core/MyUtilities.cpp Common/Core/GameWindow.cpp \
 Common/Network/NetworkMsg.cpp \
 Common/Shapes/ACone.cpp Common/Shapes/ACube.cpp Common/Shapes/ARect.cpp Common/Shapes/ASkybox.cpp Common/Shapes/ASphere.cpp Common/Shapes/AOpenAssetImportMesh.cpp \
 Common/Textures/ACubemap.cpp Common/Textures/ATexture.cpp \

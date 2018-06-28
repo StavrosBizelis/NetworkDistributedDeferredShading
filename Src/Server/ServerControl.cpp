@@ -46,7 +46,7 @@ namespace Network
     std::lock_guard<std::mutex> guard(m_socketsMut);
     m_acceptingNewConnections = true;
     m_waitsForNewConnections = false;
-    IFDBG( std::cout << "Start Accepting connections" << std::endl );
+    IFDBG( std::cout << "Start Accepting connections" << std::endl<< std::endl );
   }
   /***********************************************************************
    *  Method: ServerControl::GetConnectedClientsCount
@@ -80,7 +80,7 @@ namespace Network
     for( std::map< std::shared_ptr<asio::ip::tcp::socket> , SocketState  >::const_iterator l_socket = m_sockets.cbegin(); l_socket != m_sockets.cend(); ++l_socket )
       l_toReturn.push_back(l_socket->first);
     
-    IFDBG( std::cout << "Stop Accepting connections" << std::endl );
+    IFDBG( std::cout << "Stop Accepting connections" << std::endl<< std::endl );
     return l_toReturn;
   }
 
@@ -93,7 +93,7 @@ namespace Network
   void ServerControl::StartClientCommunication()
   {
     m_communicatesWithClients = true;
-    IFDBG( std::cout << "Start Client Communication" << std::endl );
+    IFDBG( std::cout << "Start Client Communication" << std::endl<< std::endl );
   }
   
 
@@ -107,7 +107,7 @@ namespace Network
   bool ServerControl::RegisterSocket( const std::shared_ptr<asio::ip::tcp::socket>& a_socket)
   {
     std::lock_guard<std::mutex> guard(m_socketsMut);
-    
+    m_waitsForNewConnections = false;
     if( m_sockets.find(a_socket) != m_sockets.end() )
     {
       IFDBG( std::cout << "Failed to register Socket. It already exists." << std::endl );
@@ -118,7 +118,7 @@ namespace Network
     m_sizeMsgIn.push_back( l_msg );
     
     m_sockets[a_socket];
-    IFDBG( std::cout << "Register Socket: " << a_socket << std::endl );
+    IFDBG( std::cout << "Register Socket: " << a_socket << std::endl<< std::endl );
     return true;
   }
 
@@ -138,7 +138,7 @@ namespace Network
     // check if it is size message
     if( (*a_message)->GetType() == MsgType::MSG_SIZE )
     {
-      IFDBG( std::cout << "Input Msg Message" << (**a_message) << std::endl );
+      // IFDBG( std::cout << "Input size Message" << (**a_message) << std::endl<< std::endl );
       // if it is a size message - then we should expect another message after it with the given size
       uint32_t l_size;
       (*a_message)->DeserializeSizeMsg( l_size );
@@ -155,7 +155,7 @@ namespace Network
     }
     else
     {
-      IFDBG( std::cout << "Input Message" << (**a_message) << std::endl );
+      // IFDBG( std::cout << "Input Message" << (**a_message) << std::endl<< std::endl );
       // add the message to m_inputMsgs
       m_inMsgMut.lock();
       l_state.m_inputMsgs.push_back( *a_message );
@@ -178,7 +178,7 @@ namespace Network
   {
     std::lock_guard<std::mutex> guard(m_outMsgMut);
     m_sockets[a_socket].m_outputMsgs.push_back( std::move(a_msg) );
-    IFDBG( std::cout << "Push message" << *a_msg << std::endl );
+    // IFDBG( std::cout << "Push message" << *a_msg << std::endl<< std::endl );
   }
 
   /***********************************************************************
@@ -220,7 +220,7 @@ namespace Network
     {
       if( m_acceptingNewConnections && !m_waitsForNewConnections )
       {  
-        IFDBG( std::cout << "Wait for new connections" << std::endl );
+        IFDBG( std::cout << "Wait for new connections" << std::endl<< std::endl; );
         std::shared_ptr<asio::ip::tcp::socket> l_socket = std::make_shared<asio::ip::tcp::socket>( m_io );
         asio::ip::tcp::socket l_sock{m_io};
         m_acceptor.async_accept
@@ -233,7 +233,6 @@ namespace Network
               l_me->RegisterSocket(l_socket);
           }
         );
-        // IFDBG( std::cout << "accepted 1" << std::endl );
         
         m_waitsForNewConnections = true;
       }
@@ -258,10 +257,7 @@ namespace Network
           m_sizeMsgOut->CreateSizeMsg( (uint32_t)(*l_message)->GetSize() );
           uint32_t l_ttt;
           m_sizeMsgOut->DeserializeSizeMsg(l_ttt);
-          std::cout << "size message deseriaized size " << l_ttt << std::endl;
-          
-          std::cout << "actual size " << (uint32_t)(*l_message)->GetSize() << std::endl;
-          
+        
           l_iter->first->send( asio::buffer(m_sizeMsgOut->GetData(), m_sizeMsgOut->GetSize() ) );
           l_iter->first->send( asio::buffer((*l_message)->GetData(), (*l_message)->GetSize() ) );
         }
