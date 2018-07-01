@@ -18,6 +18,7 @@ public:
   
   
   virtual void CreateFromData(char* data, int width, int height, int bpp, bool generateMipMaps = false) = 0;
+  virtual void UpdateData(char* data, int width, int height, int bpp, bool generateMipMaps = false) = 0;
   
   
 protected:

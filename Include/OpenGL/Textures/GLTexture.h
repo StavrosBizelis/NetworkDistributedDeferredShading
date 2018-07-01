@@ -15,6 +15,7 @@ public:
 	~GLTexture();
   
   virtual void CreateFromData(char* data, int width, int height, int bpp, bool generateMipMaps = false);
+  virtual void UpdateData(char* data, int width, int height, int bpp, bool generateMipMaps = false);
 	virtual void Bind(int textureUnit = 0) const;  
   
   virtual void SetSamplerObjectParameter(const unsigned int& parameter, const unsigned int& value);

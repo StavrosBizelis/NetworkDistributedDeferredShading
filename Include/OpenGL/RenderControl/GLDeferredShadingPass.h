@@ -12,8 +12,8 @@ namespace RenderControl
 	{
   protected:
     unsigned int m_fbo;
-
-
+    unsigned int m_pbos[2]; ///< two pbo for alternating the texture retrieval 
+    bool m_pboIndex;
 
     void GeometryPass();
     void LightPass();
@@ -31,6 +31,8 @@ namespace RenderControl
     virtual void UpdateViewportSettings(const glm::vec2& a_resolution, const glm::vec4& a_viewportSettings);
 
     virtual void SetMaterialManager(MaterialControl::IMaterialManager* a_materialManager);
+    
+    virtual bool PackTexture( Network::NetworkMsgPtr& a_outMsg);
 	};
 
 }

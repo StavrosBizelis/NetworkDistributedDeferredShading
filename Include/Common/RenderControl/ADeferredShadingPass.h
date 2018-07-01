@@ -1,9 +1,17 @@
 #pragma once
+
 #include "Common/RenderControl/IRenderPass.h"
 
 #include "Common/MaterialControl/IMaterialManager.h"
 #include <unordered_map>
 #include <set>
+
+namespace Network
+{
+  class NetworkMsg;
+  typedef std::shared_ptr<NetworkMsg> NetworkMsgPtr;
+}
+
 namespace RenderControl
 {
 	enum GeometryPassMaterialFlags
@@ -44,14 +52,18 @@ namespace RenderControl
     
 		virtual bool AddRenderable(IRenderable* a_renderable, const GeometryPassMaterialFlags& a_geometryMaterialFlags = GeometryPassMaterialFlags::SIMPLE_GEOMETRY );
 		
-		inline void RemoveRenderable(IRenderable* a_renderable);
+		void RemoveRenderable(IRenderable* a_renderable);
 		inline bool Exists(IRenderable* a_renderable) const;
 
 		virtual void SetMaterialManager(MaterialControl::IMaterialManager* a_materialManager);
 		/// in a deferred shading technique lights are renderable meshes
 		/// however the material and mesh must be set before adding it to the renderer
 		void AddLight(IRenderable* a_light, const LightTypeFlags& a_lightType);
+		void RemoveLight(IRenderable* a_light);
     virtual void UpdateViewportSettings(const glm::vec2& a_resolution, const glm::vec4& a_viewportSettings) = 0;
+    
+    /// @return the last-1 frame that was rendered
+    virtual bool PackTexture( Network::NetworkMsgPtr& a_outMsg ) = 0;
 		// virtual bool Init() override;
 		// virtual void Render() override;
 		// virtual void OutputOnScreen() override;

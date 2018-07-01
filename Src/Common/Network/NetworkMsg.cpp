@@ -1,5 +1,5 @@
 /***********************************************************************
- * AUTHOR:  <Doublecross>
+ * AUTHOR:  <StavrosBizelis>
  *   FILE: NetworkMsg.cpp
  *   DATE: Fri Jun 15 13:26:36 2018
  *  DESCR: 
@@ -21,8 +21,12 @@ namespace Network
     a_arrOut+=4;
     memcpy(a_arrOut, (void*)&m_lightFlags, 1);
     a_arrOut+=1;
-      
+    ConsistentInt32ToCharArray(m_meshPath.size(), a_arrOut);
+    a_arrOut+=4;
+    memcpy(a_arrOut, &(m_meshPath[0]), m_meshPath.length());
+    a_arrOut += m_meshPath.length();
   }
+  
   void ObjAddInfo::Deserialize(char* a_arrIn)
   {
     m_id = ConsistentCharArrToInt32(a_arrIn);
@@ -33,11 +37,14 @@ namespace Network
     a_arrIn+=4;
     m_lightFlags = (RenderControl::LightTypeFlags)(*a_arrIn);
     a_arrIn+=1;
+    unsigned int l_size = ConsistentCharArrToInt32(a_arrIn);
+    a_arrIn+=4;
+    m_meshPath = std::string(a_arrIn, l_size);
   }
   
   size_t ObjAddInfo::Size() const
   {
-    return sizeof(uint32_t) + sizeof(ObjectType) + sizeof(RenderControl::GeometryPassMaterialFlags) + sizeof(RenderControl::LightTypeFlags);
+    return sizeof(uint32_t) + sizeof(ObjectType) + sizeof(RenderControl::GeometryPassMaterialFlags) + sizeof(RenderControl::LightTypeFlags) + sizeof(uint32_t) + m_meshPath.size();
   }
   
   void ObjTransformInfo::Serialize(char* a_arrOut) const
@@ -158,9 +165,9 @@ namespace Network
    * Returns: void
    * Effects: 
    */
-  void NetworkMsg::CreateRenderResultMsg(char* a_textureData, const uint32_t& a_textureDataSize)
+  void NetworkMsg::CreateRenderResultMsg(char* a_textureData, const uint32_t& a_textureDataSize, const glm::vec2& a_resolution)
   {
-    uint32_t l_size = 5 + a_textureDataSize; /// 1 char type + 1(32bit) a_textureDataSize + a_textureData == (5 + a_textureDataSize) bytes
+    uint32_t l_size = 13 + a_textureDataSize; /// 1 char type + 4(32bit) a_textureDataSize + 8(64bit) resolution + a_textureData == (5 + a_textureDataSize) bytes
     Reset(l_size);
     m_type = MsgType::CLNT_RENDER_RESULT;
     m_size = l_size;
@@ -171,6 +178,13 @@ namespace Network
     ConsistentInt32ToCharArray(a_textureDataSize, l_pos);
     l_pos += 4;
 
+    ConsistentInt32ToCharArray(a_resolution.x, l_pos);
+    l_pos += 4;
+
+    ConsistentInt32ToCharArray(a_resolution.y, l_pos);
+    l_pos += 4;
+
+    
     memcpy(l_pos, a_textureData, a_textureDataSize);
     
   }
@@ -237,11 +251,15 @@ namespace Network
       const std::vector<ObjTransformInfo>& a_lightsToTransform
       )
   {
-    uint32_t l_size = 1 + 
-                      sizeof(uint32_t) + a_objsToAdd.size() * sizeof(ObjAddInfo) + 
-                      sizeof(uint32_t) + a_objsToRemove.size() * sizeof(uint32_t) +
-                      sizeof(uint32_t) + a_objsToTransform.size() * sizeof(ObjTransformInfo) +
-                      sizeof(uint32_t);
+    uint32_t l_size = 1 + sizeof(uint32_t);
+    for(unsigned int i = 0; i < a_objsToAdd.size(); ++i)
+    {
+      l_size += sizeof(uint32_t);
+      l_size += a_objsToAdd[i].Size();
+    }
+    l_size += sizeof(uint32_t) + a_objsToRemove.size() * sizeof(uint32_t) +
+              sizeof(uint32_t) + a_objsToTransform.size() * sizeof(ObjTransformInfo) +
+              sizeof(uint32_t);
     for(unsigned int i = 0; i < a_textureChange.size(); ++i)
     {
       l_size += sizeof(uint32_t); // m_id
@@ -268,6 +286,8 @@ namespace Network
     l_pos += 4;
     for( unsigned int i = 0; i < a_objsToAdd.size(); ++i)
     {
+      ConsistentInt32ToCharArray(a_objsToAdd[i].Size(), l_pos);
+      l_pos += 4;
       a_objsToAdd[i].Serialize(l_pos);
       l_pos += a_objsToAdd[i].Size();      
     }
@@ -311,8 +331,10 @@ namespace Network
     l_pos += 4;
     for( unsigned int i = 0; i < a_lightsToAdd.size(); ++i)
     {
+      ConsistentInt32ToCharArray(a_lightsToAdd[i].Size(), l_pos);
+      l_pos += 4;
       a_lightsToAdd[i].Serialize(l_pos);
-      l_pos += sizeof(ObjAddInfo);      
+      l_pos += a_lightsToAdd[i].Size();
     }
     
     // a_lightsToRemove
@@ -375,7 +397,7 @@ namespace Network
    * Returns: bool
    * Effects: 
    */
-  bool NetworkMsg::DeserializeRenderResultMsg( char* a_outTextureData, uint32_t& a_outTextureDataSize) const 
+  bool NetworkMsg::DeserializeRenderResultMsg( char* a_outTextureData, uint32_t& a_outTextureDataSize, glm::vec2& a_outResolution) const 
   {
     char* l_pos = m_data;
     if(m_size < 5)
@@ -388,11 +410,44 @@ namespace Network
     
     a_outTextureDataSize = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
-    
-    memcpy(a_outTextureData, l_pos, a_outTextureDataSize);
+    a_outResolution.x = ConsistentCharArrToInt32(l_pos);
+    l_pos += 4;
+    a_outResolution.y = ConsistentCharArrToInt32(l_pos);
+    l_pos += 4;
+    if( a_outTextureData )
+      memcpy(a_outTextureData, l_pos, a_outTextureDataSize);
     return true;
   }
 
+    /*
+   *  Method: NetworkMsg::DeserializeRenderResultMsgWithoutCopy
+   *  Params: 
+   * Returns: bool
+   * Effects: 
+   */
+  bool NetworkMsg::DeserializeRenderResultMsgWithoutCopy( char*& a_outTextureData, uint32_t& a_outTextureDataSize, glm::vec2& a_outResolution) const 
+  {
+    char* l_pos = m_data;
+    if(m_size < 5)
+      return false;
+    if( (MsgType)m_data[0] != MsgType::CLNT_RENDER_RESULT )
+      return false;
+    
+    ++l_pos;
+
+    
+    a_outTextureDataSize = ConsistentCharArrToInt32(l_pos);
+    l_pos += 4;
+    a_outResolution.x = ConsistentCharArrToInt32(l_pos);
+    l_pos += 4;
+    a_outResolution.y = ConsistentCharArrToInt32(l_pos);
+    l_pos += 4;
+
+    // NO COPY HERE
+    a_outTextureData = l_pos;
+    return true;
+  }
+  
   /*
    *  Method: NetworkMsg::DeserializeSetupMsg
    *  Params: 
@@ -466,9 +521,15 @@ namespace Network
     // a_outObjsToAdd
     uint32_t l_objectsToAddSize = ConsistentCharArrToInt32(l_pos);
     a_outObjsToAdd.resize(l_objectsToAddSize);
-    l_pos += 4;  
-    memcpy( &a_outObjsToAdd[0], l_pos, l_objectsToAddSize*sizeof(ObjAddInfo) );
-    l_pos += l_objectsToAddSize*sizeof(ObjAddInfo);
+    l_pos += 4;
+    for( unsigned int i = 0; i < l_objectsToAddSize; ++i)
+    {
+      uint32_t l_objAddInfoSize = ConsistentCharArrToInt32(l_pos);
+      l_pos += 4;
+      a_outObjsToAdd[i].Deserialize(l_pos);
+      l_pos += l_objAddInfoSize;
+      
+    }
     
     // a_outObjsToRemove
     uint32_t l_outObjsToRemoveSize = ConsistentCharArrToInt32(l_pos);
@@ -490,8 +551,17 @@ namespace Network
     uint32_t l_outTextureChangeSize = ConsistentCharArrToInt32(l_pos);
     a_outTextureChange.resize(l_outTextureChangeSize);
     l_pos += 4;
-    memcpy( &a_outTextureChange[0], l_pos, l_outTextureChangeSize*sizeof(TextureChangeInfo) );
-    l_pos += l_outTextureChangeSize*sizeof(TextureChangeInfo);
+    for( unsigned int i = 0; i < l_outTextureChangeSize; ++i)
+    {
+      a_outTextureChange[i].m_id = ConsistentCharArrToInt32(l_pos);
+      l_pos += 4;
+      a_outTextureChange[i].m_textureLayer = ConsistentCharArrToInt32(l_pos);
+      l_pos += 4;
+      unsigned int l_textSize = ConsistentCharArrToInt32(l_pos);
+      l_pos += 4;
+      a_outTextureChange[i].m_path = std::string(l_pos, l_textSize);
+      l_pos += l_textSize;
+    }
     
     
     // a_outLightsToAdd
@@ -500,8 +570,10 @@ namespace Network
     l_pos += 4;
     for( unsigned int i = 0; i < l_outLightsToAddSize; ++i)
     {
+      uint32_t l_objAddInfoSize = ConsistentCharArrToInt32(l_pos);
+      l_pos += 4;
       a_outLightsToAdd[i].Deserialize(l_pos);
-      l_pos += sizeof(ObjAddInfo);
+      l_pos += l_objAddInfoSize;
     }
     
     // a_outLightsToRemove

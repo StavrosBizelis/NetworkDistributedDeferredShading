@@ -45,10 +45,9 @@ namespace RenderControl
 		return false;
 	}
 
-	void ADeferredShadingPass::RemoveRenderable(IRenderable * a_renderable)
+	void ADeferredShadingPass::RemoveRenderable(IRenderable* a_renderable)
 	{
-		typedef std::unordered_map< std::shared_ptr<IShaderProgram>, std::vector<IRenderable*> >::iterator Iter;
-		for(Iter l_iter = m_toRender.begin(); l_iter != m_toRender.end(); ++l_iter )
+		for(std::unordered_map< std::shared_ptr<IShaderProgram>, std::vector<IRenderable*> >::iterator l_iter = m_toRender.begin(); l_iter != m_toRender.end(); ++l_iter )
 		{
 			std::vector<IRenderable*>::iterator l_iter2 = std::find(l_iter->second.begin(), l_iter->second.end(), a_renderable);
 			if (l_iter2 != l_iter->second.end())
@@ -58,8 +57,7 @@ namespace RenderControl
 
 	bool ADeferredShadingPass::Exists(IRenderable * a_renderable) const
 	{
-		typedef std::unordered_map< std::shared_ptr<IShaderProgram>, std::vector<IRenderable*> >::const_iterator Iter;
-		for (Iter l_iter = m_toRender.cbegin(); l_iter != m_toRender.cend(); ++l_iter)
+		for (std::unordered_map< std::shared_ptr<IShaderProgram>, std::vector<IRenderable*> >::const_iterator l_iter = m_toRender.cbegin(); l_iter != m_toRender.cend(); ++l_iter)
 		{
 			std::vector<IRenderable*>::const_iterator l_iter2 = std::find(l_iter->second.cbegin(), l_iter->second.cend(), a_renderable);
 			if (l_iter2 != l_iter->second.end())
@@ -94,6 +92,10 @@ namespace RenderControl
 		m_lights.insert(a_light);
 	}
 
+  void ADeferredShadingPass::RemoveLight(IRenderable* a_light)
+  {
+    m_lights.erase(a_light);
+  }
 
 
 }

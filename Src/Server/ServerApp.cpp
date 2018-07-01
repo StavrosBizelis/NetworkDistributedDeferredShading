@@ -9,6 +9,7 @@
 
 #include "OpenGL/GLGraphicsEngine.h"
 #include "Common/Core/MyUtilities.h"
+#include "Common/Textures/ATexture.h"
 #include <algorithm>
 /***********************************************************************
  *  Method: ServerApp::ServerApp
@@ -192,7 +193,35 @@ ServerApp::Update()
   /////////////////////////////////////////////
   // do here what need to be done /////////////
   /////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////// m_serverCtrl.Update();
+  // 1) SERVER SENDS SCENE UPDATE MESSAGE
+  // 2) CLIENTS UPDATE SCENE
+  // 3) CLIENTS RENDER SCENE (GEOMETRY PASS)
+  // 4) CLIENTS RENDER LIGHTS
+  // 5) CLIENTS SEND BACK THE RENDERED TEXTURES *
+  // 6) SERVER RENDERS THE RESULT ON SCREEN
+  m_serverCtrl.Update();
+  
+  const std::vector< RenderControl::CompositionEntity >& l_compEntity = m_graphics->GetCompositionPass()->GetSubpartsSettings();
+  std::vector< SceneControl::MeshSceneNode* >& l_rects = m_graphics->GetCompositionPass()->GetSubpartsRects();
+  
+  std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<Network::NetworkMsgPtr> > l_msgs = m_serverCtrl.GetMsgs();
+  for( std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<Network::NetworkMsgPtr> >::iterator l_iter = l_msgs.begin(); l_iter != l_msgs.end(); ++l_iter)
+  {
+    // for each socket
+    // check the last message
+    Network::NetworkMsgPtr l_msg = l_iter->second.back();
+    if( l_msg->GetType() == Network::MsgType::CLNT_RENDER_RESULT )
+    {
+      char* l_textureData;
+      uint32_t l_textureSize;
+      glm::vec2 l_resolution;
+      l_msg->DeserializeRenderResultMsgWithoutCopy(l_textureData, l_textureSize, l_resolution);
+      unsigned int l_index = m_clients[l_iter->first];
+      std::shared_ptr<ATexture> l_text = std::dynamic_pointer_cast< ATexture > ( l_rects[l_index]->GetTexture(0) );
+      if( l_text )
+        l_text->UpdateData(l_textureData, l_resolution.x, l_resolution.y, 24, false);
+    }
+  }
   m_graphics->Update(m_dt);
   
   m_dt = m_pHighResolutionTimer->Elapsed();
@@ -253,7 +282,8 @@ ServerApp::Initialise()
   m_serverCtrl.StartClientCommunication();
   
   // SERVER COLLECTS REQUESTS - collecting a request from a specific socket indicates its a rendering client
-  while( m_clients.size() < m_clientsCount )
+  std::vector<std::shared_ptr<asio::ip::tcp::socket> > l_clients;
+  while( l_clients.size() < m_clientsCount )
   {
     m_serverCtrl.Update();
     // get any new messages
@@ -261,14 +291,14 @@ ServerApp::Initialise()
     // for each socket that has sent a message
     for( std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<Network::NetworkMsgPtr> >::iterator l_iter = l_msgs.begin(); l_iter != l_msgs.end(); ++l_iter)
       // if this socket is not registered and
-      if( std::find(m_clients.begin(), m_clients.end(), l_iter->first ) == m_clients.end() )   
+      if( std::find(l_clients.begin(), l_clients.end(), l_iter->first ) == l_clients.end() )   
         // there is only one message from each socket, a Network::MsgType::CLNT_REQUEST
         if( l_iter->second.size() == 1 )
           if( l_iter->second[0]->GetType() == Network::MsgType::CLNT_REQUEST )
           {
             // register the socket
             IFDBG( std::cout << "Register Client: " << l_iter->first << std::endl; );
-            m_clients.push_back(l_iter->first);
+            l_clients.push_back(l_iter->first);
           }
   }
   
@@ -285,12 +315,14 @@ ServerApp::Initialise()
     Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
     l_msg->CreateSetupMsg( l_compositionSettings[i].m_viewport ,l_compositionSettings[i].m_resolution, m_graphics->GetResolution() );
     
-    IFDBG( std::cout << "Send: " << (*l_msg) << std::endl << "to " << m_clients[i] << "." << std::endl ; );
-    m_serverCtrl.PushMsg(m_clients[i], l_msg);
+    IFDBG( std::cout << "Send: " << (*l_msg) << std::endl << "to " << l_clients[i] << "." << std::endl ; );
+    m_serverCtrl.PushMsg(l_clients[i], l_msg);
+    m_clients[l_clients[i]] = i;
   }
   
+  
   // // wait to receive ready signals from all clients
-  std::set<std::shared_ptr<asio::ip::tcp::socket>> l_clients(m_clients.begin(), m_clients.end());
+  std::set<std::shared_ptr<asio::ip::tcp::socket>> l_clientsSet(l_clients.begin(), l_clients.end());
   while( l_clients.size() > 0 )
   {
     m_serverCtrl.Update();
@@ -299,62 +331,17 @@ ServerApp::Initialise()
     // for each socket that has sent a message
     for( std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<Network::NetworkMsgPtr> >::iterator l_iter = l_msgs.begin(); l_iter != l_msgs.end(); ++l_iter)
       // if this socket is registered and
-      if( l_clients.find( l_iter->first ) != l_clients.end() )
+      if( l_clientsSet.find( l_iter->first ) != l_clientsSet.end() )
         // there is only one message from each socket, a Network::MsgType::CLNT_ENGINE_READY
         if( l_iter->second.size() == 1 )
           if( l_iter->second[0]->GetType() == Network::MsgType::CLNT_ENGINE_READY )
           {
             // register the socket
             IFDBG( std::cout << "Client: " << l_iter->first << "is ready to render." << std::endl; );
-            l_clients.erase(l_iter->first);
+            l_clientsSet.erase(l_iter->first);
           }
   }
   
-  
-/*
-  m_graphics->GetDeferredRenderPass()->GetCamera()->Set(glm::vec3(5, 0, 5) , glm::vec3(0), glm::vec3(0,1,0) );
-  // m_graphics->GetSceneManager()->AddCameraSceneNode( m_graphics->GetDeferredRenderPass()->GetCamera() );
-  
-  std::shared_ptr<IMesh> l_mesh = m_graphics->GetShapeFactory()->GetOpenAssetImportMesh("..\\Assets\\Models\\Asteroid\\asteroid.obj");
-  if( l_mesh )
-  {
-    SceneControl::MeshSceneNode* l_asteroid = m_graphics->GetSceneManager()->AddMeshSceneNode( l_mesh );
-    l_asteroid->SetTexture(0, m_graphics->GetTextureFactory()->GetTexture("..\\Assets\\Models\\Asteroid\\diffuse.jpg") );
-    l_asteroid->SetTexture(1, m_graphics->GetTextureFactory()->GetTexture("..\\Assets\\Models\\Asteroid\\normal.jpg") );
-    l_asteroid->SetPersistentUniform(0, "UDiffuse", glm::vec3(0.6f));
-    l_asteroid->SetPersistentUniform(0, "USpecular", glm::vec3(0.2f));
-    l_asteroid->SetPersistentUniform(0, "UHardness", 0.01f);
-    m_graphics->GetDeferredRenderPass()->AddRenderable(l_asteroid, (RenderControl::GeometryPassMaterialFlags)(RenderControl::GeometryPassMaterialFlags::DIFFUSE_MAP | RenderControl::GeometryPassMaterialFlags::NORMAL_MAP));
-  }
-  
-  std::shared_ptr<IMesh> l_skybox = m_graphics->GetShapeFactory()->GetSkybox();
-  if( l_skybox )
-  {
-    SceneControl::MeshSceneNode* l_sky = m_graphics->GetSceneManager()->AddMeshSceneNode( l_skybox );
-    std::shared_ptr<ITexture> l_cubemap = m_graphics->GetTextureFactory()->GetCubemap("..\\Assets\\Skybox\\spacebox\\X+.jpg", "..\\Assets\\Skybox\\spacebox\\X-.jpg",
-                                                                                      "..\\Assets\\Skybox\\spacebox\\Y-.jpg", "..\\Assets\\Skybox\\spacebox\\Y+.jpg", 
-                                                                                      "..\\Assets\\Skybox\\spacebox\\Z+.jpg", "..\\Assets\\Skybox\\spacebox\\Z-.jpg");
-    if( l_cubemap )
-      l_sky->SetTexture(0, l_cubemap ); 
-    
-    m_graphics->GetDeferredRenderPass()->AddRenderable(l_sky, (RenderControl::GeometryPassMaterialFlags)(RenderControl::GeometryPassMaterialFlags::SKYBOX));
-  }
-  
-  
-  SceneControl::DirectionalLightSceneNode* l_light = m_graphics->GetSceneManager()->AddDirectionalLightSceneNode( m_graphics->GetShapeFactory()->GetRectangle() );
-  if( l_light )
-  { 
-    l_light->Init();
-    l_light->SetRelativeRot(glm::rotate(l_light->GetRelativeRot(), 110.f, glm::vec3(0.f, 0.f, 1.f)));
-    l_light->SetRelativeRot(glm::rotate(l_light->GetRelativeRot(), 10.f, glm::vec3(1.f, 0.f, 0.f)));
-
-    l_light->SetSpecular(glm::vec3(1, 1, 1));
-    l_light->SetDiffuse(glm::vec3(1, .9f, 1) );
-    l_light->SetAmbient(glm::vec3(0.1, 0.05, 0.1)*glm::vec3(0.08));
-    m_graphics->GetDeferredRenderPass()->AddLight(l_light, RenderControl::LightTypeFlags::DIRECTIONAL_LIGHT);
-  }
-*/
-
 }
 
 

@@ -1,8 +1,10 @@
 #include "Common/SceneControl/SceneNode.h"
 #include "glm/gtc/matrix_transform.hpp"
+#include <glm/gtx/quaternion.hpp>
 namespace SceneControl
 {
-	
+	std::map<unsigned int, SceneNode*> SceneNode::s_idRegistry;
+  
 	SceneNode::SceneNode(SceneNode* a_parent)
 		: m_parent(a_parent), m_id(0), m_posRel(0.f), m_orientRel(), m_scaleRel(1.f), m_dirty(true)
 	{
@@ -15,6 +17,8 @@ namespace SceneControl
 	{
 		for (std::set<SceneNode*>::iterator l_iter = m_children.begin(); l_iter != m_children.end(); ++l_iter)
 			if (*l_iter) delete (*l_iter);
+    if( m_id != 0 )
+      s_idRegistry.erase(m_id);
 		// noneed to clear here
 		// m_children.clear();
 	}
@@ -65,6 +69,12 @@ namespace SceneControl
 	{
 		return m_orientRel;
 	}
+  
+  glm::vec3 SceneNode::GetRelativeEulerAngles() const
+  {
+    glm::quat l_quat = glm::toQuat(GetRelativeRot());
+    return glm::vec3(glm::pitch(l_quat), glm::yaw(l_quat) ,glm::roll(l_quat)  );
+  }
 
 	glm::vec3 SceneNode::GetRelativeScale() const
 	{
@@ -96,6 +106,12 @@ namespace SceneControl
 			return m_orientRel;
 		return  m_parent->GetRot() * m_orientRel;
 	}
+  glm::vec3 SceneNode::GetEulerAngles() const
+  {
+    glm::quat l_quat = glm::toQuat(GetRot());
+    return glm::vec3(glm::pitch(l_quat), glm::yaw(l_quat) ,glm::roll(l_quat) );
+  }
+  
 
 	glm::vec3 SceneNode::GetScale() const
 	{

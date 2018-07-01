@@ -5,6 +5,7 @@
  *  DESCR: 
  ***********************************************************************/
 #include "OpenGL/RenderControl/GLDeferredShadingPass.h"
+#include "Common/Network/NetworkMsg.h"
 #include "gl/include/glew.h"
 #include "gl/gl.h"
 #include <iostream>
@@ -14,8 +15,10 @@
  * Effects: 
  */
 RenderControl::GLDeferredShadingPass::GLDeferredShadingPass(const glm::vec2 &a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings)
-  : ADeferredShadingPass(a_resolution, a_partialResolution, a_viewportSettings), m_fbo(0)
+  : ADeferredShadingPass(a_resolution, a_partialResolution, a_viewportSettings), m_fbo(0), m_pboIndex(false)
 {
+  m_pbos[0] = 0;
+  m_pbos[1] = 0;
   m_outputTextures.resize(5, 0);
   m_outputSamplers.resize(5, 0);
 }
@@ -34,6 +37,8 @@ RenderControl::GLDeferredShadingPass::~GLDeferredShadingPass()
 
 bool RenderControl::GLDeferredShadingPass::Init()
 {
+    glGenBuffers(2, &m_pbos[0]);
+  
   
 		// init camera
 		std::shared_ptr<CCamera> l_cam = GetCamera();
@@ -82,7 +87,7 @@ bool RenderControl::GLDeferredShadingPass::Init()
 
 		// final image
 		glBindTexture(GL_TEXTURE_2D, m_outputTextures[3]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, (GLsizei)l_res.x, (GLsizei)l_res.y, 0, GL_RGB, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, (GLsizei)l_res.x, (GLsizei)l_res.y, 0, GL_RGB, GL_FLOAT, NULL);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, (GLuint)m_outputTextures[3], 0);
 
 
@@ -293,6 +298,15 @@ void RenderControl::GLDeferredShadingPass::Clear()
     glDeleteFramebuffers(1, &m_fbo);
     m_fbo = 0;
   }
+  for( unsigned int i = 0; i < 2; ++i)
+  {
+    if( m_pbos[i] != 0 )
+    {
+      glDeleteBuffers(1,&m_pbos[i]);
+      m_pbos[i] = 0;
+    }
+  }
+  
   for (int i = 0; i < 5; ++i)
   {
     if (m_outputTextures[i])
@@ -395,6 +409,36 @@ void RenderControl::GLDeferredShadingPass::SetMaterialManager(MaterialControl::I
       "..\\Assets\\GLSL_shaders\\DirectionalLightShader.vert",
       "..\\Assets\\GLSL_shaders\\DirectionalLightShader.frag"
     );
+  
+}
+
+bool RenderControl::GLDeferredShadingPass::PackTexture( Network::NetworkMsgPtr& a_outMsg)
+{
+  m_pboIndex = !m_pboIndex;
+  bool l_nextIndex = !m_pboIndex;
+  
+  glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+  glReadBuffer(GL_COLOR_ATTACHMENT0 + m_attachmentIndex);
+  
+  
+  glBindBuffer(GL_PIXEL_PACK_BUFFER, m_pbos[m_pboIndex] );
+  glReadPixels(0, 0, (GLsizei)m_resolutionPart.x, (GLsizei)m_resolutionPart.y, GL_BGR, GL_UNSIGNED_BYTE, 0);  // returns immediately
+  
+
+  glBindBuffer(GL_PIXEL_PACK_BUFFER, m_pbos[l_nextIndex]);
+  char* l_ptr = (char*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+  
+  if(l_ptr)
+  {
+    a_outMsg->CreateRenderResultMsg(l_ptr, m_resolutionPart.x * m_resolutionPart.y * 3, m_resolutionPart );
+    glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+  }
+  
+
+  // back to conventional pixel operation
+  glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+  
+  return l_ptr != nullptr;
   
 }
 

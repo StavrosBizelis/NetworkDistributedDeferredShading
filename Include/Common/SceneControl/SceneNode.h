@@ -42,15 +42,47 @@ namespace SceneControl
 		std::vector< std::unordered_map<std::string, glm::mat3> > m_materialUniformsMat3;
 		std::vector< std::unordered_map<std::string, glm::mat4 > > m_materialUniformsMat4;
 
+    static std::map<unsigned int, SceneNode*> s_idRegistry;
+    
 	public:
 		
 		SceneNode(SceneNode* a_parent = nullptr);
 
 		virtual ~SceneNode();
 		
-    inline void SetID(const unsigned int& a_id){ m_id = a_id;}
+    /// optional id to set for quick retrieval of the scene node
+    /// an id can be any unsigned int number except 0
+    /// use 0 to remove from the id registry
+    /// not two objects can have the same id
+    inline bool SetID(const unsigned int& a_id)
+    { 
+      if( a_id == 0 )
+      {
+        s_idRegistry.erase(a_id);
+        return true;
+      }
+      if( s_idRegistry.find(a_id) == s_idRegistry.end() && a_id != 0)
+      {
+        m_id = a_id;
+        s_idRegistry[m_id] = this;
+        return true;
+      }
+      return false;
+    }
+    /// an id can be any unsigned int number except 0
+    /// not two objects can have the same id
     inline unsigned int GetID(){ return m_id;}
-
+    
+    /// @return the SceneNode* with the given id - return nullptr if no scenenode has this id
+    static SceneNode* GetByID(const unsigned int& a_id)
+    {
+      if( a_id == 0)
+        return nullptr;        
+      std::map<unsigned int, SceneNode*>::iterator l_iter = s_idRegistry.find(a_id);
+      if( l_iter == s_idRegistry.end() )
+        return nullptr;        
+      return l_iter->second;
+    }
 
 		inline void AddChild(SceneNode* a_node) 
 		{ 
@@ -67,7 +99,7 @@ namespace SceneControl
     { 
       if( m_children.erase(a_node) ) 
       { 
-        delete a_node; 
+        delete a_node;
         return true;
       }
       else return false;
@@ -145,12 +177,14 @@ namespace SceneControl
 		// Getters
 		virtual glm::vec3 GetRelativePos() const;
 		virtual glm::mat4 GetRelativeRot() const;
+		virtual glm::vec3 GetRelativeEulerAngles() const;
 		virtual glm::vec3 GetRelativeScale() const;
 
 		virtual glm::vec3 GetPos() const;
 		virtual glm::mat4 GetRot() const;
+		virtual glm::vec3 GetEulerAngles() const;
 		virtual glm::vec3 GetScale() const;
-
+    
 
 
 		// Setters

@@ -31,7 +31,7 @@ private:
   glm::vec2 m_dimensions;
   
   Network::ServerControl m_serverCtrl;
-  std::vector<std::shared_ptr<asio::ip::tcp::socket> > m_clients;
+  std::map<std::shared_ptr<asio::ip::tcp::socket>, unsigned int> m_clients;
   AGraphicsEngine* m_graphics;
   ImplTech m_implTech;
   unsigned int m_clientsCount;
