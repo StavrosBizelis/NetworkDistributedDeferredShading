@@ -178,15 +178,13 @@ namespace Network
     ConsistentInt32ToCharArray(a_textureDataSize, l_pos);
     l_pos += 4;
 
-    ConsistentInt32ToCharArray(a_resolution.x, l_pos);
+    ConsistentInt32ToCharArray((uint32_t)a_resolution.x, l_pos);
     l_pos += 4;
 
-    ConsistentInt32ToCharArray(a_resolution.y, l_pos);
+    ConsistentInt32ToCharArray((uint32_t)a_resolution.y, l_pos);
     l_pos += 4;
 
-    
     memcpy(l_pos, a_textureData, a_textureDataSize);
-    
   }
 
   /*

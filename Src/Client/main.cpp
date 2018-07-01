@@ -35,8 +35,7 @@ ClientApp g_app("localhost", 50000);
 
 LRESULT CALLBACK WinProc(HWND window, UINT message, WPARAM w_param, LPARAM l_param)
 {
-  LRESULT result = 0;
-	return result;
+  return g_app.ProcessEvents(window, message, w_param, l_param);
 }
 
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE, PSTR, int) 

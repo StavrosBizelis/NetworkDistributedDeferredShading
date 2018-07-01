@@ -42,6 +42,7 @@ public:
   ClientApp( const std::string &a_hostName, const unsigned int &a_hostPort, const ImplTech& a_implTech = ImplTech::OPENGL);
   ~ClientApp();
   
+  LRESULT ProcessEvents(HWND window,UINT message, WPARAM w_param, LPARAM l_param);
   WPARAM Execute();
   void SetHinstance(HINSTANCE hinstance);
   

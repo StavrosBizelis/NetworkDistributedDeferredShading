@@ -19,7 +19,7 @@
 ClientApp::ClientApp( const std::string &a_hostName, const unsigned int &a_hostPort, const ImplTech& a_implTech)
   :m_implTech(a_implTech), m_client(a_hostName, a_hostPort), m_graphics(nullptr)
 {
-
+  m_renderResultMsg = std::make_shared<Network::NetworkMsg>();
 }
 
 
@@ -86,6 +86,77 @@ WPARAM ClientApp::Execute()
   
 }
 
+
+
+/***********************************************************************
+ *  Method: ClientApp::ProcessEvents
+ *  Params: HWND window, UINT message, WPARAM w_param, LPARAM l_param
+ * Returns: LRESULT
+ * Effects: 
+ ***********************************************************************/
+LRESULT
+ClientApp::ProcessEvents(HWND window, UINT message, WPARAM w_param, LPARAM l_param)
+{
+  LRESULT result = 0;
+
+	switch (message) {
+  case WM_ACTIVATE:
+	{
+    switch(LOWORD(w_param))
+		{
+			case WA_ACTIVE:
+			case WA_CLICKACTIVE:
+				
+				break;
+			case WA_INACTIVE:
+				
+				break;
+		}
+		break;
+	}
+
+	case WM_SIZE:
+			RECT dimensions;
+			GetClientRect(window, &dimensions);
+			m_gameWindow.SetDimensions(dimensions);
+      m_graphics->SetResolution(glm::vec2( glm::abs(dimensions.right - dimensions.left) , glm::abs(dimensions.top - dimensions.bottom) ) );
+      
+		break;
+
+	case WM_PAINT:
+		PAINTSTRUCT ps;
+		BeginPaint(window, &ps);
+		EndPaint(window, &ps);
+		break;
+
+	case WM_KEYDOWN:
+		switch(w_param) {
+		case VK_ESCAPE:
+			PostQuitMessage(0);
+			break;
+		}
+		break;
+	case WM_KEYUP:
+		switch (w_param) {
+      case VK_SPACE: 
+			 break;
+      case 'W': 
+			 break;
+		}
+		break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+
+    default:
+      result = DefWindowProc(window, message, w_param, l_param);
+		break;
+  }
+  return result;
+
+}
+
+
 /***********************************************************************
  *  Method: ClientApp::Initialise
  *  Params: 
@@ -138,7 +209,7 @@ ClientApp::Initialise()
    // SETUP ENGINE
   if( m_implTech == ImplTech::OPENGL )  
     m_graphics = new GLGraphicsEngine( l_res, l_partialRes, l_viewport );
-  m_graphics->Init(); 
+  m_graphics->Init(false); 
   
   // CLIENT SEND CLIENT READY SIGNAL
   l_msg = std::make_shared<Network::NetworkMsg>();

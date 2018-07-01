@@ -417,7 +417,7 @@ bool RenderControl::GLDeferredShadingPass::PackTexture( Network::NetworkMsgPtr& 
   m_pboIndex = !m_pboIndex;
   bool l_nextIndex = !m_pboIndex;
   
-  glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo);
   glReadBuffer(GL_COLOR_ATTACHMENT0 + m_attachmentIndex);
   
   
@@ -433,9 +433,16 @@ bool RenderControl::GLDeferredShadingPass::PackTexture( Network::NetworkMsgPtr& 
     a_outMsg->CreateRenderResultMsg(l_ptr, m_resolutionPart.x * m_resolutionPart.y * 3, m_resolutionPart );
     glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
   }
-  
-
-  // back to conventional pixel operation
+  else
+  {
+    char* l_tmp = new char[3];
+    l_tmp[0] = 0;
+    l_tmp[1] = 0;
+    l_tmp[2] = 0;
+    a_outMsg->CreateRenderResultMsg(l_tmp, 3, glm::vec2(1) );
+    delete l_tmp;
+  }
+  // // back to conventional pixel operation
   glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
   
   return l_ptr != nullptr;
