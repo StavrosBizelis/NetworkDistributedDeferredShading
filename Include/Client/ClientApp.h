@@ -5,12 +5,20 @@
 #include "Common/Core/MyUtilities.h"
 
 #include "Common/Core/Gamewindow.h"
+#include "Common/Core/HighResolutionTimer.h"
 
 class ClientApp
 {
 private:
   HINSTANCE m_hInstance;
   GameWindow m_gameWindow;
+  
+  CHighResolutionTimer *m_pHighResolutionTimer;
+  double m_dt;
+  double m_elapsedTime;   ///< used to count frames per second
+  unsigned int m_frameCount;
+  bool m_appActive;
+  glm::vec2 m_dimensions;
   
   ImplTech m_implTech;
   Network::ClientControl m_client;

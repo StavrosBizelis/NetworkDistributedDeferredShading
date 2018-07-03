@@ -210,18 +210,21 @@ ServerApp::Update()
     // for each socket
     // check the last message
     Network::NetworkMsgPtr l_msg = l_iter->second.back();
+    IFDBG( std::cout << "Received Message of type" << *l_msg << std::endl; );
     if( l_msg->GetType() == Network::MsgType::CLNT_RENDER_RESULT )
     {
       char* l_textureData;
       uint32_t l_textureSize;
       glm::vec2 l_resolution;
       l_msg->DeserializeRenderResultMsgWithoutCopy(l_textureData, l_textureSize, l_resolution);
+      IFDBG( std::cout << "Received Proper Message" << (*l_msg).GetSize() << std::endl; );
       unsigned int l_index = m_clients[l_iter->first];
       std::shared_ptr<ATexture> l_text = std::dynamic_pointer_cast< ATexture > ( l_rects[l_index]->GetTexture(0) );
       if( l_text )
         l_text->UpdateData(l_textureData, l_resolution.x, l_resolution.y, 24, false);
     }
   }
+  IFDBG( std::cout << "Stopped Receiving Messages" << std::endl<< std::endl; );
   m_graphics->Update(m_dt);
   
   m_dt = m_pHighResolutionTimer->Elapsed();
@@ -323,7 +326,7 @@ ServerApp::Initialise()
   
   // // wait to receive ready signals from all clients
   std::set<std::shared_ptr<asio::ip::tcp::socket>> l_clientsSet(l_clients.begin(), l_clients.end());
-  while( l_clients.size() > 0 )
+  while( l_clientsSet.size() > 0 )
   {
     m_serverCtrl.Update();
     // get any new messages
@@ -341,6 +344,8 @@ ServerApp::Initialise()
             l_clientsSet.erase(l_iter->first);
           }
   }
+  IFDBG( std::cout << "All clients ready." << std::endl; );
+  
   
 }
 

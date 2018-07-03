@@ -75,7 +75,7 @@ namespace Network
     */
     bool StartCommunication();
     
-    void RegisterMessage( const std::list< NetworkMsgPtr >::iterator&  a_message ); ///< do not use - used by internal lambdas
+    void RegisterMessage( const std::list< NetworkMsgPtr >::iterator&  a_message, const std::size_t& a_size ); ///< do not use - used by internal lambdas
     
     /**
     *   @brief send message to client with given id

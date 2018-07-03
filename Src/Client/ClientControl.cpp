@@ -76,7 +76,7 @@ namespace Network
    * Effects: 
    ***********************************************************************/
   void 
-  ClientControl::RegisterMessage( const std::list< NetworkMsgPtr >::iterator& a_message )
+  ClientControl::RegisterMessage( const std::list< NetworkMsgPtr >::iterator& a_message, const std::size_t& a_size )
   {
     // allow the socket to poll again
     SocketState& l_state = m_socketState;
@@ -95,13 +95,21 @@ namespace Network
       std::lock_guard<std::mutex> guard(m_expectingMessageMut);
       l_state.m_expectingMessage.first = true;
       l_state.m_expectingMessage.second = l_msg; 
+      l_state.m_expectedMessageCompleteness.first = 0;  // zero completeness for the next message
+      l_state.m_expectedMessageCompleteness.second = l_size;  // this is the goal
     }
     else
     {
       // IFDBG( std::cout << "Input Message" << (**a_message) << std::endl );
       // add the message to m_inputMsgs
-      std::lock_guard<std::mutex> guard(m_inMsgMut);
-      l_state.m_inputMsgs.push_back( *a_message );
+      l_state.m_expectedMessageCompleteness.first += a_size;
+      if(l_state.m_expectedMessageCompleteness.first == l_state.m_expectedMessageCompleteness.second)
+      {
+        std::lock_guard<std::mutex> guard(m_inMsgMut);
+        l_state.m_inputMsgs.push_back( *a_message );
+        m_socketState.m_expectingMessage.first = false;
+        l_state.m_expectedMessageCompleteness.first = 0;
+      }
     }
 
     // remove message from pre input messages
@@ -118,7 +126,6 @@ namespace Network
   void
   ClientControl::PushMsg(const NetworkMsgPtr &a_msg)
   {
-    std::lock_guard<std::mutex> guard(m_outMsgMut);
     m_socketState.m_outputMsgs.push_back(a_msg);
     
     // IFDBG( std::cout << "Push message" << *a_msg << std::endl );
@@ -159,9 +166,11 @@ namespace Network
       
       for( std::vector<NetworkMsgPtr>::iterator l_message = l_toSend.begin(); l_message != l_toSend.end(); ++l_message )
       {
+        // IFDBG( std::cout << "Message to send size: " << (*l_message)->GetSize() << " "; );
         m_sizeMsgOut->CreateSizeMsg( (uint32_t)(*l_message)->GetSize() );
         m_socket->send( asio::buffer(m_sizeMsgOut->GetData(), m_sizeMsgOut->GetSize() ) );
         m_socket->send( asio::buffer((*l_message)->GetData(), (*l_message)->GetSize() ) );
+        // IFDBG( std::cout << "Message sent: " << (*l_message)->GetSize() << " "; );
       }
       
       
@@ -181,20 +190,21 @@ namespace Network
           std::lock_guard<std::mutex> guard(m_expectingMessageMut);
           
           m_preInMsgMut.lock();
-          m_preInputMsgs.push_front( std::move(m_socketState.m_expectingMessage.second) );
+          m_preInputMsgs.push_front( m_socketState.m_expectingMessage.second );
           m_preInMsgMut.unlock();
-          
-          m_socketState.m_expectingMessage.first = false;
         }
         
         m_preInMsgMut.lock();
         std::list< NetworkMsgPtr >::iterator l_preInputMessage = m_preInputMsgs.begin();
         m_preInMsgMut.unlock();
-        m_socket->async_receive( asio::buffer((*l_preInputMessage)->GetData(), (*l_preInputMessage)->GetSize() ),
+        m_socket->async_receive( asio::buffer((*l_preInputMessage)->GetData()+m_socketState.m_expectedMessageCompleteness.first, (*l_preInputMessage)->GetSize()-m_socketState.m_expectedMessageCompleteness.first ),
                                  [ l_me, l_preInputMessage](const std::error_code& a_error, std::size_t length )
                                  {
                                    if (!a_error)
-                                     l_me->RegisterMessage(l_preInputMessage);
+                                   {
+                                     // IFDBG( std::cout << "ACTUALLY RECEIVED LENGTH " << length << std::endl<< std::endl; );
+                                     l_me->RegisterMessage(l_preInputMessage, length);
+                                   }
                                  }
                                );
         
@@ -202,5 +212,7 @@ namespace Network
     }
     m_io.run();
   }
+  
+  
 
 }

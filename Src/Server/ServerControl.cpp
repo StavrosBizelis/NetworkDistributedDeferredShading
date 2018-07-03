@@ -115,7 +115,7 @@ namespace Network
     }
     NetworkMsgPtr l_msg = std::make_shared<NetworkMsg>();
     l_msg->CreateSizeMsg(0);
-    m_sizeMsgIn.push_back( l_msg );
+    // m_sizeMsgIn.push_back( l_msg );
     
     m_sockets[a_socket];
     IFDBG( std::cout << "Register Socket: " << a_socket << std::endl<< std::endl );
@@ -129,7 +129,7 @@ namespace Network
    * Returns: void
    * Effects: 
    ***********************************************************************/
-  void ServerControl::RegisterMessage(const std::shared_ptr<asio::ip::tcp::socket>& a_socket, const std::list< NetworkMsgPtr >::iterator& a_message)
+  void ServerControl::RegisterMessage(const std::shared_ptr<asio::ip::tcp::socket>& a_socket, const std::list< NetworkMsgPtr >::iterator& a_message, const std::size_t& a_size)
   { 
     // allow the socket to poll again
     SocketState& l_state = m_sockets[a_socket];
@@ -148,18 +148,26 @@ namespace Network
       std::lock_guard<std::mutex> guard(m_expectingMessageMut);
       l_state.m_expectingMessage.first = true;
       l_state.m_expectingMessage.second = l_msg;
+      l_state.m_expectedMessageCompleteness.first = 0;  // zero completeness for the next message
+      l_state.m_expectedMessageCompleteness.second = l_size;  // this is the goal
       
       m_preInMsgMut.lock();
-      m_sizeMsgIn.push_front(*a_message);
+      // m_sizeMsgIn.push_front(*a_message);
       m_preInMsgMut.unlock();
     }
     else
     {
       // IFDBG( std::cout << "Input Message" << (**a_message) << std::endl<< std::endl );
       // add the message to m_inputMsgs
-      m_inMsgMut.lock();
-      l_state.m_inputMsgs.push_back( *a_message );
-      m_inMsgMut.unlock();
+      l_state.m_expectedMessageCompleteness.first += a_size;
+      if(l_state.m_expectedMessageCompleteness.first == l_state.m_expectedMessageCompleteness.second)
+      {
+        m_inMsgMut.lock();
+        l_state.m_inputMsgs.push_back( *a_message );
+        l_state.m_expectingMessage.first = false;
+        l_state.m_expectedMessageCompleteness.first = 0;
+        m_inMsgMut.unlock();
+      }
     }
 
     // remove message from pre input messages
@@ -198,6 +206,7 @@ namespace Network
       {
         l_tmp[l_iter->first] = std::move( l_iter->second.m_inputMsgs );
         l_iter->second.m_inputMsgs.clear();
+
       }
     }
     m_inMsgMut.unlock();
@@ -267,35 +276,35 @@ namespace Network
         {
           l_state.m_isPolling = true;
           
-           
           if( !l_state.m_expectingMessage.first )  // if there is no expected message - create a size message to expect
           {
             m_preInMsgMut.lock();
-            m_preInputMsgs.push_front( m_sizeMsgIn.front() );
-            m_sizeMsgIn.pop_front();
+            NetworkMsgPtr l_msg = std::make_shared<NetworkMsg>();
+            l_msg->CreateSizeMsg(0);
+            m_preInputMsgs.push_front( l_msg );
             m_preInMsgMut.unlock();
           }
           else // if there is an expected message - copy it to the preInputMessages
           {
             std::lock_guard<std::mutex> guard(m_expectingMessageMut);
             m_preInMsgMut.lock();
-            m_preInputMsgs.push_front( std::move(l_state.m_expectingMessage.second) );
+            m_preInputMsgs.push_front( l_state.m_expectingMessage.second );
             m_preInMsgMut.unlock();
-            
-            l_state.m_expectingMessage.first = false;
           }
-            
-          
+                    
           m_preInMsgMut.lock();
           std::list< NetworkMsgPtr >::iterator l_preInputMessage = m_preInputMsgs.begin();
           m_preInMsgMut.unlock();
           
           std::shared_ptr<asio::ip::tcp::socket> l_socket = l_iter->first;
-          l_socket->async_receive( asio::buffer( (*l_preInputMessage)->GetData(), (*l_preInputMessage)->GetSize() ),
+          l_socket->async_receive( asio::buffer( (*l_preInputMessage)->GetData()+l_state.m_expectedMessageCompleteness.first, (*l_preInputMessage)->GetSize()-l_state.m_expectedMessageCompleteness.first ),
                                         [ l_me, l_socket, l_preInputMessage](const std::error_code& a_error, std::size_t length )
                                         {
                                           if (!a_error)
-                                            l_me->RegisterMessage(l_socket, l_preInputMessage);
+                                          {
+                                            // IFDBG( std::cout << "ACTUALLY RECEIVED LENGTH " << length << std::endl<< std::endl; );
+                                            l_me->RegisterMessage(l_socket, l_preInputMessage, length);
+                                          }
                                         }
                                       );
         }

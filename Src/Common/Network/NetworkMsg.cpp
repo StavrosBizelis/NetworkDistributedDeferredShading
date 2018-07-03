@@ -660,7 +660,7 @@ namespace Network
           break;
         case MsgType::CLNT_REQUEST: strm << "CLNT_REQUEST"; break;
         case MsgType::CLNT_ENGINE_READY: strm << "CLNT_ENGINE_READY"; break;
-        case MsgType::CLNT_RENDER_RESULT: strm << "CLNT_RENDER_RESULT"; break;
+        case MsgType::CLNT_RENDER_RESULT: strm << "CLNT_RENDER_RESULT"; return strm;
         case MsgType::SRV_SETUP:
         {
           strm << "SRV_SETUP - " << std::endl; 

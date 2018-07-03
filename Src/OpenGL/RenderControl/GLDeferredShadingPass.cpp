@@ -6,6 +6,7 @@
  ***********************************************************************/
 #include "OpenGL/RenderControl/GLDeferredShadingPass.h"
 #include "Common/Network/NetworkMsg.h"
+#include "Common/Core/MyUtilities.h"
 #include "gl/include/glew.h"
 #include "gl/gl.h"
 #include <iostream>
@@ -37,7 +38,21 @@ RenderControl::GLDeferredShadingPass::~GLDeferredShadingPass()
 
 bool RenderControl::GLDeferredShadingPass::Init()
 {
+    // init pbos
     glGenBuffers(2, &m_pbos[0]);
+    glBindBufferARB(GL_PIXEL_PACK_BUFFER_EXT, m_pbos[0]);
+    glBufferDataARB(GL_PIXEL_PACK_BUFFER_EXT, 
+                    (m_resolutionPart.x * m_resolutionPart.y * 3 ), 
+                    NULL, 
+                    GL_STREAM_READ);
+
+    glBindBufferARB(GL_PIXEL_PACK_BUFFER_EXT, m_pbos[1]);
+    glBufferDataARB(GL_PIXEL_PACK_BUFFER_EXT, 
+                    (m_resolutionPart.x * m_resolutionPart.y * 3) , 
+                    NULL, 
+                    GL_STREAM_READ);
+  
+    glBindBufferARB(GL_PIXEL_PACK_BUFFER_EXT, 0);
   
   
 		// init camera
@@ -177,7 +192,7 @@ void RenderControl::GLDeferredShadingPass::GeometryPass()
 
 
 
-  glClearColor(0, 0, 0, 0);
+  glClearColor(1, 0, 0, 1);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glDepthMask(GL_TRUE);
   glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -430,11 +445,13 @@ bool RenderControl::GLDeferredShadingPass::PackTexture( Network::NetworkMsgPtr& 
   
   if(l_ptr)
   {
+    IFDBG( std::cout << "Packed Actual Texture " << std::endl; );
     a_outMsg->CreateRenderResultMsg(l_ptr, m_resolutionPart.x * m_resolutionPart.y * 3, m_resolutionPart );
     glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
   }
   else
   {
+    IFDBG( std::cout << "Packed pseudo Texture " << std::endl; );
     char* l_tmp = new char[3];
     l_tmp[0] = 0;
     l_tmp[1] = 0;
