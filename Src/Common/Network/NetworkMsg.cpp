@@ -109,7 +109,54 @@ namespace Network
     Clear();
   }
 
-
+  NetworkMsg::NetworkMsg(const NetworkMsg& a_other)
+    :m_data(nullptr), m_size(a_other.m_size), m_trueSize(a_other.m_trueSize), m_type(a_other.m_type)
+  {
+    m_data = new char[m_trueSize];
+    memcpy(m_data, a_other.m_data, a_other.m_size);
+    
+  }
+  
+  NetworkMsg::NetworkMsg(NetworkMsg&& a_other)
+    :m_data( std::move(a_other.m_data) ), m_size( std::move(a_other.m_size) ), m_trueSize( std::move(a_other.m_trueSize) ), m_type( std::move(a_other.m_type) )
+  {
+    a_other.m_data = nullptr;
+    a_other.m_size = 0;
+    a_other.m_trueSize = 0;
+    a_other.m_type = MsgType::NONE;
+  }
+  NetworkMsg& NetworkMsg::operator=(const NetworkMsg& a_other)
+  {
+    if( this != &a_other)
+    {
+      Reset(a_other.m_size);
+      memcpy(m_data, a_other.m_data, a_other.m_size);
+      
+      m_size = a_other.m_size;
+      m_trueSize = a_other.m_trueSize;
+      m_type = a_other.m_type;
+    }
+    return *this;
+  }
+  NetworkMsg& NetworkMsg::operator=(NetworkMsg&& a_other)
+  {
+    if( this != &a_other)
+    {
+      Clear();
+      m_data = std::move(a_other.m_data);
+      m_size = std::move(a_other.m_size);
+      m_trueSize = std::move(a_other.m_trueSize);
+      m_type = std::move(a_other.m_type);
+      
+      a_other.m_data = nullptr;
+      a_other.m_size = 0;
+      a_other.m_trueSize = 0;
+      a_other.m_type = MsgType::NONE;
+    }
+    return *this;
+  }
+  
+  
   /*
    *  Method: NetworkMsg::CreateSizeMsg
    *  Params: 

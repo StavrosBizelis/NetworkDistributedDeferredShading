@@ -210,21 +210,21 @@ ServerApp::Update()
     // for each socket
     // check the last message
     Network::NetworkMsgPtr l_msg = l_iter->second.back();
-    IFDBG( std::cout << "Received Message of type" << *l_msg << std::endl; );
+    // IFDBG( std::cout << "Received Message of type" << *l_msg << std::endl; );
     if( l_msg->GetType() == Network::MsgType::CLNT_RENDER_RESULT )
     {
       char* l_textureData;
       uint32_t l_textureSize;
       glm::vec2 l_resolution;
       l_msg->DeserializeRenderResultMsgWithoutCopy(l_textureData, l_textureSize, l_resolution);
-      IFDBG( std::cout << "Received Proper Message" << (*l_msg).GetSize() << std::endl; );
+      // IFDBG( std::cout << "Received Proper Message" << (*l_msg).GetSize() << std::endl; );
       unsigned int l_index = m_clients[l_iter->first];
       std::shared_ptr<ATexture> l_text = std::dynamic_pointer_cast< ATexture > ( l_rects[l_index]->GetTexture(0) );
       if( l_text )
         l_text->UpdateData(l_textureData, l_resolution.x, l_resolution.y, 24, false);
     }
   }
-  IFDBG( std::cout << "Stopped Receiving Messages" << std::endl<< std::endl; );
+  // IFDBG( std::cout << "Stopped Receiving Messages" << std::endl<< std::endl; );
   m_graphics->Update(m_dt);
   
   m_dt = m_pHighResolutionTimer->Elapsed();
@@ -236,8 +236,8 @@ ServerApp::Update()
 	// to see if the time elapsed has been over a second, which means we found our FPS.
 	if (m_elapsedTime > 1000)
   {
+		printf( "FPS: %f\n", (m_frameCount*1000)/m_elapsedTime );
 		m_elapsedTime = 0;
-		printf( "FPS: %u\n", m_frameCount );
 		// Reset the frames per second
 		m_frameCount = 0;
   }
@@ -272,16 +272,16 @@ ServerApp::Initialise()
   // SERVER STARTS - READY TO ACCEPT CONNECTIONS
 
   
-  IFDBG( std::cout << "Start accepting connections " << std::endl; );
+
   
   m_serverCtrl.AcceptConnections();
   while( m_serverCtrl.GetConnectedClientsCount() < m_clientsCount )
     m_serverCtrl.Update();
-  IFDBG( std::cout << "Stop accepting connections " << std::endl << std::endl; );
+
   m_serverCtrl.StopAcceptingConnections();
   
   
-  IFDBG( std::cout << "Start Client Communication " << std::endl; );
+
   m_serverCtrl.StartClientCommunication();
   
   // SERVER COLLECTS REQUESTS - collecting a request from a specific socket indicates its a rendering client
@@ -300,7 +300,6 @@ ServerApp::Initialise()
           if( l_iter->second[0]->GetType() == Network::MsgType::CLNT_REQUEST )
           {
             // register the socket
-            IFDBG( std::cout << "Register Client: " << l_iter->first << std::endl; );
             l_clients.push_back(l_iter->first);
           }
   }

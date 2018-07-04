@@ -46,7 +46,7 @@ namespace Network
     std::lock_guard<std::mutex> guard(m_socketsMut);
     m_acceptingNewConnections = true;
     m_waitsForNewConnections = false;
-    IFDBG( std::cout << "Start Accepting connections" << std::endl<< std::endl );
+    std::cout << "Start Accepting connections" << std::endl<< std::endl;
   }
   /***********************************************************************
    *  Method: ServerControl::GetConnectedClientsCount
@@ -80,7 +80,7 @@ namespace Network
     for( std::map< std::shared_ptr<asio::ip::tcp::socket> , SocketState  >::const_iterator l_socket = m_sockets.cbegin(); l_socket != m_sockets.cend(); ++l_socket )
       l_toReturn.push_back(l_socket->first);
     
-    IFDBG( std::cout << "Stop Accepting connections" << std::endl<< std::endl );
+    std::cout << "Stop Accepting connections" << std::endl<< std::endl;
     return l_toReturn;
   }
 
@@ -93,7 +93,7 @@ namespace Network
   void ServerControl::StartClientCommunication()
   {
     m_communicatesWithClients = true;
-    IFDBG( std::cout << "Start Client Communication" << std::endl<< std::endl );
+    std::cout << "Start Client Communication" << std::endl<< std::endl;
   }
   
 
@@ -110,7 +110,7 @@ namespace Network
     m_waitsForNewConnections = false;
     if( m_sockets.find(a_socket) != m_sockets.end() )
     {
-      IFDBG( std::cout << "Failed to register Socket. It already exists." << std::endl );
+      std::cout << "Failed to register Socket. It already exists." << std::endl;
       return false;
     }
     NetworkMsgPtr l_msg = std::make_shared<NetworkMsg>();
@@ -118,7 +118,7 @@ namespace Network
     // m_sizeMsgIn.push_back( l_msg );
     
     m_sockets[a_socket];
-    IFDBG( std::cout << "Register Socket: " << a_socket << std::endl<< std::endl );
+    std::cout << "Register Socket: " << a_socket << std::endl<< std::endl;
     return true;
   }
 
@@ -229,7 +229,7 @@ namespace Network
     {
       if( m_acceptingNewConnections && !m_waitsForNewConnections )
       {  
-        IFDBG( std::cout << "Wait for new connections" << std::endl<< std::endl; );
+        std::cout << "Wait for new connections" << std::endl<< std::endl;
         std::shared_ptr<asio::ip::tcp::socket> l_socket = std::make_shared<asio::ip::tcp::socket>( m_io );
         asio::ip::tcp::socket l_sock{m_io};
         m_acceptor.async_accept

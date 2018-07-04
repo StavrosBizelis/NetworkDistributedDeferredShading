@@ -250,62 +250,71 @@ ClientApp::Update()
   // CLIENTS UPDATE
   // IFDBG( std::cout << "Client Update Start - "; );
   m_client.Update();
-  // // // IFDBG( std::cout << "Client Update Done." << std::endl; );
-  // // // std::vector<Network::NetworkMsgPtr> l_msgs = m_client.GetMsgs();
-  // // // // update scene as appropriate
-  // // // for( std::vector<Network::NetworkMsgPtr>::const_iterator l_iter = l_msgs.cbegin(); l_iter != l_msgs.cend(); ++l_iter)
-  // // // {
-    // // // if( (*l_iter)->GetType() == Network::MsgType::SRV_SCENE_UPDATE )
-    // // // {
-      // // // (*l_iter)->DeserializeSceneUpdateMsg(m_outObjsToAdd, m_outObjsToRemove, m_outObjsToTransform,
-                                           // // // m_outTextureChange, m_outLightsToAdd, m_outLightsToRemove, m_outLightsToTransform);
+  std::vector<Network::NetworkMsgPtr> l_msgs = m_client.GetMsgs();
+  // update scene as appropriate
+  bool l_hasUpdated = false;
+  for( std::vector<Network::NetworkMsgPtr>::const_iterator l_iter = l_msgs.cbegin(); l_iter != l_msgs.cend(); ++l_iter)
+  {
+    if( (*l_iter)->GetType() == Network::MsgType::SRV_SCENE_UPDATE )
+    {
+      l_hasUpdated = true;
+      (*l_iter)->DeserializeSceneUpdateMsg(m_outObjsToAdd, m_outObjsToRemove, m_outObjsToTransform,
+                                           m_outTextureChange, m_outLightsToAdd, m_outLightsToRemove, m_outLightsToTransform);
       
-      // // // // objects to add
-      // // // for( std::vector<Network::ObjAddInfo>::iterator l_objsToAdd = m_outObjsToAdd.begin(); l_objsToAdd != m_outObjsToAdd.end(); ++l_objsToAdd)
-        // // // AddObject(*l_objsToAdd);
-      // // // // objects to remove
-      // // // for( std::vector<uint32_t>::iterator l_objsToRemove = m_outObjsToRemove.begin(); l_objsToRemove != m_outObjsToRemove.end(); ++l_objsToRemove)
-        // // // RemoveObject(*l_objsToRemove, false);
-      // // // // objects to transform
-      // // // for( std::vector<Network::ObjTransformInfo>::iterator l_objsToTrans = m_outObjsToTransform.begin(); l_objsToTrans != m_outObjsToTransform.end(); ++l_objsToTrans)
-        // // // TransformObject(*l_objsToTrans, false);
-      // // // // change texture
-      // // // for( std::vector<Network::TextureChangeInfo>::iterator l_textChange = m_outTextureChange.begin(); l_textChange != m_outTextureChange.end(); ++l_textChange)
-        // // // TextureChange(*l_textChange);
+      // objects to add
+      for( std::vector<Network::ObjAddInfo>::iterator l_objsToAdd = m_outObjsToAdd.begin(); l_objsToAdd != m_outObjsToAdd.end(); ++l_objsToAdd)
+        AddObject(*l_objsToAdd);
+      // objects to remove
+      for( std::vector<uint32_t>::iterator l_objsToRemove = m_outObjsToRemove.begin(); l_objsToRemove != m_outObjsToRemove.end(); ++l_objsToRemove)
+        RemoveObject(*l_objsToRemove, false);
+      // objects to transform
+      for( std::vector<Network::ObjTransformInfo>::iterator l_objsToTrans = m_outObjsToTransform.begin(); l_objsToTrans != m_outObjsToTransform.end(); ++l_objsToTrans)
+        TransformObject(*l_objsToTrans, false);
+      // change texture
+      for( std::vector<Network::TextureChangeInfo>::iterator l_textChange = m_outTextureChange.begin(); l_textChange != m_outTextureChange.end(); ++l_textChange)
+        TextureChange(*l_textChange);
       
-      // // // // lights to add
-      // // // for( std::vector<Network::ObjAddInfo>::iterator l_lightsToAdd = m_outLightsToAdd.begin(); l_lightsToAdd != m_outLightsToAdd.end(); ++l_lightsToAdd)
-        // // // AddLight(*l_lightsToAdd);
-      // // // // lights to remove
-      // // // for( std::vector<uint32_t>::iterator l_lightsToRemove = m_outLightsToRemove.begin(); l_lightsToRemove != m_outLightsToRemove.end(); ++l_lightsToRemove)
-        // // // RemoveObject(*l_lightsToRemove, true);
-      // // // for( std::vector<Network::ObjTransformInfo>::iterator l_lightsToTrans = m_outLightsToTransform.begin(); l_lightsToTrans != m_outLightsToTransform.end(); ++l_lightsToTrans)
-        // // // TransformObject(*l_lightsToTrans, true);
-    // // // }
-  // // // }
+      // lights to add
+      for( std::vector<Network::ObjAddInfo>::iterator l_lightsToAdd = m_outLightsToAdd.begin(); l_lightsToAdd != m_outLightsToAdd.end(); ++l_lightsToAdd)
+        AddLight(*l_lightsToAdd);
+      // lights to remove
+      for( std::vector<uint32_t>::iterator l_lightsToRemove = m_outLightsToRemove.begin(); l_lightsToRemove != m_outLightsToRemove.end(); ++l_lightsToRemove)
+        RemoveObject(*l_lightsToRemove, true);
+      for( std::vector<Network::ObjTransformInfo>::iterator l_lightsToTrans = m_outLightsToTransform.begin(); l_lightsToTrans != m_outLightsToTransform.end(); ++l_lightsToTrans)
+        TransformObject(*l_lightsToTrans, true);
+    }
+  }
   // IFDBG( std::cout << "Scene Update" << std::endl; );
   
   // CLIENTS RENDER SCENE (GEOMETRY PASS)
   // CLIENTS RENDER LIGHTS
-  m_graphics->Update(1);
-  // IFDBG( std::cout << "Render Update" << std::endl; );
-  
-  // CLIENTS SEND BACK THE RENDERED TEXTURES
-  if( m_graphics->GetDeferredRenderPass()->PackTexture(m_renderResultMsg) )
-    m_client.PushMsg(m_renderResultMsg);
+  if( l_hasUpdated )
+  {
+    m_graphics->Update(1);
+    // IFDBG( std::cout << "Render Update" << std::endl; );
+    
+    // CLIENTS SEND BACK THE RENDERED TEXTURES
+    
+    if( m_graphics->GetDeferredRenderPass()->PackTexture(m_renderResultMsg) )
+    {
+      Network::NetworkMsgPtr l_test = std::make_shared<Network::NetworkMsg> ( *m_renderResultMsg );
+      m_client.PushMsg(m_renderResultMsg);
+      m_frameCount++;
+    }
+  }
   // IFDBG( std::cout << "Send Render Result Update" << std::endl; );
-  system("pause");
+  
   m_dt = m_pHighResolutionTimer->Elapsed();
   
   // framerate output
-  m_frameCount++;
+  
   m_elapsedTime += m_dt;
   // Now we want to subtract the current time by the last time that was stored
 	// to see if the time elapsed has been over a second, which means we found our FPS.
 	if (m_elapsedTime > 1000)
   {
+		printf( "FPS: %f\n", (m_frameCount*1000)/m_elapsedTime );
 		m_elapsedTime = 0;
-		printf( "FPS: %u\n", m_frameCount );
 		// Reset the frames per second
 		m_frameCount = 0;
   }

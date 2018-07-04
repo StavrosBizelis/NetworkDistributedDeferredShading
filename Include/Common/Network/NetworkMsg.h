@@ -100,6 +100,13 @@ namespace Network
     NetworkMsg();
     ~NetworkMsg();
 
+        
+    NetworkMsg(const NetworkMsg& a_other); ///< Copy constructor
+    NetworkMsg(NetworkMsg&& a_other); ///< Move constructor
+    NetworkMsg& operator=(const NetworkMsg& a_other); ///< Copy assignment operator
+    NetworkMsg& operator=(NetworkMsg&& a_other);  ///< Move assignment operator
+
+    
     inline char* GetData(){  return m_data;  }
     inline const char* GetData() const{  return m_data;  }
     MsgType GetType() const;

@@ -45,11 +45,12 @@ namespace Network
     asio::ip::tcp::resolver::query l_query(m_hostName, std::to_string(m_hostPort) );
     asio::ip::tcp::resolver::results_type l_endpoints = m_resolver.resolve(l_query);
     m_io.run();
-    IFDBG( std::cout << "connnecting to:" << m_hostName << "/" << std::to_string(m_hostPort) << std::endl );
+    std::cout << "connnecting to:" << m_hostName << "/" << std::to_string(m_hostPort) << std::endl;
     m_socket = std::make_shared<asio::ip::tcp::socket>(m_io);
     asio::connect(*m_socket, l_endpoints);
     m_connected = true;
-    IFDBG( std::cout << "Connected to " << m_hostName  << "/" << std::to_string(m_hostPort) << std::endl << std::endl; );
+    std::cout << "Connected to " << m_hostName  << "/" << std::to_string(m_hostPort) << std::endl << std::endl; 
+    m_socket->set_option( asio::ip::tcp::no_delay(true) );
   }
 
 
@@ -65,7 +66,7 @@ namespace Network
     if( !m_connected )
       return false;
     m_communicatesWithServer = true;
-    IFDBG( std::cout << "Start Communication" << std::endl << std::endl; );
+    std::cout << "Start Communication" << std::endl << std::endl;
     return true;
   }
 
@@ -126,8 +127,8 @@ namespace Network
   void
   ClientControl::PushMsg(const NetworkMsgPtr &a_msg)
   {
+    std::lock_guard<std::mutex> guard(m_outMsgMut);
     m_socketState.m_outputMsgs.push_back(a_msg);
-    
     // IFDBG( std::cout << "Push message" << *a_msg << std::endl );
   }
 
@@ -158,21 +159,19 @@ namespace Network
     ClientControl* l_me = this;
     if( m_communicatesWithServer && m_connected)
     {
-      // send messages
-      std::vector<NetworkMsgPtr> l_toSend;
+
+      // send messages      
       m_outMsgMut.lock();
-      m_socketState.m_outputMsgs.swap(l_toSend);
-      m_outMsgMut.unlock();
-      
-      for( std::vector<NetworkMsgPtr>::iterator l_message = l_toSend.begin(); l_message != l_toSend.end(); ++l_message )
+      for( std::vector<NetworkMsgPtr>::iterator l_message = m_socketState.m_outputMsgs.begin(); l_message != m_socketState.m_outputMsgs.end(); ++l_message )
       {
         // IFDBG( std::cout << "Message to send size: " << (*l_message)->GetSize() << " "; );
         m_sizeMsgOut->CreateSizeMsg( (uint32_t)(*l_message)->GetSize() );
-        m_socket->send( asio::buffer(m_sizeMsgOut->GetData(), m_sizeMsgOut->GetSize() ) );
-        m_socket->send( asio::buffer((*l_message)->GetData(), (*l_message)->GetSize() ) );
+        m_socket->async_send( asio::buffer(m_sizeMsgOut->GetData(), m_sizeMsgOut->GetSize() ), [](const std::error_code& a_error, std::size_t bytes_transferred){} );
+        m_socket->async_send( asio::buffer((*l_message)->GetData(), (*l_message)->GetSize() ), [](const std::error_code& a_error, std::size_t bytes_transferred){} );
         // IFDBG( std::cout << "Message sent: " << (*l_message)->GetSize() << " "; );
       }
-      
+      m_socketState.m_outputMsgs.clear();
+      m_outMsgMut.unlock();
       
       // receive message
       if( !m_socketState.m_isPolling )
@@ -212,6 +211,9 @@ namespace Network
     }
     m_io.run();
   }
+  
+  
+  
   
   
 
