@@ -8,7 +8,7 @@
 
 #include <iostream>
 #include <memory>
-
+#include <array>
 namespace Network
 {
     
@@ -83,7 +83,8 @@ namespace Network
   {
     uint32_t m_id;
     uint32_t m_textureLayer;
-    std::string m_path;
+    char m_cubeText;
+    std::string m_path[6];
   };
 
 
@@ -131,6 +132,7 @@ namespace Network
     
     void CreateSetupMsg( const glm::vec4& a_viewportInfo, const glm::vec2& a_partialResolution, const glm::vec2& a_resolution ); ///< SRV_SETUP
     void CreateSceneUpdateMsg(
+      const std::array<glm::vec3, 3>& a_cameraSettings,  /// pos, view, up vec
       const std::vector<ObjAddInfo>& a_objsToAdd, 
       const std::vector<uint32_t>& a_objsToRemove, 
       const std::vector<ObjTransformInfo>& a_objsToTransform, 
@@ -157,6 +159,7 @@ namespace Network
     
     bool DeserializeSetupMsg( glm::vec4& a_outViewportInfo, glm::vec2& a_outPartialResolution, glm::vec2& a_outResolution ) const; ///< SRV_SETUP
     bool DeserializeSceneUpdateMsg( 
+      std::array<glm::vec3, 3>& a_outCameraSettings,
       std::vector<ObjAddInfo>& a_outObjsToAdd, 
       std::vector<uint32_t>& a_outObjsToRemove, 
       std::vector<ObjTransformInfo>& a_outObjsToTransform, 
@@ -177,5 +180,6 @@ namespace Network
   };
   
   std::ostream& operator<<(std::ostream &strm, const NetworkMsg &a);
+  std::ostream& operator<<(std::ostream &strm, const ObjAddInfo &a);
 
 }

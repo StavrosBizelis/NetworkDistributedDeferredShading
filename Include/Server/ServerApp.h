@@ -37,6 +37,8 @@ private:
   unsigned int m_clientsCount;
    
   void Update();
+  void UpdateScene();
   void Initialise();
+  void InitialiseScene();
 
 };

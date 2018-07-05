@@ -184,9 +184,12 @@ namespace Network
   void
   ServerControl::PushMsg(const std::shared_ptr<asio::ip::tcp::socket>& a_socket, const NetworkMsgPtr &a_msg)
   {
+    Network::NetworkMsgPtr l_sizeMsg = std::make_shared<Network::NetworkMsg>();
+    l_sizeMsg->CreateSizeMsg( (uint32_t)a_msg->GetSize() );
+    
     std::lock_guard<std::mutex> guard(m_outMsgMut);
-    m_sockets[a_socket].m_outputMsgs.push_back( std::move(a_msg) );
-    // IFDBG( std::cout << "Push message" << *a_msg << std::endl<< std::endl );
+    m_sockets[a_socket].m_outputMsgs.push_back(l_sizeMsg);
+    m_sockets[a_socket].m_outputMsgs.push_back( a_msg );
   }
 
   /***********************************************************************
@@ -256,20 +259,25 @@ namespace Network
       {
         
         SocketState& l_state = l_iter->second;
-        // send messages        
-        std::vector<NetworkMsgPtr> l_toSend;
-        m_outMsgMut.lock();
-        l_state.m_outputMsgs.swap(l_toSend);
-        m_outMsgMut.unlock();
-        for( std::vector<NetworkMsgPtr>::iterator l_message = l_toSend.begin(); l_message != l_toSend.end(); ++l_message )
-        {
-          m_sizeMsgOut->CreateSizeMsg( (uint32_t)(*l_message)->GetSize() );
-          uint32_t l_ttt;
-          m_sizeMsgOut->DeserializeSizeMsg(l_ttt);
         
-          l_iter->first->send( asio::buffer(m_sizeMsgOut->GetData(), m_sizeMsgOut->GetSize() ) );
-          l_iter->first->send( asio::buffer((*l_message)->GetData(), (*l_message)->GetSize() ) );
+        // send messages        
+        l_state.m_pendingOutMsgs.insert( l_state.m_outputMsgs.begin(), l_state.m_outputMsgs.end() );
+        
+        m_outMsgMut.lock();
+        for( std::vector<NetworkMsgPtr>::iterator l_message = l_state.m_outputMsgs.begin(); l_message != l_state.m_outputMsgs.end(); ++l_message )
+        {
+          NetworkMsgPtr l_actMsg = *l_message;
+          SocketState* l_statePtr = &l_state;
+          l_iter->first->async_send( 
+            asio::buffer(l_actMsg->GetData(), l_actMsg->GetSize() ), 
+            [l_statePtr, l_actMsg](const std::error_code& a_error, std::size_t bytes_transferred)
+            {
+              l_statePtr->m_pendingOutMsgs.erase( l_statePtr->m_pendingOutMsgs.find( l_actMsg ) );
+            } 
+          );
         }
+        l_state.m_outputMsgs.clear();
+        m_outMsgMut.unlock();
         
         // receive messages
         if( !l_state.m_isPolling )

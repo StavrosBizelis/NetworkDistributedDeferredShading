@@ -199,6 +199,10 @@ ServerApp::Update()
   // 4) CLIENTS RENDER LIGHTS
   // 5) CLIENTS SEND BACK THE RENDERED TEXTURES *
   // 6) SERVER RENDERS THE RESULT ON SCREEN
+  
+  // SERVER SENDS SCENE UPDATE MESSAGE
+  UpdateScene();
+  
   m_serverCtrl.Update();
   
   const std::vector< RenderControl::CompositionEntity >& l_compEntity = m_graphics->GetCompositionPass()->GetSubpartsSettings();
@@ -207,6 +211,7 @@ ServerApp::Update()
   std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<Network::NetworkMsgPtr> > l_msgs = m_serverCtrl.GetMsgs();
   for( std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<Network::NetworkMsgPtr> >::iterator l_iter = l_msgs.begin(); l_iter != l_msgs.end(); ++l_iter)
   {
+    
     // for each socket
     // check the last message
     Network::NetworkMsgPtr l_msg = l_iter->second.back();
@@ -247,6 +252,20 @@ ServerApp::Update()
 }
 
 
+void
+ServerApp::UpdateScene()
+{
+  static float l_x = 0;
+  Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
+  l_msg->CreateSceneUpdateMsg(
+  {glm::vec3(-1,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
+  {}, {}, {}, {}, {}, {}, {});
+
+  
+  for( std::map<std::shared_ptr<asio::ip::tcp::socket>, unsigned int>::iterator l_iter = m_clients.begin(); l_iter != m_clients.end(); ++l_iter )
+   m_serverCtrl.PushMsg(l_iter->first, l_msg);
+}
+
 /***********************************************************************
  *  Method: ServerApp::Initialise
  *  Params: 
@@ -270,10 +289,6 @@ ServerApp::Initialise()
   // 7) CLIENTS SEND CLIENT READY SIGNALS *
   
   // SERVER STARTS - READY TO ACCEPT CONNECTIONS
-
-  
-
-  
   m_serverCtrl.AcceptConnections();
   while( m_serverCtrl.GetConnectedClientsCount() < m_clientsCount )
     m_serverCtrl.Update();
@@ -345,9 +360,42 @@ ServerApp::Initialise()
   }
   IFDBG( std::cout << "All clients ready." << std::endl; );
   
-  
+  InitialiseScene();
 }
 
+
+void 
+ServerApp::InitialiseScene()
+{
+  
+  Network::ObjAddInfo l_sky;
+  l_sky.m_id = 1;
+  l_sky.m_objType = Network::ObjectType::SKYBOX;
+  l_sky.m_materialFlags = RenderControl::GeometryPassMaterialFlags::SKYBOX;
+  
+  Network::TextureChangeInfo l_skyText;
+  l_skyText.m_id = 1;
+  l_skyText.m_textureLayer = 0;
+  l_skyText.m_cubeText = true ;
+  l_skyText.m_path[0] = std::string("../Assets/Skybox/spacebox/X+.jpg");
+  l_skyText.m_path[1] = std::string("../Assets/Skybox/spacebox/X-.jpg");
+  l_skyText.m_path[2] = std::string("../Assets/Skybox/spacebox/Y+.jpg");
+  l_skyText.m_path[3] = std::string("../Assets/Skybox/spacebox/Y-.jpg");
+  l_skyText.m_path[4] = std::string("../Assets/Skybox/spacebox/Z+.jpg");
+  l_skyText.m_path[5] = std::string("../Assets/Skybox/spacebox/Z-.jpg");
+  
+  Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
+  
+  // l_msg->CreateSceneUpdateMsg({}, {}, {}, {}, {}, {}, {});
+  l_msg->CreateSceneUpdateMsg(
+  {glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
+  {l_sky}, {}, {}, {l_skyText}, {}, {}, {});
+
+  
+  for( std::map<std::shared_ptr<asio::ip::tcp::socket>, unsigned int>::iterator l_iter = m_clients.begin(); l_iter != m_clients.end(); ++l_iter )
+   m_serverCtrl.PushMsg(l_iter->first, l_msg);
+  
+}
 
 
 

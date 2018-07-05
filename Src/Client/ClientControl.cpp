@@ -127,7 +127,10 @@ namespace Network
   void
   ClientControl::PushMsg(const NetworkMsgPtr &a_msg)
   {
+    Network::NetworkMsgPtr l_sizeMsg = std::make_shared<Network::NetworkMsg>();
+    l_sizeMsg->CreateSizeMsg( (uint32_t)a_msg->GetSize() );
     std::lock_guard<std::mutex> guard(m_outMsgMut);
+    m_socketState.m_outputMsgs.push_back(l_sizeMsg);
     m_socketState.m_outputMsgs.push_back(a_msg);
     // IFDBG( std::cout << "Push message" << *a_msg << std::endl );
   }
@@ -159,16 +162,24 @@ namespace Network
     ClientControl* l_me = this;
     if( m_communicatesWithServer && m_connected)
     {
-
       // send messages      
       m_outMsgMut.lock();
+      // block until the previous frame is sent
+      while( m_socketState.m_pendingOutMsgs.size() > 0 ){m_io.run();}
+      
+      m_socketState.m_pendingOutMsgs.insert( m_socketState.m_outputMsgs.begin(), m_socketState.m_outputMsgs.end() );
+      
       for( std::vector<NetworkMsgPtr>::iterator l_message = m_socketState.m_outputMsgs.begin(); l_message != m_socketState.m_outputMsgs.end(); ++l_message )
       {
-        // IFDBG( std::cout << "Message to send size: " << (*l_message)->GetSize() << " "; );
-        m_sizeMsgOut->CreateSizeMsg( (uint32_t)(*l_message)->GetSize() );
-        m_socket->async_send( asio::buffer(m_sizeMsgOut->GetData(), m_sizeMsgOut->GetSize() ), [](const std::error_code& a_error, std::size_t bytes_transferred){} );
-        m_socket->async_send( asio::buffer((*l_message)->GetData(), (*l_message)->GetSize() ), [](const std::error_code& a_error, std::size_t bytes_transferred){} );
-        // IFDBG( std::cout << "Message sent: " << (*l_message)->GetSize() << " "; );
+        NetworkMsgPtr l_actMsg = *l_message;
+        SocketState* l_statePtr = &m_socketState;
+        m_socket->async_send( 
+          asio::buffer(l_actMsg->GetData(), l_actMsg->GetSize() ), 
+          [l_statePtr, l_actMsg](const std::error_code& a_error, std::size_t bytes_transferred)
+          {
+            l_statePtr->m_pendingOutMsgs.erase( l_statePtr->m_pendingOutMsgs.find( l_actMsg ) );
+          }
+        );        
       }
       m_socketState.m_outputMsgs.clear();
       m_outMsgMut.unlock();

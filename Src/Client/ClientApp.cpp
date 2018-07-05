@@ -19,7 +19,9 @@
 ClientApp::ClientApp( const std::string &a_hostName, const unsigned int &a_hostPort, const ImplTech& a_implTech)
   :m_implTech(a_implTech), m_client(a_hostName, a_hostPort), m_graphics(nullptr), m_dt(0)
 {
-  m_renderResultMsg = std::make_shared<Network::NetworkMsg>();
+  m_hasUpdated[0] = true;
+  m_hasUpdated[1] = true;
+  m_hasUpdated[2] = false;
 }
 
 
@@ -217,6 +219,9 @@ ClientApp::Initialise()
   m_client.PushMsg(l_msg);
   
   IFDBG( std::cout << "send: " << (*l_msg) << std::endl << std::endl; );
+  
+  m_camera = m_graphics->GetSceneManager()->AddCameraSceneNode(m_graphics->GetDeferredRenderPass()->GetCamera(), SceneControl::STATIC_CAMERA);
+  
 }
 
 
@@ -252,15 +257,18 @@ ClientApp::Update()
   m_client.Update();
   std::vector<Network::NetworkMsgPtr> l_msgs = m_client.GetMsgs();
   // update scene as appropriate
-  bool l_hasUpdated = false;
+  m_hasUpdated[ m_hasUpdated[2] ] = false;
+  
   for( std::vector<Network::NetworkMsgPtr>::const_iterator l_iter = l_msgs.cbegin(); l_iter != l_msgs.cend(); ++l_iter)
   {
     if( (*l_iter)->GetType() == Network::MsgType::SRV_SCENE_UPDATE )
     {
-      l_hasUpdated = true;
-      (*l_iter)->DeserializeSceneUpdateMsg(m_outObjsToAdd, m_outObjsToRemove, m_outObjsToTransform,
-                                           m_outTextureChange, m_outLightsToAdd, m_outLightsToRemove, m_outLightsToTransform);
+      m_hasUpdated[ m_hasUpdated[2] ] = true;
       
+      (*l_iter)->DeserializeSceneUpdateMsg(m_outCameraSettings, m_outObjsToAdd, m_outObjsToRemove, m_outObjsToTransform,
+                                           m_outTextureChange, m_outLightsToAdd, m_outLightsToRemove, m_outLightsToTransform);
+      // std::cout << (**l_iter) << std::endl;
+      SetCamera(m_outCameraSettings[0], m_outCameraSettings[1], m_outCameraSettings[2]);
       // objects to add
       for( std::vector<Network::ObjAddInfo>::iterator l_objsToAdd = m_outObjsToAdd.begin(); l_objsToAdd != m_outObjsToAdd.end(); ++l_objsToAdd)
         AddObject(*l_objsToAdd);
@@ -283,25 +291,31 @@ ClientApp::Update()
       for( std::vector<Network::ObjTransformInfo>::iterator l_lightsToTrans = m_outLightsToTransform.begin(); l_lightsToTrans != m_outLightsToTransform.end(); ++l_lightsToTrans)
         TransformObject(*l_lightsToTrans, true);
     }
+    
+      
   }
+
   // IFDBG( std::cout << "Scene Update" << std::endl; );
   
   // CLIENTS RENDER SCENE (GEOMETRY PASS)
   // CLIENTS RENDER LIGHTS
-  if( l_hasUpdated )
+  if( m_hasUpdated[ !m_hasUpdated[2] ] )
   {
+
     m_graphics->Update(1);
     // IFDBG( std::cout << "Render Update" << std::endl; );
     
     // CLIENTS SEND BACK THE RENDERED TEXTURES
     
-    if( m_graphics->GetDeferredRenderPass()->PackTexture(m_renderResultMsg) )
+    Network::NetworkMsgPtr l_test = std::make_shared<Network::NetworkMsg>();
+    
+    if( m_graphics->GetDeferredRenderPass()->PackTexture(l_test) )
     {
-      Network::NetworkMsgPtr l_test = std::make_shared<Network::NetworkMsg> ( *m_renderResultMsg );
-      m_client.PushMsg(m_renderResultMsg);
+      m_client.PushMsg(l_test);
       m_frameCount++;
     }
   }
+  m_hasUpdated[2] = !m_hasUpdated[2];
   // IFDBG( std::cout << "Send Render Result Update" << std::endl; );
   
   m_dt = m_pHighResolutionTimer->Elapsed();
@@ -321,6 +335,13 @@ ClientApp::Update()
   
   // IFDBG( std::cout << "Loop End" << std::endl<< std::endl; );
   
+}
+
+
+void ClientApp::SetCamera(glm::vec3 a_pos, glm::vec3 a_view, glm::vec3 a_up)
+{
+  std::cout << a_pos.x << std::endl;
+  m_camera->GetCamera()->Set(a_pos, a_view, a_up); 
 }
 
 /***********************************************************************
@@ -357,8 +378,12 @@ ClientApp::AddObject(const Network::ObjAddInfo& a_info)
   if(l_mesh)
   {
     SceneControl::MeshSceneNode* l_meshNode = m_graphics->GetSceneManager()->AddMeshSceneNode( l_mesh );
+
     if( l_meshNode->SetID(a_info.m_id))
+    {
       m_graphics->GetDeferredRenderPass()->AddRenderable(l_meshNode, (RenderControl::GeometryPassMaterialFlags)(a_info.m_materialFlags));
+
+    }
     else // if bad id given remove it from the registry and detach it from the scene manager
     {
       l_meshNode->SetID(0);
@@ -439,7 +464,13 @@ void ClientApp::TextureChange(const Network::TextureChangeInfo& a_info)
 {
   SceneControl::TexturedSceneNode* l_node = dynamic_cast<SceneControl::TexturedSceneNode*>( SceneControl::SceneNode::GetByID(a_info.m_id) );
   if( l_node )
-    l_node->SetTexture(a_info.m_textureLayer, m_graphics->GetTextureFactory()->GetTexture(a_info.m_path) );
+  {
+    if( a_info.m_cubeText)
+    {
+      l_node->SetTexture(a_info.m_textureLayer, m_graphics->GetTextureFactory()->GetCubemap(a_info.m_path[0], a_info.m_path[1], a_info.m_path[2], a_info.m_path[3], a_info.m_path[4], a_info.m_path[5]) );
+    }else
+      l_node->SetTexture(a_info.m_textureLayer, m_graphics->GetTextureFactory()->GetTexture(a_info.m_path[0]) );
+  }
 }
 
 

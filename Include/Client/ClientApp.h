@@ -25,6 +25,7 @@ private:
   AGraphicsEngine* m_graphics;
 
   // vectors to hold scene update data
+  std::array<glm::vec3, 3> m_outCameraSettings;
   std::vector<Network::ObjAddInfo> m_outObjsToAdd; 
   std::vector<uint32_t> m_outObjsToRemove;
   std::vector<Network::ObjTransformInfo> m_outObjsToTransform; 
@@ -33,13 +34,14 @@ private:
   std::vector<uint32_t> m_outLightsToRemove;
   std::vector<Network::ObjTransformInfo> m_outLightsToTransform;
 
-  Network::NetworkMsgPtr m_renderResultMsg;
-  
+  bool m_hasUpdated[3];
   
   void Initialise();
   void Update();
   
+  SceneControl::CameraSceneNode* m_camera;
   // helpers
+  void SetCamera(glm::vec3 a_pos, glm::vec3 a_view, glm::vec3 a_up);
   void AddObject(const Network::ObjAddInfo& a_info);
   void RemoveObject(const uint32_t& a_id, bool a_isLight);
   void TransformObject(const Network::ObjTransformInfo& a_info, bool a_isLight);
