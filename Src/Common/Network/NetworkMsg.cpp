@@ -6,6 +6,10 @@
  ***********************************************************************/
 #include "Common/Network/NetworkMsg.h"
 #include "Common/Core/MyUtilities.h"
+
+#include "Common/Core/HighResolutionTimer.h"
+
+
 namespace Network
 {
   
@@ -212,26 +216,42 @@ namespace Network
    * Returns: void
    * Effects: 
    */
-  void NetworkMsg::CreateRenderResultMsg(char* a_textureData, const uint32_t& a_textureDataSize, const glm::vec2& a_resolution)
+  void NetworkMsg::CreateRenderResultMsg(char* a_textureData, const glm::vec2& a_resolution, LodePNGColorType a_colorType, const unsigned int& a_bitDepth)
   {
-    uint32_t l_size = 13 + a_textureDataSize; /// 1 char type + 4(32bit) a_textureDataSize + 8(64bit) resolution + a_textureData == (5 + a_textureDataSize) bytes
+    // first encode the image to png so we can know the resulting size
+    unsigned int l_bitDepth = a_bitDepth == 8 || a_bitDepth == 16 ? a_bitDepth : 8;
+    
+    
+    // l_timer.Start();
+    unsigned int l_bmpSize = a_resolution.x*a_resolution.y*3;
+    // 1 type + 4 pngFileSize + 4 colourtype + 4 bit Depth + max immage size
+    uint32_t l_size = 17 + l_bmpSize;
     Reset(l_size);
     m_type = MsgType::CLNT_RENDER_RESULT;
-    m_size = l_size;
     char* l_pos = m_data;
     *l_pos = (char)m_type;
     ++l_pos;
     
-    ConsistentInt32ToCharArray(a_textureDataSize, l_pos);
+    // l_original Size 
+    ConsistentInt32ToCharArray(a_resolution.x, l_pos);
     l_pos += 4;
-
-    ConsistentInt32ToCharArray((uint32_t)a_resolution.x, l_pos);
+    ConsistentInt32ToCharArray(a_resolution.y, l_pos);
     l_pos += 4;
-
-    ConsistentInt32ToCharArray((uint32_t)a_resolution.y, l_pos);
+    // colourtype
+    ConsistentInt32ToCharArray((uint32_t)a_colorType, l_pos);
     l_pos += 4;
-
-    memcpy(l_pos, a_textureData, a_textureDataSize);
+    // bit depth
+    ConsistentInt32ToCharArray((uint32_t)l_bitDepth, l_pos);
+    l_pos += 4;
+    
+    
+    // CHighResolutionTimer l_timer;
+    // l_timer.Start();    
+    m_size = 17 + LZ4_compress_default(a_textureData, l_pos, l_bmpSize, l_bmpSize);
+    // std::cout << "encoding time " << l_timer.Elapsed() << std::endl; 
+    // std::cout << "compression ratio =  " << float(l_size)/float(m_size) << std::endl; 
+    
+    
   }
 
   /*
@@ -468,56 +488,37 @@ namespace Network
    * Returns: bool
    * Effects: 
    */
-  bool NetworkMsg::DeserializeRenderResultMsg( char* a_outTextureData, uint32_t& a_outTextureDataSize, glm::vec2& a_outResolution) const 
+  bool NetworkMsg::DeserializeRenderResultMsg( char** a_outTextureData, 
+                                               glm::vec2& a_outResolution, 
+                                               LodePNGColorType& a_outColourType, 
+                                               unsigned int& a_outBitDepth) const 
   {
     char* l_pos = m_data;
-    if(m_size < 5)
+    // 1 type + 8 resolution + 4 colourtype + 4 bit Depth
+    if(m_size < 17)
       return false;
     if( (MsgType)m_data[0] != MsgType::CLNT_RENDER_RESULT )
       return false;
     
     ++l_pos;
-
+    a_outResolution.x = (float)ConsistentCharArrToInt32(l_pos);
+    l_pos += 4;
+    a_outResolution.y = (float)ConsistentCharArrToInt32(l_pos);
+    l_pos += 4;
     
-    a_outTextureDataSize = ConsistentCharArrToInt32(l_pos);
+    a_outColourType = (LodePNGColorType)ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
-    a_outResolution.x = ConsistentCharArrToInt32(l_pos);
+    a_outBitDepth = ConsistentCharArrToInt32(l_pos);
     l_pos += 4;
-    a_outResolution.y = ConsistentCharArrToInt32(l_pos);
-    l_pos += 4;
-    if( a_outTextureData )
-      memcpy(a_outTextureData, l_pos, a_outTextureDataSize);
-    return true;
+
+    unsigned int l_originalSize = a_outResolution.x*a_outResolution.y*3;
+    *a_outTextureData = new char[l_originalSize];
+    if( LZ4_decompress_fast(l_pos, *a_outTextureData, l_originalSize) > 0 )
+      return true;
+    return false;
   }
 
-    /*
-   *  Method: NetworkMsg::DeserializeRenderResultMsgWithoutCopy
-   *  Params: 
-   * Returns: bool
-   * Effects: 
-   */
-  bool NetworkMsg::DeserializeRenderResultMsgWithoutCopy( char*& a_outTextureData, uint32_t& a_outTextureDataSize, glm::vec2& a_outResolution) const 
-  {
-    char* l_pos = m_data;
-    if(m_size < 5)
-      return false;
-    if( (MsgType)m_data[0] != MsgType::CLNT_RENDER_RESULT )
-      return false;
-    
-    ++l_pos;
 
-    
-    a_outTextureDataSize = ConsistentCharArrToInt32(l_pos);
-    l_pos += 4;
-    a_outResolution.x = ConsistentCharArrToInt32(l_pos);
-    l_pos += 4;
-    a_outResolution.y = ConsistentCharArrToInt32(l_pos);
-    l_pos += 4;
-
-    // NO COPY HERE
-    a_outTextureData = l_pos;
-    return true;
-  }
   
   /*
    *  Method: NetworkMsg::DeserializeSetupMsg

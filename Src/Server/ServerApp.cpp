@@ -221,12 +221,17 @@ ServerApp::Update()
       char* l_textureData;
       uint32_t l_textureSize;
       glm::vec2 l_resolution;
-      l_msg->DeserializeRenderResultMsgWithoutCopy(l_textureData, l_textureSize, l_resolution);
-      // IFDBG( std::cout << "Received Proper Message" << (*l_msg).GetSize() << std::endl; );
-      unsigned int l_index = m_clients[l_iter->first];
-      std::shared_ptr<ATexture> l_text = std::dynamic_pointer_cast< ATexture > ( l_rects[l_index]->GetTexture(0) );
-      if( l_text )
-        l_text->UpdateData(l_textureData, l_resolution.x, l_resolution.y, 24, false);
+      LodePNGColorType l_colourType;
+      unsigned int l_outBitDepth;
+      if( l_msg->DeserializeRenderResultMsg(&l_textureData, l_resolution, l_colourType, l_outBitDepth) )
+      {
+          // IFDBG( std::cout << "Received Proper Message" << (*l_msg).GetSize() << std::endl; );
+        unsigned int l_index = m_clients[l_iter->first];
+        std::shared_ptr<ATexture> l_text = std::dynamic_pointer_cast< ATexture > ( l_rects[l_index]->GetTexture(0) );
+        if( l_text )
+          l_text->UpdateData(reinterpret_cast<char*>(l_textureData), l_resolution.x, l_resolution.y, 24, false);
+        delete l_textureData;
+      }
     }
   }
   // IFDBG( std::cout << "Stopped Receiving Messages" << std::endl<< std::endl; );
@@ -258,7 +263,7 @@ ServerApp::UpdateScene()
   static float l_x = 0;
   Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
   l_msg->CreateSceneUpdateMsg(
-  {glm::vec3(-1,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
+  {glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
   {}, {}, {}, {}, {}, {}, {});
 
   

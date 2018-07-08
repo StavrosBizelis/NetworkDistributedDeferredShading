@@ -340,7 +340,7 @@ ClientApp::Update()
 
 void ClientApp::SetCamera(glm::vec3 a_pos, glm::vec3 a_view, glm::vec3 a_up)
 {
-  std::cout << a_pos.x << std::endl;
+  // std::cout << a_pos.x << std::endl;
   m_camera->GetCamera()->Set(a_pos, a_view, a_up); 
 }
 

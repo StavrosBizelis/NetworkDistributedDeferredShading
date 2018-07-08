@@ -446,7 +446,7 @@ bool RenderControl::GLDeferredShadingPass::PackTexture( Network::NetworkMsgPtr& 
   if(l_ptr)
   {
     // IFDBG( std::cout << "Packed Actual Texture " << std::endl; );
-    a_outMsg->CreateRenderResultMsg(l_ptr, m_resolutionPart.x * m_resolutionPart.y * 3, m_resolutionPart );
+    a_outMsg->CreateRenderResultMsg(l_ptr, m_resolutionPart, LCT_RGB, 8 );
     glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
   }
   else
@@ -456,7 +456,7 @@ bool RenderControl::GLDeferredShadingPass::PackTexture( Network::NetworkMsgPtr& 
     l_tmp[0] = 0;
     l_tmp[1] = 0;
     l_tmp[2] = 0;
-    a_outMsg->CreateRenderResultMsg(l_tmp, 3, glm::vec2(1) );
+    a_outMsg->CreateRenderResultMsg(l_tmp, m_resolutionPart );
     delete l_tmp;
   }
   // // back to conventional pixel operation

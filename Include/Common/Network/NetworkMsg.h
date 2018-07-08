@@ -9,6 +9,9 @@
 #include <iostream>
 #include <memory>
 #include <array>
+
+#include "lz4/include/lz4.h"
+
 namespace Network
 {
     
@@ -128,7 +131,7 @@ namespace Network
     void CreateSizeMsg(const uint32_t& a_size); ///< MSG_SIZE
     void CreateClientRequestMsg(); ///< CLNT_REQUEST
     void CreateEngineReadyMsg(); ///< CLNT_ENGINE_READY
-    void CreateRenderResultMsg(char* a_textureData, const uint32_t& a_textureDataSize, const glm::vec2& a_resolution);  ///< CLNT_RENDER_RESULT
+    void CreateRenderResultMsg(char* a_textureData, const glm::vec2& a_resolution, LodePNGColorType a_colorType = LCT_RGB, const unsigned int& a_bitDepth = 8);  ///< CLNT_RENDER_RESULT
     
     void CreateSetupMsg( const glm::vec4& a_viewportInfo, const glm::vec2& a_partialResolution, const glm::vec2& a_resolution ); ///< SRV_SETUP
     void CreateSceneUpdateMsg(
@@ -149,13 +152,10 @@ namespace Network
     // bool DeserializeClientRequestMsg( uint32_t& a_outSize) const; ///< CLNT_REQUEST
     // bool DeserializeEngineReadyMsg() const; ///< CLNT_ENGINE_READY
     
-    /// @brief a_outTextureData should be allocated beforehand and is independent to the network message
-    /// @brief if a_outTextureData is nullptr - only a_outTextureDataSize will be updated
+    /// @param a_outTextureData pointer to a buffer - will be allocated in the function
+    /// @brief a_outTextureData should not be allocated beforehand.
     /// @brief the caller is responsible to delete a_outTextureData after this function is called
-    bool DeserializeRenderResultMsg( char* a_outTextureData, uint32_t& a_outTextureDataSize, glm::vec2& a_outResolution) const; ///< CLNT_RENDER_RESULT
-    /// @brief a_outTextureData should not be allocated beforehand and is bound to the network message
-    /// @brief do not try to delete a_outTextureData after calling this function
-    bool DeserializeRenderResultMsgWithoutCopy( char*& a_outTextureData, uint32_t& a_outTextureDataSize, glm::vec2& a_outResolution) const; ///< CLNT_RENDER_RESULT
+    bool DeserializeRenderResultMsg( char** a_outTextureData, glm::vec2& a_outResolution, LodePNGColorType& a_outColourType, unsigned int& a_outBitDepth) const; ///< CLNT_RENDER_RESULT
     
     bool DeserializeSetupMsg( glm::vec4& a_outViewportInfo, glm::vec2& a_outPartialResolution, glm::vec2& a_outResolution ) const; ///< SRV_SETUP
     bool DeserializeSceneUpdateMsg( 

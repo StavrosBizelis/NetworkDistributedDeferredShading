@@ -9,7 +9,7 @@ env.Append(CCFLAGS='/DWIN32 /Zi /Od /Gm /EHsc /MTd /W4 /DDEBUG -D_WIN32_WINNT=0x
 # remember to change this for the various projects to the name you want
 env.Append(LINKFLAGS=' /DEBUG  /PDB:NDDSServer.pdb')
 # in here we add the library folders
-env.Append(LIBPATH='C:\Program Files (x86)\Microsoft SDKs\Windows\\v7.0A\lib;C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\lib;../Bin/Debug;../Impt/assimp/lib;../Impt/freeimage/lib;../Impt/gl/lib')
+env.Append(LIBPATH='C:\Program Files (x86)\Microsoft SDKs\Windows\\v7.0A\lib;C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\lib;../Bin/Debug;../Impt/assimp/lib;../Impt/freeimage/lib;../Impt/gl/lib;')
 # in this list we add all the libraries we want to link to our code seperated by space
 list1=Split(' kernel32.lib user32.lib gdi32.lib glew32.lib opengl32.lib assimp.lib FreeImage.lib FreeImage.lib glew32.lib')
 env.Append(LIBS=list1)
@@ -31,7 +31,9 @@ OpenGL/Textures/GLTextureFactory.cpp OpenGL/Textures/GLTexture.cpp OpenGL/Textur
 OpenGL/Shapes/GLShapeFactory.cpp OpenGL/Shapes/GLRect.cpp OpenGL/Shapes/GLSphere.cpp OpenGL/Shapes/GLCone.cpp OpenGL/Shapes/GLCube.cpp OpenGL/Shapes/GLSkybox.cpp OpenGL/Shapes/GLOpenAssetImportMesh.cpp \
 OpenGL/GLGraphicsEngine.cpp \
 \
-Server/main.cpp Server/ServerApp.cpp Server/ServerControl.cpp')
+Server/main.cpp Server/ServerApp.cpp Server/ServerControl.cpp \
+\
+../Impt/lz4/include/lz4.c')
 
 # this creates a Library(lib)
 #could use env.SharedLibrary(...) to create shared library(dll+lib) - when use this option remember to have exported all the symbols
