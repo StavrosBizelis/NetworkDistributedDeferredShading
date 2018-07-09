@@ -35,7 +35,12 @@ private:
   AGraphicsEngine* m_graphics;
   ImplTech m_implTech;
   unsigned int m_clientsCount;
-   
+  
+  
+  // a preallocated data array for the raw decoded texture that is used to update the composition rectangles
+  char* m_textureData;
+  
+  
   void Update();
   void UpdateScene();
   void Initialise();

@@ -14,6 +14,10 @@
  */
 GLTexture::GLTexture()
 {
+ // Generate an OpenGL texture ID for this texture
+	glGenTextures(1, &m_textureID);
+	
+  glGenSamplers(1, &m_samplerObjectID);
 }
 
 
@@ -37,24 +41,20 @@ GLTexture::~GLTexture()
  */
 void GLTexture::CreateFromData(char* data, int width, int height, int bpp, bool generateMipMaps)
 {
- // Generate an OpenGL texture ID for this texture
-	glGenTextures(1, &m_textureID);
-	glBindTexture(GL_TEXTURE_2D, m_textureID);
-  
-
   UpdateData(data, width, height, bpp, generateMipMaps);
 
   
-  glGenSamplers(1, &m_samplerObjectID);
+  
   glSamplerParameterf(m_samplerObjectID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glSamplerParameterf(m_samplerObjectID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   
 	m_path = "";
-	m_mipMapsGenerated = generateMipMaps;
 	m_width = width;
 	m_height = height;
 	m_bpp = bpp;
+  m_mipMapsGenerated = generateMipMaps;
+	
 }
 
 void GLTexture::UpdateData(char* data, int width, int height, int bpp, bool generateMipMaps)
@@ -64,6 +64,7 @@ void GLTexture::UpdateData(char* data, int width, int height, int bpp, bool gene
 	if(bpp == 24)format = GL_BGR;
 	if(bpp == 8)format = GL_LUMINANCE;
   
+  glBindTexture(GL_TEXTURE_2D, m_textureID);
   if(format == GL_RGBA || format == GL_BGRA)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 	// We must handle this because of internal format parameter
@@ -72,6 +73,11 @@ void GLTexture::UpdateData(char* data, int width, int height, int bpp, bool gene
 	else
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 	if(generateMipMaps)glGenerateMipmap(GL_TEXTURE_2D);
+  
+  m_width = width;
+	m_height = height;
+	m_bpp = bpp;
+  m_mipMapsGenerated = generateMipMaps;
 }
 
 

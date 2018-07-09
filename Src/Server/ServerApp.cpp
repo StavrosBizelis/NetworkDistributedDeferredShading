@@ -17,9 +17,11 @@
  * Effects: 
  ***********************************************************************/
 ServerApp::ServerApp(const glm::vec2& a_dimensions, const ImplTech& a_implTech, const unsigned int& a_clientsCount)
-  : m_appActive(true), m_elapsedTime(0), m_dt(0), m_frameCount(0), m_dimensions(a_dimensions), m_pHighResolutionTimer(nullptr), m_graphics(nullptr), m_serverCtrl(50000), m_implTech(a_implTech),
+  : m_appActive(true), m_elapsedTime(0), m_dt(0), m_frameCount(0), m_dimensions(a_dimensions), m_pHighResolutionTimer(nullptr), m_graphics(nullptr), m_serverCtrl(50001), m_implTech(a_implTech),
     m_clientsCount(a_clientsCount)
-{}
+{
+  m_textureData = new char[m_dimensions.x * m_dimensions.y  * 3];
+}
 
 
 /***********************************************************************
@@ -33,6 +35,8 @@ ServerApp::~ServerApp()
    delete m_pHighResolutionTimer;
  if( m_graphics )
    delete m_graphics;
+ if( m_textureData )
+   delete[] m_textureData;
 }
 
 
@@ -218,19 +222,16 @@ ServerApp::Update()
     // IFDBG( std::cout << "Received Message of type" << *l_msg << std::endl; );
     if( l_msg->GetType() == Network::MsgType::CLNT_RENDER_RESULT )
     {
-      char* l_textureData;
       uint32_t l_textureSize;
       glm::vec2 l_resolution;
-      LodePNGColorType l_colourType;
+      unsigned int l_colourType;
       unsigned int l_outBitDepth;
-      if( l_msg->DeserializeRenderResultMsg(&l_textureData, l_resolution, l_colourType, l_outBitDepth) )
+      if( l_msg->DeserializeRenderResultMsg(m_textureData, l_resolution, l_colourType, l_outBitDepth) )
       {
-          // IFDBG( std::cout << "Received Proper Message" << (*l_msg).GetSize() << std::endl; );
         unsigned int l_index = m_clients[l_iter->first];
         std::shared_ptr<ATexture> l_text = std::dynamic_pointer_cast< ATexture > ( l_rects[l_index]->GetTexture(0) );
         if( l_text )
-          l_text->UpdateData(reinterpret_cast<char*>(l_textureData), l_resolution.x, l_resolution.y, 24, false);
-        delete l_textureData;
+          l_text->UpdateData(m_textureData, l_resolution.x, l_resolution.y, 24, false);
       }
     }
   }
@@ -260,15 +261,27 @@ ServerApp::Update()
 void
 ServerApp::UpdateScene()
 {
-  static float l_x = 0;
+  static float l_y = 0;
+  static float l_counter = 0;
+
   Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
+  if( l_y++ > 360 )
+    l_y = 0 ;
+  Network::ObjTransformInfo l_asteroidStartTransform;
+  l_asteroidStartTransform.m_id = 2;
+  l_asteroidStartTransform.m_transformType = Network::ObjectTransformType::OBJ_ROT;
+  l_asteroidStartTransform.x = 0;
+  l_asteroidStartTransform.y = l_y;
+  l_asteroidStartTransform.z = 0;
+  
+  
   l_msg->CreateSceneUpdateMsg(
-  {glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
-  {}, {}, {}, {}, {}, {}, {});
+  {glm::vec3(0,0,5), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
+  {}, {}, {l_asteroidStartTransform}, {}, {}, {}, {});
 
   
   for( std::map<std::shared_ptr<asio::ip::tcp::socket>, unsigned int>::iterator l_iter = m_clients.begin(); l_iter != m_clients.end(); ++l_iter )
-   m_serverCtrl.PushMsg(l_iter->first, l_msg);
+    m_serverCtrl.PushMsg(l_iter->first, l_msg);
 }
 
 /***********************************************************************
@@ -321,6 +334,7 @@ ServerApp::Initialise()
           {
             // register the socket
             l_clients.push_back(l_iter->first);
+            std::cout << "Registered client " << l_iter->first << std::endl;
           }
   }
   
@@ -337,9 +351,10 @@ ServerApp::Initialise()
     Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
     l_msg->CreateSetupMsg( l_compositionSettings[i].m_viewport ,l_compositionSettings[i].m_resolution, m_graphics->GetResolution() );
     
-    IFDBG( std::cout << "Send: " << (*l_msg) << std::endl << "to " << l_clients[i] << "." << std::endl ; );
+    IFDBG( std::cout << "Send: " << (*l_msg) << std::endl << "to " << l_clients[i] << " and assign them the index " << i << "." << std::endl ; );
     m_serverCtrl.PushMsg(l_clients[i], l_msg);
     m_clients[l_clients[i]] = i;
+    
   }
   
   
@@ -389,16 +404,38 @@ ServerApp::InitialiseScene()
   l_skyText.m_path[4] = std::string("../Assets/Skybox/spacebox/Z+.jpg");
   l_skyText.m_path[5] = std::string("../Assets/Skybox/spacebox/Z-.jpg");
   
-  Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
   
-  // l_msg->CreateSceneUpdateMsg({}, {}, {}, {}, {}, {}, {});
+  
+  // asteroid
+  Network::ObjAddInfo l_asteroid;
+  l_asteroid.m_id = 2;
+  l_asteroid.m_objType = Network::ObjectType::MESH;
+  l_asteroid.m_materialFlags = RenderControl::GeometryPassMaterialFlags::EMISSION_MAP;
+  l_asteroid.m_meshPath = std::string("../Assets/Models/Asteroid/asteroid.obj");
+  
+  Network::ObjTransformInfo l_asteroidStartTransform;
+  l_asteroidStartTransform.m_id = 2;
+  l_asteroidStartTransform.m_transformType = Network::ObjectTransformType::OBJ_POS;
+  l_asteroidStartTransform.x = 0;
+  l_asteroidStartTransform.y = 0;
+  l_asteroidStartTransform.z = -5;
+  
+  Network::TextureChangeInfo l_asteroidText;
+  l_asteroidText.m_id = 2;
+  l_asteroidText.m_textureLayer = 0;
+  l_asteroidText.m_cubeText = false;
+  l_asteroidText.m_path[0] = std::string("../Assets/Models/Asteroid/diffuse.jpg");
+  
+  
+  
+  Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
   l_msg->CreateSceneUpdateMsg(
   {glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
-  {l_sky}, {}, {}, {l_skyText}, {}, {}, {});
+  {l_sky, l_asteroid}, {}, {}, {l_skyText, l_asteroidText}, {}, {}, {});
 
-  
+
   for( std::map<std::shared_ptr<asio::ip::tcp::socket>, unsigned int>::iterator l_iter = m_clients.begin(); l_iter != m_clients.end(); ++l_iter )
-   m_serverCtrl.PushMsg(l_iter->first, l_msg);
+    m_serverCtrl.PushMsg(l_iter->first, l_msg);
   
 }
 

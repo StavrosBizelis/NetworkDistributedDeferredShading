@@ -78,7 +78,7 @@ namespace Network
     
     void Serialize(char* a_arrOut) const;
     void Deserialize(char* a_arrIn);
-    size_t Size() const;
+    static size_t Size();
   };
 
 
@@ -88,6 +88,11 @@ namespace Network
     uint32_t m_textureLayer;
     char m_cubeText;
     std::string m_path[6];
+    
+    TextureChangeInfo();
+    void Serialize(char* a_arrOut) const;
+    void Deserialize(char* a_arrIn);
+    size_t Size() const;
   };
 
 
@@ -131,7 +136,7 @@ namespace Network
     void CreateSizeMsg(const uint32_t& a_size); ///< MSG_SIZE
     void CreateClientRequestMsg(); ///< CLNT_REQUEST
     void CreateEngineReadyMsg(); ///< CLNT_ENGINE_READY
-    void CreateRenderResultMsg(char* a_textureData, const glm::vec2& a_resolution, LodePNGColorType a_colorType = LCT_RGB, const unsigned int& a_bitDepth = 8);  ///< CLNT_RENDER_RESULT
+    void CreateRenderResultMsg(char* a_textureData, const glm::vec2& a_resolution, const unsigned int& a_colorType = 0, const unsigned int& a_bitDepth = 8);  ///< CLNT_RENDER_RESULT
     
     void CreateSetupMsg( const glm::vec4& a_viewportInfo, const glm::vec2& a_partialResolution, const glm::vec2& a_resolution ); ///< SRV_SETUP
     void CreateSceneUpdateMsg(
@@ -155,7 +160,7 @@ namespace Network
     /// @param a_outTextureData pointer to a buffer - will be allocated in the function
     /// @brief a_outTextureData should not be allocated beforehand.
     /// @brief the caller is responsible to delete a_outTextureData after this function is called
-    bool DeserializeRenderResultMsg( char** a_outTextureData, glm::vec2& a_outResolution, LodePNGColorType& a_outColourType, unsigned int& a_outBitDepth) const; ///< CLNT_RENDER_RESULT
+    bool DeserializeRenderResultMsg( char* a_outTextureData, glm::vec2& a_outResolution, unsigned int& a_outColourType, unsigned int& a_outBitDepth) const; ///< CLNT_RENDER_RESULT
     
     bool DeserializeSetupMsg( glm::vec4& a_outViewportInfo, glm::vec2& a_outPartialResolution, glm::vec2& a_outResolution ) const; ///< SRV_SETUP
     bool DeserializeSceneUpdateMsg( 

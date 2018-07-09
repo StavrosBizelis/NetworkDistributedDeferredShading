@@ -41,10 +41,7 @@ void GLGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
   
   if(a_composite)
   {
-    std::shared_ptr<ITexture> l_text = m_textureFactory->GetTexture("..\\Assets\\Skybox\\spacebox\\DX+.jpg");
-    l_text->SetSamplerObjectParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    l_text->SetSamplerObjectParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    m_compositionPass = new RenderControl::GLCompositionPass(m_resolution, m_sceneManager, m_shapeFactory, a_subparts, l_text);
+    m_compositionPass = new RenderControl::GLCompositionPass(m_resolution, m_sceneManager, m_shapeFactory, m_textureFactory, a_subparts);
     m_compositionPass->Init();
     m_compositionPass->SetSceenOutputAttachment(0);
     m_renderPassPipeline->PushBack(m_compositionPass);

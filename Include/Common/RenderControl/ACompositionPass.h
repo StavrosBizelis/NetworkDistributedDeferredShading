@@ -5,6 +5,7 @@
 #include "Common/Shapes/ARect.h"
 #include "Common/SceneControl/SceneManager.h"
 #include "Common/Shapes/IShapeFactory.h"
+#include "Common/Textures/ITextureFactory.h"
 
 #include <unordered_map>
 #include <set>
@@ -27,7 +28,7 @@ namespace RenderControl
     std::vector< SceneControl::MeshSceneNode* > m_subpartRects;
     SceneControl::SceneManager* m_scnManager;
 	public:
-		ACompositionPass(const glm::vec2& a_resolution, SceneControl::SceneManager* a_scnManager, IShapeFactory* a_shapeFactory, const unsigned int& a_subparts);
+		ACompositionPass(const glm::vec2& a_resolution, SceneControl::SceneManager* a_scnManager, IShapeFactory* a_shapeFactory, ITextureFactory* a_textFactory, const unsigned int& a_subparts);
 		virtual ~ACompositionPass();
     
     

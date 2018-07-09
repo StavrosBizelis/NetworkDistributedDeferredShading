@@ -75,12 +75,8 @@ bool RenderControl::GLDeferredShadingPass::Init()
 			glSamplerParameterf(m_outputSamplers[i], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		}
 
-	//	glEnable(GL_SCISSOR_TEST);
-	//	glScissor(0, 400, 300, 600);
 
-//		glm::vec2 l_res( 128, 648);
 		glm::vec2 l_res = m_resolutionPart;
-		//l_res.y /= 2.f;
 		// setup geometry frame buffer object and its textures
 		glGenFramebuffers(1, &m_fbo);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo);
@@ -187,8 +183,8 @@ void RenderControl::GLDeferredShadingPass::GeometryPass()
 
 
   glm::vec2 l_resolution = GetResolution();
-  glViewport( (GLsizei)m_viewPortSetting.x, (GLsizei)m_viewPortSetting.y, 
-              (GLsizei)m_viewPortSetting.z, (GLsizei)m_viewPortSetting.w);
+  glViewport( m_viewPortSetting.x, m_viewPortSetting.y, 
+              m_viewPortSetting.z, m_viewPortSetting.w);
 
 
 
@@ -446,7 +442,7 @@ bool RenderControl::GLDeferredShadingPass::PackTexture( Network::NetworkMsgPtr& 
   if(l_ptr)
   {
     // IFDBG( std::cout << "Packed Actual Texture " << std::endl; );
-    a_outMsg->CreateRenderResultMsg(l_ptr, m_resolutionPart, LCT_RGB, 8 );
+    a_outMsg->CreateRenderResultMsg(l_ptr, m_resolutionPart, 0, 8 );
     glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
   }
   else

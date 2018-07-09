@@ -18,7 +18,7 @@ namespace RenderControl
     void Clear();
     
 	public:
-		GLCompositionPass(const glm::vec2& a_resolution, SceneControl::SceneManager* a_scnManager, IShapeFactory* a_shapeFactory, const unsigned int& a_subparts, std::shared_ptr<ITexture> a_text);
+		GLCompositionPass(const glm::vec2& a_resolution, SceneControl::SceneManager* a_scnManager, IShapeFactory* a_shapeFactory, ITextureFactory* a_textFactory, const unsigned int& a_subparts);
 		virtual ~GLCompositionPass();
     
     

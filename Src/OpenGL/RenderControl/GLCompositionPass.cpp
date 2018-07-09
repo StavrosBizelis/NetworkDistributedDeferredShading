@@ -12,12 +12,9 @@
  *  Params: const glm::vec2 &a_resolution, SceneControl::SceneManager *a_scnManager, SceneControl::IShapeFactory *a_shapeFactory, const unsigned int &a_subparts
  * Effects: 
  ***********************************************************************/
-RenderControl::GLCompositionPass::GLCompositionPass(const glm::vec2 &a_resolution, SceneControl::SceneManager *a_scnManager, IShapeFactory *a_shapeFactory, const unsigned int &a_subparts, std::shared_ptr<ITexture> a_text)
-  :ACompositionPass(a_resolution, a_scnManager, a_shapeFactory, a_subparts)
+RenderControl::GLCompositionPass::GLCompositionPass(const glm::vec2 &a_resolution, SceneControl::SceneManager *a_scnManager, IShapeFactory *a_shapeFactory, ITextureFactory* a_textFactory, const unsigned int &a_subparts)
+  :ACompositionPass(a_resolution, a_scnManager, a_shapeFactory,a_textFactory, a_subparts)
 {
-  
-  for( unsigned int i =0; i < a_subparts; ++i)
-    m_subpartRects[i]->SetTexture(0,a_text);
   
   m_outputTextures.resize(1, 0);
   m_outputSamplers.resize(1, 0);

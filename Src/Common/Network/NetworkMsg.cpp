@@ -17,15 +17,15 @@ namespace Network
   
   void ObjAddInfo::Serialize(char* a_arrOut) const
   {
-    ConsistentInt32ToCharArray(m_id, a_arrOut);
+    ConsistentUInt32ToCharArray(m_id, a_arrOut);
     a_arrOut+=4;
     memcpy(a_arrOut, (void*)&m_objType, 1);
     a_arrOut+=1;
-    ConsistentInt32ToCharArray(m_materialFlags, a_arrOut);
+    ConsistentUInt32ToCharArray(m_materialFlags, a_arrOut);
     a_arrOut+=4;
     memcpy(a_arrOut, (void*)&m_lightFlags, 1);
     a_arrOut+=1;
-    ConsistentInt32ToCharArray(m_meshPath.size(), a_arrOut);
+    ConsistentUInt32ToCharArray(m_meshPath.size(), a_arrOut);
     a_arrOut+=4;
     memcpy(a_arrOut, &(m_meshPath[0]), m_meshPath.length());
     a_arrOut += m_meshPath.length();
@@ -33,15 +33,15 @@ namespace Network
   
   void ObjAddInfo::Deserialize(char* a_arrIn)
   {
-    m_id = ConsistentCharArrToInt32(a_arrIn);
+    m_id = ConsistentCharArrToUInt32(a_arrIn);
     a_arrIn+=4;
     m_objType = (ObjectType)(*a_arrIn);
     a_arrIn+=1;
-    m_materialFlags = (RenderControl::GeometryPassMaterialFlags)ConsistentCharArrToInt32(a_arrIn);
+    m_materialFlags = (RenderControl::GeometryPassMaterialFlags)ConsistentCharArrToUInt32(a_arrIn);
     a_arrIn+=4;
     m_lightFlags = (RenderControl::LightTypeFlags)(*a_arrIn);
     a_arrIn+=1;
-    unsigned int l_size = ConsistentCharArrToInt32(a_arrIn);
+    unsigned int l_size = ConsistentCharArrToUInt32(a_arrIn);
     a_arrIn+=4;
     m_meshPath = std::string(a_arrIn, l_size);
   }
@@ -53,7 +53,7 @@ namespace Network
   
   void ObjTransformInfo::Serialize(char* a_arrOut) const
   {
-    ConsistentInt32ToCharArray(m_id, a_arrOut);
+    ConsistentUInt32ToCharArray(m_id, a_arrOut);
     a_arrOut+=4;
     memcpy(a_arrOut, (void*)&m_transformType, 1);
     a_arrOut+=1;
@@ -68,7 +68,7 @@ namespace Network
   }
   void ObjTransformInfo::Deserialize(char* a_arrIn)
   {
-    m_id = ConsistentCharArrToInt32(a_arrIn);
+    m_id = ConsistentCharArrToUInt32(a_arrIn);
     a_arrIn+=4;
     m_transformType = (ObjectTransformType)(*a_arrIn);
     a_arrIn+=1;
@@ -81,13 +81,74 @@ namespace Network
     a_arrIn+=4;
   }
   
-  size_t ObjTransformInfo::Size() const
+  size_t ObjTransformInfo::Size()
   {
     return sizeof(uint32_t) + sizeof(ObjectTransformType) + 3* sizeof(float) ;
   }
-  
-  
 
+  TextureChangeInfo::TextureChangeInfo()
+  : m_id(0), m_textureLayer(0), m_cubeText(0)
+  {
+    for( int i = 0; i < 6; ++i)
+      m_path[i] = "";
+  }
+  
+  void TextureChangeInfo::Serialize(char* a_arrOut) const
+  {
+    ConsistentUInt32ToCharArray(m_id, a_arrOut);
+    a_arrOut+=4;
+    ConsistentUInt32ToCharArray(m_textureLayer, a_arrOut);
+    a_arrOut+=4;
+    memcpy(a_arrOut, (void*)&m_cubeText, 1);
+    a_arrOut++;
+    for( unsigned int i =0; i < 6; ++i)
+    {
+      ConsistentUInt32ToCharArray( uint32_t(m_path[i].length() ), a_arrOut);   // length of path
+      a_arrOut += 4;
+      memcpy(a_arrOut, m_path[i].data(), uint32_t( m_path[i].length() ) );   // path
+      a_arrOut += m_path[i].length();
+    }
+  }
+  void TextureChangeInfo::Deserialize(char* a_arrIn)
+  {
+    m_id = ConsistentCharArrToUInt32(a_arrIn);   // m_id
+    a_arrIn += 4;
+
+    m_textureLayer = ConsistentCharArrToUInt32(a_arrIn);  // m_texture layer
+    a_arrIn += 4;
+    m_cubeText = *a_arrIn;  // is it a cube
+    a_arrIn += 1;
+    for( unsigned int i = 0; i < 6; ++i)
+    {
+      uint32_t l_textSize = ConsistentCharArrToUInt32(a_arrIn);  // texture size 
+      a_arrIn += 4;
+      if( l_textSize )
+      {
+        m_path[i] = std::string(a_arrIn, l_textSize);   // path
+        a_arrIn += l_textSize;
+      }
+    }
+  }
+  size_t TextureChangeInfo::Size() const
+  {
+    return 2*sizeof(uint32_t) + 1 + 6 * sizeof(uint32_t) + m_path[0].length() + m_path[1].length() + m_path[2].length() + m_path[3].length() + m_path[4].length() + m_path[5].length();
+  }
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   
@@ -177,7 +238,7 @@ namespace Network
     *l_pos = (char)m_type;
     
     ++l_pos;
-    ConsistentInt32ToCharArray(a_size, l_pos);
+    ConsistentUInt32ToCharArray(a_size, l_pos);
   } 
 
   /*
@@ -216,7 +277,7 @@ namespace Network
    * Returns: void
    * Effects: 
    */
-  void NetworkMsg::CreateRenderResultMsg(char* a_textureData, const glm::vec2& a_resolution, LodePNGColorType a_colorType, const unsigned int& a_bitDepth)
+  void NetworkMsg::CreateRenderResultMsg(char* a_textureData, const glm::vec2& a_resolution, const unsigned int& a_colorType, const unsigned int& a_bitDepth)
   {
     // first encode the image to png so we can know the resulting size
     unsigned int l_bitDepth = a_bitDepth == 8 || a_bitDepth == 16 ? a_bitDepth : 8;
@@ -233,15 +294,15 @@ namespace Network
     ++l_pos;
     
     // l_original Size 
-    ConsistentInt32ToCharArray(a_resolution.x, l_pos);
+    ConsistentUInt32ToCharArray(a_resolution.x, l_pos);
     l_pos += 4;
-    ConsistentInt32ToCharArray(a_resolution.y, l_pos);
+    ConsistentUInt32ToCharArray(a_resolution.y, l_pos);
     l_pos += 4;
     // colourtype
-    ConsistentInt32ToCharArray((uint32_t)a_colorType, l_pos);
+    ConsistentUInt32ToCharArray((uint32_t)a_colorType, l_pos);
     l_pos += 4;
     // bit depth
-    ConsistentInt32ToCharArray((uint32_t)l_bitDepth, l_pos);
+    ConsistentUInt32ToCharArray((uint32_t)l_bitDepth, l_pos);
     l_pos += 4;
     
     
@@ -271,30 +332,30 @@ namespace Network
     ++l_pos;
         
     // a_viewportInfo
-    ConsistentInt32ToCharArray( (uint32_t)a_viewportInfo.x, l_pos);
+    ConsistentInt32ToCharArray( (int32_t)a_viewportInfo.x, l_pos);
     l_pos += 4;
-    ConsistentInt32ToCharArray( (uint32_t)a_viewportInfo.y, l_pos);
+    ConsistentInt32ToCharArray( (int32_t)a_viewportInfo.y, l_pos);
     
     l_pos += 4;
-    ConsistentInt32ToCharArray( (uint32_t)a_viewportInfo.z, l_pos);
+    ConsistentInt32ToCharArray( (int32_t)a_viewportInfo.z, l_pos);
     
     l_pos += 4;
-    ConsistentInt32ToCharArray( (uint32_t)a_viewportInfo.w, l_pos);
+    ConsistentInt32ToCharArray( (int32_t)a_viewportInfo.w, l_pos);
     
     l_pos += 4;
     // a_partialResolution
-    ConsistentInt32ToCharArray( (uint32_t)a_partialResolution.x, l_pos);
+    ConsistentInt32ToCharArray( (int32_t)a_partialResolution.x, l_pos);
     
     l_pos += 4;
-    ConsistentInt32ToCharArray( (uint32_t)a_partialResolution.y, l_pos);
+    ConsistentInt32ToCharArray( (int32_t)a_partialResolution.y, l_pos);
     
     l_pos += 4;
     
     // a_resolution
-    ConsistentInt32ToCharArray( (uint32_t)a_resolution.x, l_pos);
+    ConsistentInt32ToCharArray( (int32_t)a_resolution.x, l_pos);
     
     l_pos += 4;
-    ConsistentInt32ToCharArray( (uint32_t)a_resolution.y, l_pos);
+    ConsistentInt32ToCharArray( (int32_t)a_resolution.y, l_pos);
     
 
   }
@@ -319,44 +380,36 @@ namespace Network
   {
     uint32_t l_size = 1 + 
       3 * 3 * sizeof(uint32_t) // camera settings
-      + sizeof(uint32_t);
+      + sizeof(uint32_t);       // object to add size
     for(unsigned int i = 0; i < a_objsToAdd.size(); ++i)
     {
-      l_size += sizeof(uint32_t);
-      l_size += a_objsToAdd[i].Size();
+      l_size += sizeof(uint32_t); // size of current obj to add
+      l_size += a_objsToAdd[i].Size();    // current obj to add
     }
-    l_size += sizeof(uint32_t) + a_objsToRemove.size() * sizeof(uint32_t) +
-              sizeof(uint32_t) + a_objsToTransform.size() * sizeof(ObjTransformInfo) +
-              sizeof(uint32_t);
+    l_size += sizeof(uint32_t) + a_objsToRemove.size() * sizeof(uint32_t) + // objects to remove
+              sizeof(uint32_t) + a_objsToTransform.size() * ObjTransformInfo::Size() + // objects to transform
+              sizeof(uint32_t); // textures to change
     for(unsigned int i = 0; i < a_textureChange.size(); ++i)
     {
-      l_size += sizeof(uint32_t); // m_id
-      l_size += sizeof(uint32_t); // m_textureLayer
-      l_size += 1; // m_cubeText
-      for( unsigned l_textIndex = 0; l_textIndex < 6; ++l_textIndex)
-      {
-        l_size += sizeof(uint32_t); // int size( m_path.length )
-        l_size += a_textureChange[i].m_path[i].length();
-      }
+      l_size += sizeof(uint32_t) + a_textureChange[i].Size();
     }
     
-    l_size += sizeof(uint32_t);
+    l_size += sizeof(uint32_t); // size of lights to add 
     for(unsigned int i = 0; i < a_lightsToAdd.size(); ++i)
     {
-      l_size += sizeof(uint32_t);
-      l_size += a_lightsToAdd[i].Size();
+      l_size += sizeof(uint32_t);   // size of current light to add
+      l_size += a_lightsToAdd[i].Size();  // current light to add 
     }
-    l_size += sizeof(uint32_t) + a_lightsToRemove.size() * sizeof(uint32_t) +
-              sizeof(uint32_t) + a_lightsToTransform.size() * sizeof(ObjTransformInfo);
+    l_size += sizeof(uint32_t) + a_lightsToRemove.size() * sizeof(uint32_t) +   // lights to remove
+              sizeof(uint32_t) + a_lightsToTransform.size() * ObjTransformInfo::Size();   // lights to transform
     
     
     Reset(l_size);
     m_type = MsgType::SRV_SCENE_UPDATE;
     m_size = l_size;
     char* l_pos = m_data;
-    *l_pos = (char)m_type;
+    *l_pos = (char)m_type;    // type
     ++l_pos;
-    
     // camera settings
     for( unsigned int i = 0; i < 3; ++i)
     {
@@ -369,82 +422,73 @@ namespace Network
     
     
     // a_objsToAdd
-    ConsistentInt32ToCharArray( uint32_t(a_objsToAdd.size()), l_pos);
+    ConsistentUInt32ToCharArray( uint32_t(a_objsToAdd.size()), l_pos);
     l_pos += 4;
     for( unsigned int i = 0; i < a_objsToAdd.size(); ++i)
     {
-      ConsistentInt32ToCharArray( uint32_t(a_objsToAdd[i].Size() ) , l_pos);
+      ConsistentUInt32ToCharArray( uint32_t(a_objsToAdd[i].Size() ) , l_pos);
       l_pos += 4;
       a_objsToAdd[i].Serialize(l_pos);
       l_pos += a_objsToAdd[i].Size();
     }
     
     // a_objsToRemove
-    ConsistentInt32ToCharArray( uint32_t(a_objsToRemove.size() ), l_pos);
+    ConsistentUInt32ToCharArray( uint32_t(a_objsToRemove.size() ), l_pos);
     l_pos += 4;
     for( unsigned int i = 0; i < a_objsToRemove.size(); ++i)
     {
-      ConsistentInt32ToCharArray(a_objsToRemove[i], l_pos);
+      ConsistentUInt32ToCharArray(a_objsToRemove[i], l_pos);
       l_pos += sizeof(uint32_t);      
     }
     
     // a_objsToTransform
-    ConsistentInt32ToCharArray(uint32_t(a_objsToTransform.size()), l_pos);
+    ConsistentUInt32ToCharArray(uint32_t(a_objsToTransform.size()), l_pos);
     l_pos += 4;
     for( unsigned int i = 0; i < a_objsToTransform.size(); ++i)
     {
       a_objsToTransform[i].Serialize(l_pos);
-      l_pos += a_objsToTransform[i].Size();      
+      l_pos += ObjTransformInfo::Size();
     }
     
     
     // a_textureChange
-    ConsistentInt32ToCharArray( uint32_t(a_textureChange.size()), l_pos);
+    ConsistentUInt32ToCharArray( uint32_t(a_textureChange.size()), l_pos);   // number of texture changes
     l_pos += 4;
     for(unsigned int i = 0; i < a_textureChange.size(); ++i)
     {
-      ConsistentInt32ToCharArray(a_textureChange[i].m_id, l_pos);
+      ConsistentUInt32ToCharArray( uint32_t(a_textureChange[i].Size()), l_pos);
       l_pos += 4;
-      ConsistentInt32ToCharArray(a_textureChange[i].m_textureLayer, l_pos);
-      l_pos += 4;
-      *l_pos = a_textureChange[i].m_cubeText;
-      l_pos += 1;
-      for( unsigned l_textIndex = 0; l_textIndex < 6; ++l_textIndex)
-      {
-        ConsistentInt32ToCharArray( uint32_t(a_textureChange[i].m_path[l_textIndex].length() ), l_pos);
-        l_pos += 4;
-        memcpy(l_pos, &(a_textureChange[i].m_path[l_textIndex][0]), uint32_t(a_textureChange[i].m_path[l_textIndex].length() ) );
-        l_pos += a_textureChange[i].m_path[l_textIndex].length();
-      }
+      a_textureChange[i].Serialize(l_pos);
+      l_pos += a_textureChange[i].Size();
     }
     
     // a_lightsToAdd
-    ConsistentInt32ToCharArray( uint32_t(a_lightsToAdd.size() ), l_pos);
+    ConsistentUInt32ToCharArray( uint32_t(a_lightsToAdd.size() ), l_pos);
     l_pos += 4;
     for( unsigned int i = 0; i < a_lightsToAdd.size(); ++i)
     {
-      ConsistentInt32ToCharArray( uint32_t(a_lightsToAdd[i].Size()), l_pos);
+      ConsistentUInt32ToCharArray( uint32_t(a_lightsToAdd[i].Size()), l_pos);
       l_pos += 4;
       a_lightsToAdd[i].Serialize(l_pos);
       l_pos += a_lightsToAdd[i].Size();
     }
     
     // a_lightsToRemove
-    ConsistentInt32ToCharArray(uint32_t(a_lightsToRemove.size()), l_pos);
+    ConsistentUInt32ToCharArray(uint32_t(a_lightsToRemove.size()), l_pos);
     l_pos += 4;
     for( unsigned int i = 0; i < a_lightsToRemove.size(); ++i)
     {
-      ConsistentInt32ToCharArray(a_lightsToRemove[i], l_pos);
+      ConsistentUInt32ToCharArray(a_lightsToRemove[i], l_pos);
       l_pos += sizeof(uint32_t);      
     }
     
     // a_lightsToTransform
-    ConsistentInt32ToCharArray( uint32_t(a_lightsToTransform.size() ), l_pos);
+    ConsistentUInt32ToCharArray( uint32_t(a_lightsToTransform.size() ), l_pos);
     l_pos += 4;
     for( unsigned int i = 0; i < a_lightsToTransform.size(); ++i)
     {
       a_lightsToTransform[i].Serialize(l_pos);
-      l_pos += sizeof(ObjTransformInfo);      
+      l_pos += ObjTransformInfo::Size();
     }
     
   }
@@ -478,19 +522,20 @@ namespace Network
       return false;
       
     // a_outSize = ((uint32_t)m_data[4] << 24) | ((uint32_t)m_data[3] << 16) | ((uint32_t)m_data[2] << 8) | (uint32_t)m_data[1];
-    a_outSize = ConsistentCharArrToInt32(&m_data[1]);
+    a_outSize = ConsistentCharArrToUInt32(&m_data[1]);
     return true;
   }
 
+  
   /*
    *  Method: NetworkMsg::DeserializeGeometryPassMsg
    *  Params: 
    * Returns: bool
    * Effects: 
    */
-  bool NetworkMsg::DeserializeRenderResultMsg( char** a_outTextureData, 
+  bool NetworkMsg::DeserializeRenderResultMsg( char* a_outTextureData, 
                                                glm::vec2& a_outResolution, 
-                                               LodePNGColorType& a_outColourType, 
+                                               unsigned int& a_outColourType, 
                                                unsigned int& a_outBitDepth) const 
   {
     char* l_pos = m_data;
@@ -501,19 +546,18 @@ namespace Network
       return false;
     
     ++l_pos;
-    a_outResolution.x = (float)ConsistentCharArrToInt32(l_pos);
+    a_outResolution.x = (float)ConsistentCharArrToUInt32(l_pos);
     l_pos += 4;
-    a_outResolution.y = (float)ConsistentCharArrToInt32(l_pos);
+    a_outResolution.y = (float)ConsistentCharArrToUInt32(l_pos);
     l_pos += 4;
     
-    a_outColourType = (LodePNGColorType)ConsistentCharArrToInt32(l_pos);
+    a_outColourType = ConsistentCharArrToUInt32(l_pos);
     l_pos += 4;
-    a_outBitDepth = ConsistentCharArrToInt32(l_pos);
+    a_outBitDepth = ConsistentCharArrToUInt32(l_pos);
     l_pos += 4;
 
     unsigned int l_originalSize = a_outResolution.x*a_outResolution.y*3;
-    *a_outTextureData = new char[l_originalSize];
-    if( LZ4_decompress_fast(l_pos, *a_outTextureData, l_originalSize) > 0 )
+    if( LZ4_decompress_fast(l_pos, a_outTextureData, l_originalSize) > 0 )
       return true;
     return false;
   }
@@ -534,7 +578,7 @@ namespace Network
     if( (MsgType)(*l_pos) != MsgType::SRV_SETUP )
       return false;
 
-    uint32_t l_x, l_y, l_z, l_w;
+    int32_t l_x, l_y, l_z, l_w;
     
     ++l_pos;
  
@@ -591,7 +635,7 @@ namespace Network
     if( (MsgType)(*l_pos) != MsgType::SRV_SCENE_UPDATE )
       return false;
     ++l_pos;
-    
+
     // camera settings
     for( unsigned int i = 0; i < 3; ++i)
     {
@@ -599,12 +643,12 @@ namespace Network
       l_pos += 3*sizeof(float);
     }
     // a_outObjsToAdd
-    uint32_t l_objectsToAddSize = ConsistentCharArrToInt32(l_pos);
+    uint32_t l_objectsToAddSize = ConsistentCharArrToUInt32(l_pos);
     a_outObjsToAdd.resize(l_objectsToAddSize);
     l_pos += 4;
     for( unsigned int i = 0; i < l_objectsToAddSize; ++i)
     {
-      uint32_t l_objAddInfoSize = ConsistentCharArrToInt32(l_pos);
+      uint32_t l_objAddInfoSize = ConsistentCharArrToUInt32(l_pos);
       l_pos += 4;
       a_outObjsToAdd[i].Deserialize(l_pos);
       l_pos += l_objAddInfoSize;
@@ -612,7 +656,7 @@ namespace Network
     }
     
     // a_outObjsToRemove
-    uint32_t l_outObjsToRemoveSize = ConsistentCharArrToInt32(l_pos);
+    uint32_t l_outObjsToRemoveSize = ConsistentCharArrToUInt32(l_pos);
     l_pos += 4;
     a_outObjsToRemove.resize(l_outObjsToRemoveSize);
     if( l_outObjsToRemoveSize > 0)
@@ -620,63 +664,56 @@ namespace Network
       memcpy( &a_outObjsToRemove[0], l_pos, l_outObjsToRemoveSize*sizeof(uint32_t) );
       l_pos += l_outObjsToRemoveSize*sizeof(uint32_t);
     }
-      
+    
+    
     // a_outObjsToTransform
-    uint32_t l_outObjsToTransformSize = ConsistentCharArrToInt32(l_pos);
-    l_pos += 4;  
+    uint32_t l_outObjsToTransformSize = ConsistentCharArrToUInt32(l_pos);
     a_outObjsToTransform.resize(l_outObjsToTransformSize);
-    if(l_outObjsToTransformSize > 0)
+    l_pos += 4;
+    for( unsigned int i = 0; i < l_outObjsToTransformSize; ++i)
     {
-      memcpy( &a_outObjsToTransform[0], l_pos, l_outObjsToTransformSize*sizeof(ObjTransformInfo) );
-      l_pos += l_outObjsToTransformSize*sizeof(ObjTransformInfo);
+      a_outObjsToTransform[i].Deserialize(l_pos);
+      l_pos += ObjTransformInfo::Size();
     }
     
+
     // a_outTextureChange
-    uint32_t l_outTextureChangeSize = ConsistentCharArrToInt32(l_pos);
+    uint32_t l_outTextureChangeSize = ConsistentCharArrToUInt32(l_pos);
     a_outTextureChange.resize(l_outTextureChangeSize);
     l_pos += 4;
     for( unsigned int i = 0; i < l_outTextureChangeSize; ++i)
     {
-      a_outTextureChange[i].m_id = ConsistentCharArrToInt32(l_pos);
+      uint32_t l_textChangeInfoSize = ConsistentCharArrToUInt32(l_pos);
       l_pos += 4;
-      a_outTextureChange[i].m_textureLayer = ConsistentCharArrToInt32(l_pos);
-      l_pos += 4;
-      a_outTextureChange[i].m_cubeText = *l_pos;
-      l_pos += 1;
-      for( unsigned l_textIndex = 0; l_textIndex < 6; ++l_textIndex)
-      {
-        unsigned int l_textSize = ConsistentCharArrToInt32(l_pos);
-        l_pos += 4;
-        a_outTextureChange[i].m_path[l_textIndex] = std::string(l_pos, l_textSize);
-        l_pos += l_textSize;
-      }
+      a_outTextureChange[i].Deserialize(l_pos);
+      l_pos += l_textChangeInfoSize;
     }
     
     
     // a_outLightsToAdd
-    uint32_t l_outLightsToAddSize = ConsistentCharArrToInt32(l_pos);
+    uint32_t l_outLightsToAddSize = ConsistentCharArrToUInt32(l_pos);
     a_outLightsToAdd.resize(l_outLightsToAddSize);
     l_pos += 4;
     for( unsigned int i = 0; i < l_outLightsToAddSize; ++i)
     {
-      uint32_t l_objAddInfoSize = ConsistentCharArrToInt32(l_pos);
+      uint32_t l_objAddInfoSize = ConsistentCharArrToUInt32(l_pos);
       l_pos += 4;
       a_outLightsToAdd[i].Deserialize(l_pos);
       l_pos += l_objAddInfoSize;
     }
-    
+
     // a_outLightsToRemove
-    uint32_t l_outLightsToRemoveSize = ConsistentCharArrToInt32(l_pos);
+    uint32_t l_outLightsToRemoveSize = ConsistentCharArrToUInt32(l_pos);
     a_outLightsToRemove.resize(l_outLightsToRemoveSize);
     l_pos += 4;
     for( unsigned int i = 0; i < l_outLightsToRemoveSize; ++i)
     {
-      a_outLightsToRemove[i] = ConsistentCharArrToInt32(l_pos);
+      a_outLightsToRemove[i] = ConsistentCharArrToUInt32(l_pos);
       l_pos += sizeof(uint32_t);
     }
-    
+
     // a_outLightsToTransform
-    uint32_t l_outLightsToTransformSize = ConsistentCharArrToInt32(l_pos);
+    uint32_t l_outLightsToTransformSize = ConsistentCharArrToUInt32(l_pos);
     a_outLightsToTransform.resize(l_outLightsToTransformSize);
     l_pos += 4;
     for( unsigned int i = 0; i < l_outLightsToTransformSize; ++i)
@@ -684,6 +721,7 @@ namespace Network
       a_outLightsToTransform[i].Deserialize(l_pos);
       l_pos += sizeof(ObjTransformInfo);
     }
+
     
     return true;
   }
@@ -760,9 +798,9 @@ namespace Network
           glm::vec2 l_res;
           a.DeserializeSetupMsg(l_viewport, l_resPart, l_res);
           
-          strm << "Viewport settings " << (uint32_t)l_viewport.x << ", " << (uint32_t)l_viewport.y << ", " << (uint32_t)l_viewport.z << ", " << (uint32_t)l_viewport.w << std::endl;
-          strm << "partial resolution " << (uint32_t)l_resPart.x << ", " << (uint32_t)l_resPart.y << std::endl;
-          strm << "resolution " << (uint32_t) l_res.x << ", " << (uint32_t)l_res.y;
+          strm << "Viewport settings " << l_viewport.x << ", " << l_viewport.y << ", " << l_viewport.z << ", " << l_viewport.w << std::endl;
+          strm << "partial resolution " << l_resPart.x << ", " << l_resPart.y << std::endl;
+          strm << "resolution " << l_res.x << ", " << l_res.y;
           return strm;
         }
         case MsgType::SRV_SCENE_UPDATE: 

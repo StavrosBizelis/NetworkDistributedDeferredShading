@@ -3,6 +3,13 @@
 #include "OpenGL/Textures/GLCubemap.h"
 
 
+std::shared_ptr<ITexture> GLTextureFactory::GetTexture()
+{
+  std::shared_ptr<GLTexture> l_text = std::make_shared<GLTexture>();
+  l_text->Load("../Assets/EmptyTexture.jpg", true);
+  return l_text;
+}
+
 std::shared_ptr<ITexture> GLTextureFactory::GetTexture(std::string a_path)
 {
   std::map<std::string, std::shared_ptr<ITexture> >::iterator l_iter = m_textures.find(a_path);

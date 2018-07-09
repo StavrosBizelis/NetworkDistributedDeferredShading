@@ -13,7 +13,7 @@
  *  Params: const glm::vec2 &a_resolution, const unsigned int &a_subparts
  * Effects: 
  ***********************************************************************/
-RenderControl::ACompositionPass::ACompositionPass(const glm::vec2 &a_resolution, SceneControl::SceneManager* a_scnManager, IShapeFactory* a_shapeFactory, const unsigned int &a_subparts)
+RenderControl::ACompositionPass::ACompositionPass(const glm::vec2 &a_resolution, SceneControl::SceneManager* a_scnManager, IShapeFactory* a_shapeFactory, ITextureFactory* a_textFactory, const unsigned int &a_subparts)
   :IRenderPass(a_resolution), m_scnManager(a_scnManager)
 {
   m_subpartsSettings.resize(a_subparts);
@@ -21,8 +21,12 @@ RenderControl::ACompositionPass::ACompositionPass(const glm::vec2 &a_resolution,
   
   std::shared_ptr<ARect> l_rec = a_shapeFactory->GetRectangle();
   for( unsigned int i =0; i < a_subparts; ++i)
+  {
+    std::shared_ptr<ITexture> l_text = a_textFactory->GetTexture();
+    // std::shared_ptr<ITexture> l_text = a_textFactory->GetTexture("..\\Assets\\Skybox\\spacebox\\DX+.jpg");
     m_subpartRects.push_back( m_scnManager->AddMeshSceneNode(l_rec) );
-  
+    m_subpartRects.back()->SetTexture(0,l_text);
+  }
   UpdateSubpartsSettings();
 }
 
@@ -83,7 +87,7 @@ RenderControl::ACompositionPass::UpdateSubpartsSettings()
       // set the viewport settings and the resolution for this block
       CompositionEntity l_entity;
       l_entity.m_resolution = glm::vec2(l_currentWidth, l_currentHeight);
-      l_entity.m_viewport = glm::vec4(-l_shiftX, -l_shiftY, l_currentWidth, l_currentHeight);
+      l_entity.m_viewport = glm::vec4(-l_shiftX, -l_shiftY, m_resolution.x, m_resolution.y);
       m_subpartsSettings[l_index] = std::move(l_entity);
       // set the position and scale of the current block rectangle
       m_subpartRects[l_index]->SetPos( glm::vec3( 
