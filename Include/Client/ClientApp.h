@@ -21,7 +21,7 @@ private:
   glm::vec2 m_dimensions;
   
   ImplTech m_implTech;
-  Network::ClientControl m_client;
+  Network::ClientControl* m_client;
   AGraphicsEngine* m_graphics;
 
   // vectors to hold scene update data

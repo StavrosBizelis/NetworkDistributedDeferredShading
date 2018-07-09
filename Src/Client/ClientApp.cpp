@@ -17,11 +17,14 @@
  * Effects: 
  ***********************************************************************/
 ClientApp::ClientApp( const std::string &a_hostName, const unsigned int &a_hostPort, const ImplTech& a_implTech)
-  :m_implTech(a_implTech), m_client(a_hostName, a_hostPort), m_graphics(nullptr), m_dt(0)
+  // :m_implTech(a_implTech), m_graphics(nullptr), m_dt(0)
+  :m_implTech(a_implTech), m_client(nullptr), m_graphics(nullptr), m_dt(0)
 {
   m_hasUpdated[0] = true;
   m_hasUpdated[1] = true;
   m_hasUpdated[2] = false;
+  
+  m_client = new Network::ClientControl(a_hostName, a_hostPort);
 }
 
 
@@ -32,7 +35,9 @@ ClientApp::ClientApp( const std::string &a_hostName, const unsigned int &a_hostP
  ***********************************************************************/
 ClientApp::~ClientApp()
 {
- if( m_graphics )
+  if( m_client)
+    delete m_client;
+  if( m_graphics )
    delete m_graphics;
 }
 
@@ -71,7 +76,7 @@ WPARAM ClientApp::Execute()
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { 
 			if(msg.message == WM_QUIT) {
 				break;
-			}
+      }
 
 			TranslateMessage(&msg);	
 			DispatchMessage(&msg);
@@ -121,7 +126,8 @@ ClientApp::ProcessEvents(HWND window, UINT message, WPARAM w_param, LPARAM l_par
 			RECT dimensions;
 			GetClientRect(window, &dimensions);
 			m_gameWindow.SetDimensions(dimensions);
-      m_graphics->SetResolution(glm::vec2( glm::abs(dimensions.right - dimensions.left) , glm::abs(dimensions.top - dimensions.bottom) ) );
+			// if( m_graphics )
+        // m_graphics->SetResolution(glm::vec2( glm::abs(dimensions.right - dimensions.left) , glm::abs(dimensions.top - dimensions.bottom) ) );
       
 		break;
 
@@ -178,15 +184,15 @@ ClientApp::Initialise()
   // 7) CLIENTS SEND CLIENT READY SIGNALS *
 
   // CONNECTS TO SERVER
-  m_client.Connect();
+  m_client->Connect();
   
-  m_client.StartCommunication();
+  m_client->StartCommunication();
   
   // SENDS REQUEST
   Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
   l_msg->CreateClientRequestMsg();
   IFDBG( std::cout << "Send: " << (*l_msg) << std::endl << std::endl; );
-  m_client.PushMsg( l_msg );
+  m_client->PushMsg( l_msg );
   
   // wait for a rendering info from the server
   glm::vec4 l_viewport; 
@@ -195,8 +201,8 @@ ClientApp::Initialise()
   bool l_wait = true;
   while(l_wait)  
   {
-    m_client.Update();
-    std::vector<Network::NetworkMsgPtr> l_msgs = m_client.GetMsgs();
+    m_client->Update();
+    std::vector<Network::NetworkMsgPtr> l_msgs = m_client->GetMsgs();
     // we expect only one message at this point
     if( l_msgs.size() == 1 ) 
       if( l_msgs[0]->GetType() == Network::MsgType::SRV_SETUP )
@@ -216,7 +222,7 @@ ClientApp::Initialise()
   // CLIENT SEND CLIENT READY SIGNAL
   l_msg = std::make_shared<Network::NetworkMsg>();
   l_msg->CreateEngineReadyMsg();
-  m_client.PushMsg(l_msg);
+  m_client->PushMsg(l_msg);
   
   IFDBG( std::cout << "send: " << (*l_msg) << std::endl << std::endl; );
   
@@ -254,8 +260,8 @@ ClientApp::Update()
   
   // CLIENTS UPDATE
   // IFDBG( std::cout << "Client Update Start - "; );
-  m_client.Update();
-  std::vector<Network::NetworkMsgPtr> l_msgs = m_client.GetMsgs();
+  m_client->Update();
+  std::vector<Network::NetworkMsgPtr> l_msgs = m_client->GetMsgs();
   // update scene as appropriate
   m_hasUpdated[ m_hasUpdated[2] ] = false;
   
@@ -311,7 +317,7 @@ ClientApp::Update()
     
     if( m_graphics->GetDeferredRenderPass()->PackTexture(l_test) )
     {
-      m_client.PushMsg(l_test);
+      m_client->PushMsg(l_test);
       m_frameCount++;
     }
   }

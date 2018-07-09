@@ -32,6 +32,7 @@
 
 
 ClientApp g_app("192.168.1.3", 50001);
+// ClientApp g_app("localhost", 50001);
 
 LRESULT CALLBACK WinProc(HWND window, UINT message, WPARAM w_param, LPARAM l_param)
 {
@@ -43,7 +44,7 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE, PSTR, int)
   // create a console to print program output
   AllocConsole();
   freopen("CONOUT$", "w", stdout);
-  
   g_app.SetHinstance(hinstance); 
+  
   return g_app.Execute();
 }

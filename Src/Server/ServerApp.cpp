@@ -72,7 +72,8 @@ ServerApp::ProcessEvents(HWND window, UINT message, WPARAM w_param, LPARAM l_par
 			RECT dimensions;
 			GetClientRect(window, &dimensions);
 			m_gameWindow.SetDimensions(dimensions);
-      m_graphics->SetResolution(glm::vec2( glm::abs(dimensions.right - dimensions.left) , glm::abs(dimensions.top - dimensions.bottom) ) );
+      // if( m_graphics )
+        // m_graphics->SetResolution(glm::vec2( glm::abs(dimensions.right - dimensions.left) , glm::abs(dimensions.top - dimensions.bottom) ) );
       
 		break;
 
@@ -92,19 +93,8 @@ ServerApp::ProcessEvents(HWND window, UINT message, WPARAM w_param, LPARAM l_par
 	case WM_KEYUP:
 		switch (w_param) {
       case VK_SPACE: 
-			 ////////////////////////////////////////////////////// m_sockets = m_serverCtrl.StopAcceptingConnections();
-			 ////////////////////////////////////////////////////// m_sockets = m_serverCtrl.StopAcceptingConnections();
-			 ////////////////////////////////////////////////////// m_serverCtrl.StartClientCommunication();
 			break;
       case 'W': 
-        ////////////////////////////////////////////////////// char* l_data = new char [ 5 ];
-        ////////////////////////////////////////////////////// for( char i = 0; i < 5; ++i)
-        //////////////////////////////////////////////////////   l_data[i] = i+65;
-        
-        ////////////////////////////////////////////////////// Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
-        ////////////////////////////////////////////////////// l_msg->SetData(l_data, 5);
-        ////////////////////////////////////////////////////// std::cout << "send data message " << (*l_msg) << std::endl;
-			  ////////////////////////////////////////////////////// m_serverCtrl.PushMsg(m_sockets[0], l_msg);
         break;
 		}
 		break;
