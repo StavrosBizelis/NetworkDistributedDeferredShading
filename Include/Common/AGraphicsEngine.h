@@ -54,8 +54,25 @@ public:
   virtual void SetResolution(const glm::vec2& a_dim) 
   { 
     m_resolution = a_dim;
-    GetDeferredRenderPass()->GetCamera()->SetDimentsions(a_dim);
+    if(GetDeferredRenderPass())
+      GetDeferredRenderPass()->GetCamera()->SetDimentsions(a_dim);
   }
+  
+  glm::vec2 GetPartRes() { return m_resolutionPart; }
+  virtual void SetPartRes(const glm::vec2& a_dim) 
+  { 
+    m_resolutionPart = a_dim;
+  }
+
+  glm::vec4 GetViewportSettings() { return m_viewPortSettings; }
+  virtual void SetViewportSettings(const glm::vec4& a_viewport) 
+  { 
+    m_viewPortSettings = a_viewport;
+  }
+  
+  
+  
+  
   
   virtual RenderControl::ADeferredShadingPass* GetDeferredRenderPass() const = 0;
   virtual RenderControl::ACompositionPass* GetCompositionPass() const = 0;

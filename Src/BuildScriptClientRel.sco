@@ -5,13 +5,13 @@ import os
 env=Environment( ENV = {'PATH' : os.environ['PATH']}, TARGET_ARCH='x86' )
 
 # here we add the include folders
-env.Append(CCFLAGS='/DWIN32 /Zi /Gm /GR /EHsc /DNDEBUG /MT /O2 -D_WIN32_WINNT=0x0601 /I. /I"C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include" /I"../Include" /I"../Impt/"')
+env.Append(CCFLAGS='/DWIN32 /Zi /Gm /GR /EHsc /DNDEBUG /MT /O2 -D_WIN32_WINNT=0x0601 /I. /I"C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include" /I"C:\\VulkanSDK\\1.0.57.0\\Include" /I"../Include" /I"../Impt/"')
 # remember to change this for the various projects to the name you want
 env.Append(LINKFLAGS=' /PDB:NDDSClient.pdb')
 # in here we add the library folders
-env.Append(LIBPATH='C:\Program Files (x86)\Microsoft SDKs\Windows\\v7.0A\lib;C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\lib;../Bin/Debug;../Impt/assimp/lib;../Impt/freeimage/lib;../Impt/gl/lib;')
+env.Append(LIBPATH='C:\Program Files (x86)\Microsoft SDKs\Windows\\v7.0A\lib;C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\lib;C:\\VulkanSDK\\1.0.57.0\\Lib32;../Bin/Debug;../Impt/assimp/lib;../Impt/freeimage/lib;../Impt/gl/lib;')
 # in this list we add all the libraries we want to link to our code seperated by space
-list1=Split(' kernel32.lib User32.lib gdi32.lib glew32.lib opengl32.lib assimp.lib FreeImage.lib FreeImage.lib glew32.lib ')
+list1=Split(' kernel32.lib User32.lib gdi32.lib glew32.lib opengl32.lib assimp.lib FreeImage.lib vulkan-1.lib')
 env.Append(LIBS=list1)
 
 
@@ -30,6 +30,10 @@ OpenGL/RenderControl/GLDeferredShadingPass.cpp OpenGL/RenderControl/GLCompositio
 OpenGL/Textures/GLTextureFactory.cpp OpenGL/Textures/GLTexture.cpp OpenGL/Textures/GLCubemap.cpp \
 OpenGL/Shapes/GLShapeFactory.cpp OpenGL/Shapes/GLRect.cpp OpenGL/Shapes/GLSphere.cpp OpenGL/Shapes/GLCone.cpp OpenGL/Shapes/GLCube.cpp OpenGL/Shapes/GLSkybox.cpp OpenGL/Shapes/GLOpenAssetImportMesh.cpp \
 OpenGL/GLGraphicsEngine.cpp \
+\
+Vulkan/Core/VulkanDriver.cpp Vulkan/Core/VulkanMemory.cpp \
+Vulkan/Shapes/VKShapeFactory.cpp Vulkan/Shapes/VKRect.cpp Vulkan/Shapes/VKSphere.cpp Vulkan/Shapes/VKCone.cpp Vulkan/Shapes/VKCube.cpp Vulkan/Shapes/VKSkybox.cpp Vulkan/Shapes/VKOpenAssetImportMesh.cpp \
+Vulkan/VKGraphicsEngine.cpp \
 \
 Client/main.cpp Client/ClientApp.cpp Client/ClientControl.cpp  \
 \

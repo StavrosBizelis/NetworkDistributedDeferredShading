@@ -3,6 +3,9 @@
 #include "gl/include/glew.h"
 #include "gl/include/wglew.h"
 
+#define VK_USE_PLATFORM_WIN32_KHR
+#include <vulkan/vulkan.h>
+
 
 #define SIMPLE_OPENGL_CLASS_NAME "simple_openGL_class_name"
 
@@ -116,6 +119,7 @@ bool GameWindow::InitGLEW()
 // Initialise GLEW and create the real game window
 HDC GameWindow::Init(HINSTANCE hinstance, const glm::vec2& a_dimensions) 
 {
+  m_tech = ImplTech::OPENGL;
 	m_hinstance = hinstance;
 	if(!InitGLEW())
 		return false;
@@ -125,6 +129,26 @@ HDC GameWindow::Init(HINSTANCE hinstance, const glm::vec2& a_dimensions)
 	CreateGameWindow("OpenGL Template", a_dimensions);
 
 	// If we never got a valid window handle, quit the program
+	if(m_hwnd == NULL) {
+		return NULL;
+	} else {
+		return m_hdc;
+	}
+}
+
+HDC GameWindow::Init(HINSTANCE hinstance, const glm::vec2& a_dimensions, void* a_vkInstance, void* a_mvkSurface)
+{
+  m_tech = ImplTech::VULKAN;
+  m_vkInstance = a_vkInstance;
+  m_vkSurface = a_mvkSurface;
+  m_hinstance = hinstance;
+  m_appName = "Vulkan";
+
+	CreateGameWindow("Vulkan Template", a_dimensions);
+
+  
+  m_hdc = GetDC(m_hwnd);
+  // If we never got a valid window handle, quit the program
 	if(m_hwnd == NULL) {
 		return NULL;
 	} else {
@@ -176,10 +200,17 @@ void GameWindow::CreateGameWindow(std::string sTitle, const glm::vec2& a_dimensi
 	*/
 
 
-	// Initialise OpenGL here
-	InitOpenGL();
-	
-	ShowWindow(m_hwnd, SW_SHOW);
+  if( m_tech == ImplTech::OPENGL )
+  {
+    // Initialise OpenGL here
+    InitOpenGL();
+	}
+  else if( m_tech == ImplTech::VULKAN )
+  {
+    InitVulkan();
+  }
+  
+  ShowWindow(m_hwnd, SW_SHOW);
 	GetClientRect(m_hwnd, &m_dimensions);
 
 	UpdateWindow(m_hwnd);
@@ -273,6 +304,42 @@ void GameWindow::InitOpenGL()
 	return;
 }
 
+void GameWindow::InitVulkan()
+{
+  VkWin32SurfaceCreateInfoKHR l_surfaceCreateInfo;
+  l_surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+  l_surfaceCreateInfo.pNext = NULL;
+  l_surfaceCreateInfo.flags = 0;
+  l_surfaceCreateInfo.hinstance = m_hinstance;
+  l_surfaceCreateInfo.hwnd = m_hwnd;
+  
+  VkInstance l_inst = *reinterpret_cast<VkInstance*>(m_vkInstance);
+  auto CreateWin32SurfaceKHR = (PFN_vkCreateWin32SurfaceKHR) vkGetInstanceProcAddr(l_inst, "vkCreateWin32SurfaceKHR");
+  
+  
+  if(CreateWin32SurfaceKHR == nullptr)
+  {
+    // Generate error messages
+    char sErrorMessage[255], sErrorTitle[255];
+    sprintf_s(sErrorMessage, "Vulkan is not supported! Please download latest GPU drivers and check your graphics card capability! Could not load vkCreateWin32SurfaceKHR.");
+    MessageBox(m_hwnd, sErrorMessage, sErrorTitle, MB_ICONINFORMATION);
+    return;
+  }
+  
+      
+  VkResult l_res = CreateWin32SurfaceKHR(l_inst, &l_surfaceCreateInfo, NULL, reinterpret_cast<VkSurfaceKHR*>(m_vkSurface) );
+  if( l_res != VK_SUCCESS)
+  {
+    // Generate error messages
+    char sErrorMessage[255], sErrorTitle[255];
+    sprintf_s(sErrorMessage, "Vulkan is not supported! Please download latest GPU drivers and check your graphics card capability! Code: %d", l_res);
+    MessageBox(m_hwnd, sErrorMessage, sErrorTitle, MB_ICONINFORMATION);
+    return;
+  }
+
+}
+
+
 // Deinitialise the window and rendering context
 void GameWindow::Deinit()
 {
@@ -291,5 +358,8 @@ void GameWindow::Deinit()
 	}
 
 	UnregisterClass(m_class, m_hinstance);
+  
+
+  
 	PostQuitMessage(0);
 }

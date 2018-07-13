@@ -8,9 +8,15 @@
 #include "Common/SceneControl/MeshSceneNode.h"
 
 #include "OpenGL/GLGraphicsEngine.h"
+#include "Vulkan/VKGraphicsEngine.h"
+
 #include "Common/Core/MyUtilities.h"
 #include "Common/Textures/ATexture.h"
 #include <algorithm>
+
+#include <vulkan/vulkan.h>
+
+
 /***********************************************************************
  *  Method: ServerApp::ServerApp
  *  Params: 
@@ -135,14 +141,27 @@ WPARAM ServerApp::Execute()
 
   m_pHighResolutionTimer = new CHighResolutionTimer;
   
-  m_gameWindow.Init(m_hInstance, m_dimensions );
+  if( m_implTech == ImplTech::OPENGL )
+  {    
+    m_graphics = new GLGraphicsEngine();
+    m_gameWindow.Init(m_hInstance, m_dimensions );
+  }
+  else if( m_implTech == ImplTech::VULKAN )  
+  {
+    VKGraphicsEngine* l_graphics = new VKGraphicsEngine();
+    m_graphics = l_graphics;
+    
+    // it receives the vk instance and it will create a vk surface
+    m_gameWindow.Init(m_hInstance, m_dimensions, l_graphics->GetVkInstance(), l_graphics->GetVkSurface() );
+  }
+  
   if(!m_gameWindow.Hdc()) {
 		return 1;
 	}
-  
   RECT dimensions = m_gameWindow.GetDimensions();
-  if( m_implTech == ImplTech::OPENGL )  
-    m_graphics = new GLGraphicsEngine( glm::vec2( glm::abs(dimensions.right - dimensions.left) , glm::abs(dimensions.top - dimensions.bottom) ) );
+
+  m_graphics->SetResolution( glm::vec2( glm::abs(dimensions.right - dimensions.left) , glm::abs(dimensions.top - dimensions.bottom) ) );
+  
   
   
   Initialise();

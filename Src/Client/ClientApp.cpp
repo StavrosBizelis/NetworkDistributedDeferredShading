@@ -8,7 +8,9 @@
 #include "Common/SceneControl/SceneNode.h"
 #include "Common/SceneControl/TexturedSceneNode.h"
 #include "Common/SceneControl/LightSceneNode.h"
+
 #include "OpenGL/GLGraphicsEngine.h"
+#include "Vulkan/VKGraphicsEngine.h"
 
 
 /***********************************************************************
@@ -63,7 +65,19 @@ ClientApp::SetHinstance(HINSTANCE hinstance)
 WPARAM ClientApp::Execute()
 {
   m_pHighResolutionTimer = new CHighResolutionTimer;
-  m_gameWindow.Init(m_hInstance, glm::vec2(10,10) );
+  
+  if( m_implTech == ImplTech::OPENGL )
+  {    
+    m_graphics = new GLGraphicsEngine();
+    m_gameWindow.Init(m_hInstance, glm::vec2(10,10) );
+  }
+  else if( m_implTech == ImplTech::VULKAN )  
+  {
+    VKGraphicsEngine* l_graphics = new VKGraphicsEngine();
+    m_graphics = l_graphics;
+    m_gameWindow.Init(m_hInstance, glm::vec2(10,10), l_graphics->GetVkInstance(), l_graphics->GetVkSurface() );
+  }
+  
   if(!m_gameWindow.Hdc()) {
 		return 1;
 	}
@@ -214,9 +228,10 @@ ClientApp::Initialise()
       }
   }
   
-   // SETUP ENGINE
-  if( m_implTech == ImplTech::OPENGL )  
-    m_graphics = new GLGraphicsEngine( l_res, l_partialRes, l_viewport );
+  // SETUP ENGINE
+  m_graphics->SetResolution(l_res);
+  m_graphics->SetPartRes(l_partialRes);
+  m_graphics->SetViewportSettings(l_viewport);
   m_graphics->Init(false); 
   
   // CLIENT SEND CLIENT READY SIGNAL

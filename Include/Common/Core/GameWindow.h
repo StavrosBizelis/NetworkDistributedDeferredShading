@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <string>
 #include "glm/glm.hpp"
+#include "Common/Core/MyUtilities.h"
 LRESULT CALLBACK WinProc(HWND hWnd,UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 class GameWindow {
@@ -10,7 +11,8 @@ public:
 	static GameWindow& GetInstance();
 	GameWindow();
 
-	HDC Init(HINSTANCE hinstance, const glm::vec2& a_dimensions);
+	HDC Init(HINSTANCE hinstance, const glm::vec2& a_dimensions); ///< OpenGL
+	HDC Init(HINSTANCE hinstance, const glm::vec2& a_dimensions, void* a_vkInstance, void* a_mvkSurface);  ///< Vulkan
 	void Deinit();
 
 	void SetDimensions(RECT dimensions) {m_dimensions = dimensions;}
@@ -31,6 +33,7 @@ private:
 	void CreateGameWindow(std::string title, const glm::vec2& a_dimensions);
 	void InitOpenGL();
 	bool InitGLEW();
+	void InitVulkan();
 	void RegisterSimpleOpenGLClass(HINSTANCE hInstance);
 
 	bool  m_fullscreen;
@@ -45,4 +48,7 @@ private:
 
 	std::string m_appName;
 
+  void* m_vkInstance;
+  void* m_vkSurface;
+  ImplTech m_tech;
 };
