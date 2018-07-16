@@ -8,9 +8,10 @@ class VKCubemap : public ACubemap
   
   std::shared_ptr<VulkanMemory> m_memory;
   std::shared_ptr<VulkanImageMemoryChunk> m_image;
+  std::shared_ptr<VulkanSampler> m_sampler;
 public:
   
-  VKCubemap();
+  VKCubemap(std::shared_ptr<VulkanMemory> a_memory);
 	~VKCubemap();
   
   virtual void Create(std::string sPositiveX, std::string sNegativeX, std::string sPositiveY, std::string sNegativeY, std::string sPositiveZ, std::string sNegativeZ);

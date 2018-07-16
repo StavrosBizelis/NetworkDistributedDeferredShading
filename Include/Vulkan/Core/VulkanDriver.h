@@ -8,7 +8,7 @@
 
 
 // #include <VulkanDriver/VulkanPhysicalDeviceSelector.h>
-// #include <VulkanDriver/VulkanLogicalDeviceManager.h>
+#include "Vulkan/Core/VulkanLogicalDeviceManager.h"
 
 #include <glm/glm.hpp>
 
@@ -33,7 +33,7 @@ class VulkanDriver
   // VulkanPhysicalDeviceSelector m_physicalDeviceMan;
   // VkPhysicalDevice m_chosenPhysicalDevice;
   
-  // std::shared_ptr<VulkanLogicalDeviceManager> m_logicalDeviceMan;
+  std::shared_ptr<VulkanLogicalDeviceManager> m_logicalDeviceMan;
   
   void CreateVulkanInstance();
   void SetupDebugCallback();

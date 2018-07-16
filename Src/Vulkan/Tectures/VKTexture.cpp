@@ -11,10 +11,8 @@
  *  Params: 
  * Effects: 
  ***********************************************************************/
-VKTexture::VKTexture()
-{
-  
-}
+VKTexture::VKTexture(std::shared_ptr<VulkanMemory> a_memory)
+  : m_memory(a_memory){}
 
 
 /***********************************************************************
@@ -39,12 +37,8 @@ void
 VKTexture::CreateFromData(char *data, int width, int height, int bpp, bool generateMipMaps)
 {
   UpdateData(data, width, height, bpp, generateMipMaps);
-
   
-  
-  // glSamplerParameterf(m_samplerObjectID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	// glSamplerParameterf(m_samplerObjectID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
+  m_sampler= std::make_shared<VulkanSampler>();
   
 	m_path = "";
 	m_width = width;
@@ -109,6 +103,8 @@ VKTexture::Bind(int textureUnit) const
 void
 VKTexture::SetSamplerObjectParameter(const unsigned int &parameter, const unsigned int &value)
 {
+  if(m_sampler)
+    m_sampler->SetSamplerObjectParameter(parameter, value);
 }
 
 
@@ -121,6 +117,8 @@ VKTexture::SetSamplerObjectParameter(const unsigned int &parameter, const unsign
 void
 VKTexture::SetSamplerObjectParameterf(const unsigned int &parameter, float value)
 {
+  if(m_sampler)
+    m_sampler->SetSamplerObjectParameter(parameter, value);
 }
 
 

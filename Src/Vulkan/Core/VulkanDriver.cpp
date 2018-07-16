@@ -2,6 +2,7 @@
 #include <Vulkan/Core/VulkanDriver.h>
 // #include <VulkanDriver/VulkanRenderPassFactory.h>
 #include <Common/Core/MyUtilities.h>
+#include <Vulkan/Core/VulkanValidationLayerEnabler.h>
 
 
 
@@ -44,7 +45,7 @@ void VulkanDriver::Init(const glm::vec2& a_windowSize )
 {
   m_windowSize = a_windowSize;
 
-  // m_logicalDeviceMan = std::make_shared<VulkanLogicalDeviceManager>();
+  m_logicalDeviceMan = std::make_shared<VulkanLogicalDeviceManager>();
   
   // // choose physical device
   // std::map<int, VkPhysicalDevice> l_physicalDevices = m_physicalDeviceMan.GetSuitablePhysicalDevices( m_instance, m_surface, m_windowSize.x, m_windowSize.y);

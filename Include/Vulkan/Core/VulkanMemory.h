@@ -8,39 +8,6 @@
 
 class VulkanMemoryPool;
 class VulkanMemoryChunk;
-/**
-*   structure that holds the buffer handle and a memory handle and cleans them up on destruction
-*/
-// struct VulkanMemoryBuffer
-// {
-  // protected:
-  // std::shared_ptr<VulkanMemoryPool> m_allocator;  ///< the memory pool in which the memory chunk(m_memory) was allocated - on memory buffer destructor - free it
-  
-  // public:
-  // std::string m_type;
-  // VkBuffer m_buffer;
-  // std::shared_ptr< VulkanMemoryChunk> m_memory;
-  // // VkDeviceMemory m_bufferMemory;
-  
-  // VulkanMemoryBuffer(); ///< default constructor
-  // VulkanMemoryBuffer(const std::shared_ptr<VulkanMemoryPool>& a_memPool, const std::shared_ptr<VulkanMemoryChunk> a_memoryChunk, const std::string& a_type = "");
-  
-  // VulkanMemoryBuffer(const VulkanMemoryBuffer&) = default; ///< copy constructor
-  // VulkanMemoryBuffer& operator=(const VulkanMemoryBuffer&) = default; ///< copy assignment operator
-  
-  // VulkanMemoryBuffer(VulkanMemoryBuffer&&) = default; ///< move constructor
-  // VulkanMemoryBuffer& operator=(VulkanMemoryBuffer&&) = default; ///< move assignment operator
-  // virtual ~VulkanMemoryBuffer();
-// };
-
-
-
-
-
-
-
-
-
 
 
 struct VulkanMemorySubBuffer
@@ -91,6 +58,7 @@ class VulkanMemoryPool
   
   
   VkDeviceSize m_size;    ///< physically preallocated memory size
+  VkDeviceSize m_alignment;
   VkDeviceMemory m_memorySpace; ///< preallocated memory to use - allocated in VulkanMemoryPool::Init()
   
   std::shared_ptr< VulkanMemorySubBuffer > m_buffer; ///< buffer for this piece of memory - FUTURE WORK : create more if needed
@@ -161,10 +129,27 @@ class VulkanMemoryPool
 
 
 
+enum VulkanSamplerOption
+{
+  VLK_SMPL_MIN_FLTR = 0,
+  VLK_SMPL_MAG_FLTR = 1,
+  VLK_SMPL_REPEAT = 2,
+  VLK_SMPL_ANISOTROPY_LVL = 3
+};
 
-
-
-
+struct VulkanSampler 
+{
+  VkDevice m_logicalDevice;
+  VkSampler m_sampler;
+  
+  std::map<VulkanSamplerOption, int> m_params;
+  
+  VulkanSampler( const VkDevice& a_logicalDevice );
+  ~VulkanSampler();
+  
+  void SetSamplerObjectParameter(const VulkanSamplerOption a_parameter, const float& a_value);
+  void Create();
+};
 
 
 
@@ -185,19 +170,22 @@ struct VulkanImageMemoryChunk
   
   // image info
   VkImage m_image;
-  VkImageView  m_imageView;
   VkDeviceSize m_width;
   VkDeviceSize m_height;
   VkFormat m_format;
   VkImageTiling m_tiling;
   VkImageLayout m_layout;
   
+  VkImageView  m_imageView;
+  VkImageViewType m_imageViewType;
+  
+  
   
   std::shared_ptr< VulkanImageMemoryChunk > m_prev; ///< optional - previous memory chunk
   std::shared_ptr< VulkanImageMemoryChunk > m_next; ///< optional - next memory chunk
   
   VulkanImageMemoryChunk(VulkanImageMemoryPool* a_allocator, const VkDevice& a_logicalDevice, const VkDeviceMemory& a_memorySpace, const VkDeviceSize& a_offset, const VkDeviceSize& a_size, 
-                         const VkDeviceSize& a_width, const VkDeviceSize& a_height, VkFormat a_format, VkImageTiling a_tiling);
+                         const VkDeviceSize& a_width, const VkDeviceSize& a_height, VkFormat a_format, VkImageTiling a_tiling, VkImageViewType a_imageViewType);
   
   VkDeviceSize GetMemoryOffset(){return m_offset;}
   
@@ -220,6 +208,7 @@ class VulkanImageMemoryPool
   
   
   VkDeviceSize m_size;    ///< physically preallocated memory size
+  VkDeviceSize m_alignment;    ///< alignment size 
   VkDeviceMemory m_memorySpace; ///< preallocated memory to use - allocated in VulkanImageMemoryPool::Init()
   
   
@@ -239,7 +228,7 @@ class VulkanImageMemoryPool
   void RemoveFromTheAvailableChunks(const VkDeviceSize& a_size, const std::shared_ptr< VulkanImageMemoryChunk>& a_chunk);
   void AddToTheAvailableChunks(const VkDeviceSize& a_size, const std::shared_ptr< VulkanImageMemoryChunk>& a_chunk);
   
-  VkImage CreateImage(const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format, VkImageTiling a_tiling, VkDeviceSize& a_outSize);
+  VkImage CreateImage(const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format, VkImageTiling a_tiling, VkImageViewType a_imageViewType, VkDeviceSize& a_outSize);
   
   public:
   /**
@@ -257,7 +246,7 @@ class VulkanImageMemoryPool
   
   bool Owns(const std::shared_ptr< VulkanImageMemoryChunk>& a_chunk);  ///< @return true if a_chunk exists inside this pool
   
-  std::shared_ptr< VulkanImageMemoryChunk> AllocateMemory(const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format, VkImageTiling a_tiling);   ///< allocate a chunk of memory, @param a_size must be < GetMemorySpaceSize()
+  std::shared_ptr< VulkanImageMemoryChunk> AllocateMemory(const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format, VkImageTiling a_tiling, VkImageViewType a_imageViewType);   ///< allocate a chunk of memory, @param a_size must be < GetMemorySpaceSize()
   bool DeallocateMemory(const std::shared_ptr< VulkanImageMemoryChunk>& a_chunk );  ///< @return true on success, false if chunk does not exists
   bool DeallocateMemory(VulkanImageMemoryChunk* a_chunk );  ///< @return true on success, false if chunk does not exists - for use in VulkanImageMemoryChunk::Free()
   
@@ -365,6 +354,9 @@ class VulkanMemory
   /// Create texture for use in shaders
   std::shared_ptr<VulkanImageMemoryChunk> CreateMaterialTexture(char* a_data, const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format );
   bool UpdateTextureData(std::shared_ptr<VulkanImageMemoryChunk> a_memoryChunk, char* a_data, const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format );
+  /// all cubemap textures must be of the same size
+  std::shared_ptr<VulkanImageMemoryChunk> CreateCubemap(char* a_data1, char* a_data2, char* a_data3, char* a_data4, char* a_data5, char* a_data6,
+                                                        const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format );
   
   
   

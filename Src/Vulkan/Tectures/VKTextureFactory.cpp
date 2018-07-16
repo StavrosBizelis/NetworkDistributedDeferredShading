@@ -6,6 +6,10 @@
  ***********************************************************************/
 #include "Vulkan/Textures/VKTextureFactory.h"
 
+VKTextureFactory::VKTextureFactory(std::shared_ptr<VulkanMemory> a_memory)
+:m_memory(a_memory){}
+
+
 /***********************************************************************
  *  Method: VKTextureFactory::GetTexture
  *  Params: 
@@ -15,6 +19,9 @@
 std::shared_ptr<ITexture>
 VKTextureFactory::GetTexture()
 {
+  std::shared_ptr<VKTexture> l_text = std::make_shared<VKTexture>(m_memory);
+  l_text->Load("../Assets/EmptyTexture.jpg", true);
+  return l_text;
 }
 
 
@@ -27,6 +34,13 @@ VKTextureFactory::GetTexture()
 std::shared_ptr<ITexture>
 VKTextureFactory::GetTexture(std::string a_path)
 {
+  std::map<std::string, std::shared_ptr<ITexture> >::iterator l_iter = m_textures.find(a_path);
+  if( l_iter != m_textures.end() )
+    return l_iter->second;
+  
+  std::shared_ptr<VKTexture> l_text = std::make_shared<VKTexture>();
+  l_text->Load(a_path, true);
+  return l_text;
 }
 
 
@@ -39,6 +53,9 @@ VKTextureFactory::GetTexture(std::string a_path)
 std::shared_ptr<ITexture>
 VKTextureFactory::GetCubemap(std::string sPositiveX, std::string sNegativeX, std::string sPositiveY, std::string sNegativeY, std::string sPositiveZ, std::string sNegativeZ)
 {
+  std::shared_ptr<VKCubemap> l_cubeMap = std::make_shared<VKCubemap>();
+  l_cubeMap->Create(sPositiveX, sNegativeX, sPositiveY, sNegativeY, sPositiveZ, sNegativeZ);
+  return l_cubeMap;
 }
 
 

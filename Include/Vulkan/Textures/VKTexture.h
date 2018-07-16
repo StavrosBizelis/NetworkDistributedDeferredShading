@@ -7,9 +7,10 @@ class VKTexture : public ATexture
   
   std::shared_ptr<VulkanMemory> m_memory;
   std::shared_ptr<VulkanImageMemoryChunk> m_image;
+  std::shared_ptr<VulkanSampler> m_sampler;
 public:
   
-  VKTexture();
+  VKTexture(std::shared_ptr<VulkanMemory> a_memory);
 	~VKTexture();
   
   virtual void CreateFromData(char* data, int width, int height, int bpp, bool generateMipMaps = false);
