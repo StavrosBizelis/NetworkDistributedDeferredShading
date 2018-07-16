@@ -10,42 +10,6 @@
 
 
 
-// VulkanMemoryBuffer::VulkanMemoryBuffer()
-  // : m_buffer(NULL), m_memory(NULL), m_type("Invalid")
-// {}
-
-// VulkanMemoryBuffer::VulkanMemoryBuffer(const std::shared_ptr<VulkanMemoryPool>& a_memPool, const std::shared_ptr< VulkanMemoryChunk> a_memoryChunk, const std::string& a_type)
-  // : m_buffer(NULL), m_memory(a_memoryChunk), m_allocator(a_memPool), m_type( a_type ) 
-// {
-  // VkMemoryPropertyFlags l_propertyFlags = m_allocator->GetPropertyFlags();
-  // VkBufferUsageFlags l_usageFlags = m_allocator->GetUsageFlags();
-  // VkDeviceSize l_size = m_memory->m_size;
-  // VkDeviceSize l_offset = m_memory->m_offset;
-  // VkDeviceMemory l_memorySpace = m_memory->m_memorySpace;
-  
-  // // create buffer here
-  // VkBufferCreateInfo bufferInfo = {};
-  // bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-  // bufferInfo.size = l_size;
-  // bufferInfo.usage = l_usageFlags;
-  // bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-  // if (vkCreateBuffer(m_logicalDevice, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-    // throw std::runtime_error("failed to create buffer!");
-  // }
-
-  // vkBindBufferMemory(m_logicalDevice, m_buffer, l_memorySpace, l_offset);
-// }
-
-// VulkanMemoryBuffer::~VulkanMemoryBuffer()
-// {
-  // if( m_buffer )
-    // vkDestroyBuffer(m_logicalDevice, m_buffer, nullptr);
-  // if( m_allocator && m_memory)
-    // m_allocator->DeallocateMemory(m_memory);
-// }
-
-
 
 
 
@@ -61,7 +25,7 @@ VulkanMemorySubBuffer::~VulkanMemorySubBuffer()
 
 
 VulkanMemoryChunk::VulkanMemoryChunk(VulkanMemoryPool* a_allocator, const VkDevice& a_logicalDevice, const VkDeviceMemory& a_memorySpace, const VkDeviceSize& a_offset, const VkDeviceSize& a_size)
-: m_available(true), m_allocator(m_allocator), m_logicalDevice (a_logicalDevice), m_memorySpace(a_memorySpace), m_offset(a_offset), m_size(a_size) {}
+: m_available(true), m_allocator(a_allocator), m_logicalDevice (a_logicalDevice), m_memorySpace(a_memorySpace), m_offset(a_offset), m_size(a_size) {}
 
 VulkanMemoryChunk::VulkanMemoryChunk(const VulkanMemoryChunk& a_other)
 {
@@ -372,6 +336,386 @@ std::string VulkanMemoryPool::AvailableMemoryChunks()
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+VulkanImageMemoryChunk::VulkanImageMemoryChunk(VulkanImageMemoryPool* a_allocator, const VkDevice& a_logicalDevice, const VkDeviceMemory& a_memorySpace, const VkDeviceSize& a_offset, const VkDeviceSize& a_size, 
+                                               const VkDeviceSize& a_width, const VkDeviceSize& a_height, VkFormat a_format, VkImageTiling a_tiling)
+: m_available(true), m_allocator(a_allocator), m_logicalDevice (a_logicalDevice), m_memorySpace(a_memorySpace), m_offset(a_offset), m_size(a_size),
+ m_width(a_width), m_height(a_height), m_format(a_format), m_tiling(a_tiling), m_layout(VK_IMAGE_LAYOUT_UNDEFINED), m_image(NULL)
+ {}
+
+void VulkanImageMemoryChunk::Free()
+{
+  if( m_image)
+    vkDestroyImage(m_logicalDevice, m_image, nullptr);
+  if(m_allocator)
+    m_allocator->DeallocateMemory(this);
+}
+
+
+void VulkanImageMemoryPool::RemoveFromTheAvailableChunks(const VkDeviceSize& a_size, const std::shared_ptr< VulkanImageMemoryChunk>& a_chunk)
+{
+  std::map<VkDeviceSize, std::list< std::weak_ptr< VulkanImageMemoryChunk> > >::iterator l_iter = m_availableMemChunks->find(a_size);
+  if( l_iter != m_availableMemChunks->end() )
+  {
+    // for(std::list< std::weak_ptr< VulkanImageMemoryChunk> >::iterator l_iter2 = l_iter->second.begin(); l_iter2 != l_iter->second.end(); ++l_iter2 )
+      // if( l_iter2->lock() == a_chunk )
+      // {
+        // l_iter->second.erase( l_iter2 );
+        // break;
+      // }
+    l_iter->second.remove_if([a_chunk]( std::weak_ptr< VulkanImageMemoryChunk> l_tmp) {return l_tmp.lock() == a_chunk; } );
+    
+    if( l_iter->second.empty() )
+      m_availableMemChunks->erase(l_iter);
+  }
+}
+
+void VulkanImageMemoryPool::AddToTheAvailableChunks(const VkDeviceSize& a_size, const std::shared_ptr< VulkanImageMemoryChunk>& a_chunk)
+{
+  if( m_availableMemChunks->find(a_size) == m_availableMemChunks->end() )
+    m_availableMemChunks->insert( 
+                                  std::pair<VkDeviceSize, std::list< std::weak_ptr< VulkanImageMemoryChunk> >> ( a_size, {} ) 
+                                  ); 
+  m_availableMemChunks->at(a_size).push_back(a_chunk);
+}
+
+VkImage VulkanImageMemoryPool::CreateImage(const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format, VkImageTiling a_tiling, VkDeviceSize& a_outSize)
+{
+  VkImage l_image;
+  VkImageCreateInfo imageInfo = {};
+  imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  imageInfo.imageType = VK_IMAGE_TYPE_2D;
+  imageInfo.extent.width = a_width;
+  imageInfo.extent.height = a_height;
+  imageInfo.extent.depth = 1;
+  imageInfo.mipLevels = 1;
+  imageInfo.arrayLayers = 1;
+  imageInfo.format = a_format;
+  imageInfo.tiling = a_tiling;
+  imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageInfo.usage = m_usage;
+  imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+  imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  if (vkCreateImage(m_logicalDevice, &imageInfo, nullptr, &l_image) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create image!");
+  }
+  
+  
+  VkMemoryRequirements l_memRequirements;
+  vkGetImageMemoryRequirements(m_logicalDevice, l_image, &l_memRequirements);
+  a_outSize = l_memRequirements.size;
+  return l_image;
+}
+
+
+VulkanImageMemoryPool::VulkanImageMemoryPool(const VkPhysicalDevice& a_physicalDevice, const VkDevice& a_logicalDevice, const VkDeviceSize& a_size, const VkImageUsageFlags& a_usage, const VkMemoryPropertyFlags& a_properties)
+: m_physicalDevice(a_physicalDevice), m_logicalDevice(a_logicalDevice), m_size(a_size), m_usage(a_usage), m_properties(a_properties), m_memorySpace(NULL),
+  m_memChunks(NULL), m_availableMemChunks( std::make_shared< std::map<VkDeviceSize, std::list< std::weak_ptr< VulkanImageMemoryChunk> > > >() ) {}
+
+VulkanImageMemoryPool::~VulkanImageMemoryPool()
+{
+  if( m_memorySpace )
+    vkFreeMemory(m_logicalDevice, m_memorySpace, nullptr);
+}
+
+void VulkanImageMemoryPool::Init()
+{
+  
+  // dummy image for memory allocation
+  VkImage l_image;
+  VkImageCreateInfo imageInfo = {};
+  imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  imageInfo.imageType = VK_IMAGE_TYPE_2D;
+  imageInfo.extent.width = 1;
+  imageInfo.extent.height = 1;
+  imageInfo.extent.depth = 1;
+  imageInfo.mipLevels = 1;
+  imageInfo.arrayLayers = 1;
+  imageInfo.format = VK_FORMAT_R8G8B8_UINT ;
+  imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL ;
+  imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageInfo.usage = m_usage;
+  imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+  imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  if (vkCreateImage(m_logicalDevice, &imageInfo, nullptr, &l_image) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create image!");
+  }
+  
+
+  VkMemoryRequirements l_memRequirements;
+  vkGetImageMemoryRequirements(m_logicalDevice, l_image, &l_memRequirements);
+  
+  VkPhysicalDeviceMemoryProperties memProperties;
+  vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
+
+  uint32_t l_memoryIndex;
+  for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) 
+    if ((l_memRequirements.memoryTypeBits & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & m_properties) == m_properties)
+    {
+      l_memoryIndex = i;
+      break;
+    }
+  
+  
+  VkMemoryAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = m_size;
+  allocInfo.memoryTypeIndex = l_memoryIndex;
+
+  if (vkAllocateMemory(m_logicalDevice, &allocInfo, nullptr, &m_memorySpace) != VK_SUCCESS)
+  {
+    m_memorySpace = NULL;
+    throw std::runtime_error("VulkanImageMemoryPool::Init() - failed to allocate memory!");
+  }
+  
+  // destroy dummy image
+  vkDestroyImage(m_logicalDevice, l_image, nullptr);
+  
+  // after the memory is allocated create ONE big chunk that fills all the memory and is available to use
+  m_memChunks = std::make_shared< VulkanImageMemoryChunk>( this, m_logicalDevice, m_memorySpace, VkDeviceSize(0) , m_size, 0, 0, VK_FORMAT_UNDEFINED, VK_IMAGE_TILING_OPTIMAL  );
+  AddToTheAvailableChunks(m_size, m_memChunks);
+  
+}
+
+VkMemoryPropertyFlags VulkanImageMemoryPool::GetPropertyFlags() { return m_properties; }
+VkBufferUsageFlags VulkanImageMemoryPool::GetUsageFlags() { return m_usage; }
+VkDeviceSize VulkanImageMemoryPool::GetMemorySpaceSize() { return m_size; }
+
+
+bool VulkanImageMemoryPool::Owns(const std::shared_ptr< VulkanImageMemoryChunk>& a_chunk)
+{
+  std::shared_ptr< VulkanImageMemoryChunk> l_next = m_memChunks;
+  while( l_next )
+  {
+    if( l_next == a_chunk)
+      return true;
+    l_next = l_next->m_next;
+  }
+  return false;
+}
+
+std::shared_ptr< VulkanImageMemoryChunk> VulkanImageMemoryPool::AllocateMemory(const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format, VkImageTiling a_tiling)
+{
+  
+  VkDeviceSize l_size;
+  VkImage l_img = CreateImage(a_width, a_height, a_format, a_tiling, l_size);
+  
+  // best fit algorithm
+  // using the map of the available chunks find in a linear fashion te best fit instead of searching the whole memory space
+  for( std::map<VkDeviceSize, std::list< std::weak_ptr< VulkanImageMemoryChunk> > >::iterator l_iter = m_availableMemChunks->begin(); l_iter != m_availableMemChunks->end(); ++l_iter )
+  {
+    if(l_iter->first >= l_size )
+    {
+      
+      std::shared_ptr< VulkanImageMemoryChunk> l_freeChunk = l_iter->second.begin()->lock();
+      
+      if( l_freeChunk )
+      { 
+        // do allocation 
+        // if l_size == l_freeChunk->m_size THEN return this chunk and remove it from the available chunks map
+        if( l_size == l_freeChunk->m_size)
+        {
+          l_freeChunk->m_available = false;
+          
+          l_freeChunk->m_image = l_img;
+          l_freeChunk->m_width = a_width;
+          l_freeChunk->m_height = a_height;
+          l_freeChunk->m_format = a_format;
+          l_freeChunk->m_tiling = a_tiling;
+          l_freeChunk->m_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+          
+          RemoveFromTheAvailableChunks(l_iter->first, l_freeChunk);
+          return l_freeChunk;
+        }
+        else
+        {
+          
+          // create a new memory chunk, of the appropriate size at the beginning of the free chunk
+          std::shared_ptr< VulkanImageMemoryChunk> l_memoryChunk = 
+                std::make_shared< VulkanImageMemoryChunk>( this, m_logicalDevice, m_memorySpace, l_freeChunk->m_offset, l_size, a_width, a_height, a_format, a_tiling );
+          l_memoryChunk->m_image = l_img;
+                
+          l_memoryChunk->m_available = false;
+          // place the l_memoryChunk after the l_freeChunk->m_prev and before l_freeChunk
+          l_memoryChunk->m_prev = l_freeChunk->m_prev;
+          if( l_freeChunk->m_prev )
+            l_freeChunk->m_prev->m_next = l_memoryChunk;
+          else
+            this->m_memChunks = l_memoryChunk;
+          l_memoryChunk->m_next = l_freeChunk;
+          
+          
+          // update the information of the free chunk to be after the l_memoryChunk and with the new size and offset
+          l_freeChunk->m_offset = l_freeChunk->m_offset + l_size;
+          l_freeChunk->m_size = l_freeChunk->m_size - l_memoryChunk->m_size;
+          l_freeChunk->m_prev = l_memoryChunk;
+          // m_next remain the same
+          // l_freeChunk->m_next =
+          
+          RemoveFromTheAvailableChunks(l_iter->first, l_freeChunk);
+          
+          AddToTheAvailableChunks(l_freeChunk->m_size, l_freeChunk);
+          
+          return l_memoryChunk;
+        }
+        
+      }
+      
+      break;
+    }
+  }
+  // if we reach that point the allocation failed so delete the image
+  vkDestroyImage(m_logicalDevice, l_img, nullptr);
+  return NULL;
+}
+
+bool VulkanImageMemoryPool::DeallocateMemory(const std::shared_ptr< VulkanImageMemoryChunk>& a_chunk )
+{
+  if( !this->Owns(a_chunk) )
+    return false;
+  
+  a_chunk->m_available = true;
+  // if m_prev exists
+  std::shared_ptr< VulkanImageMemoryChunk > l_previousChunk = a_chunk->m_prev;
+  if(l_previousChunk)
+    // if m_prev is available make the two chunks one
+    if(l_previousChunk->m_available)
+    {
+      a_chunk->m_size += l_previousChunk->m_size;
+      a_chunk->m_offset = l_previousChunk->m_offset;
+      a_chunk->m_prev = l_previousChunk->m_prev;
+      
+      // if m_prev is the not the root of the list then update the previous chunk to point to this new chunk 
+      if( l_previousChunk->m_prev )
+        l_previousChunk->m_prev->m_next = a_chunk;
+      else // update the root of the list to be this new chunk
+        this->m_memChunks = a_chunk;
+      
+      
+      // remove l_previousChunk from the m_availableMemChunks
+      RemoveFromTheAvailableChunks(l_previousChunk->m_size, l_previousChunk);
+      
+    }
+  
+  
+  
+  
+  // if m_next is also available  make the two chunks one
+  std::shared_ptr< VulkanImageMemoryChunk> l_nextChunk = a_chunk->m_next;
+  if(l_nextChunk)
+    if(l_nextChunk->m_available)
+    {
+      a_chunk->m_size += l_nextChunk->m_size;
+      a_chunk->m_next = l_nextChunk->m_next;
+      if( a_chunk->m_next )
+        a_chunk->m_next->m_prev = a_chunk;
+      
+      // remove l_nextChunk from the m_availableMemChunks
+      RemoveFromTheAvailableChunks(l_nextChunk->m_size, l_nextChunk);
+    }
+    
+  AddToTheAvailableChunks(a_chunk->m_size, a_chunk);
+
+  return true;
+}
+
+bool VulkanImageMemoryPool::DeallocateMemory(VulkanImageMemoryChunk* a_chunk )
+{
+  std::shared_ptr< VulkanImageMemoryChunk> l_next = m_memChunks;
+  while( l_next )
+  {
+    if( l_next.get() == a_chunk)
+      return DeallocateMemory(l_next);
+    l_next = l_next->m_next;
+  }
+  return false;
+}
+
+std::string VulkanImageMemoryPool::MemoryChunks()
+{
+  std::string l_toReturn = "MEMORY CHUNKS - Total memory " + std::to_string(this->m_size) + " Bytes \n";
+  
+  std::shared_ptr< VulkanImageMemoryChunk> l_curr = m_memChunks;
+  while( l_curr )
+  {
+    std::string l_currentLine("");
+    l_currentLine += "Offset Bytes: " + std::to_string(l_curr->m_offset) + ", ";
+    l_currentLine += "Chunk Bytes: " + std::to_string(l_curr->m_size) + ", ";
+    if( l_curr->m_available ) l_currentLine += "State: FREE";
+    else l_currentLine += "State: ALLOCATED";       
+    l_currentLine += "\n";
+    
+    l_toReturn += l_currentLine;
+    l_curr = l_curr->m_next;
+  }
+  return l_toReturn;
+}
+
+std::string VulkanImageMemoryPool::AvailableMemoryChunks()
+{
+  std::string l_toReturn = "AVAILABLE MEMORY CHUNKS - Total memory " + std::to_string(this->m_size) + " Bytes \n";
+  for( std::map<VkDeviceSize, std::list< std::weak_ptr< VulkanImageMemoryChunk> > >::iterator l_iter = m_availableMemChunks->begin(); l_iter != m_availableMemChunks->end(); ++l_iter )
+  {
+    std::string l_currentLine("size: ");
+    l_currentLine += std::to_string( l_iter->first );
+    l_currentLine += ", count: ";
+    l_currentLine += std::to_string( l_iter->second.size() );
+    l_currentLine += "\n";
+    
+    l_toReturn += l_currentLine;
+  }
+  return l_toReturn;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void VulkanMemory::CreateCommandPool() {
   
   VkCommandPoolCreateInfo poolInfo = {};
@@ -454,7 +798,56 @@ void VulkanMemory::CreateMixedBufferMemPool(const VkDeviceSize& a_sizeInBytes)
 }
 
 
+void VulkanMemory::CreateImageMemPools(const VkDeviceSize& a_shaderImagesSize, const VkDeviceSize& a_colourAttachmentsSize, const VkDeviceSize& a_downloadingColourAttachmentsSize )
+{
+  m_imageMemoryPools[0] = std::make_shared<VulkanImageMemoryPool>( m_physicalDevice, m_logicalDevice, a_shaderImagesSize, 
+   VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
+   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  m_imageMemoryPools[0]->Init();
 
+  m_imageMemoryPools[1] = std::make_shared<VulkanImageMemoryPool>( m_physicalDevice, m_logicalDevice, a_colourAttachmentsSize, 
+   VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT  | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
+   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  m_imageMemoryPools[1]->Init();
+
+  m_imageMemoryPools[2] = std::make_shared<VulkanImageMemoryPool>( m_physicalDevice, m_logicalDevice, a_downloadingColourAttachmentsSize, 
+   VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, 
+   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  m_imageMemoryPools[2]->Init();  
+   
+}
+
+size_t VulkanMemory::SizeOfPixel(VkFormat a_format)
+{
+  if( a_format >= 9 && a_format <= 15)
+    return 1;
+  
+  if( a_format >= 16 && a_format <= 22)
+    return 2;
+  if( a_format >= 23 && a_format <= 36)
+    return 3;
+  if( a_format >= 37 && a_format <= 69)
+    return 4;
+  if( a_format >= 70 && a_format <= 76)
+    return 2;
+  if( a_format >= 77 && a_format <= 83)
+    return 4;
+  if( a_format >= 83 && a_format <= 90)
+    return 6;
+  if( a_format >= 91 && a_format <= 97)
+    return 8;
+
+  if( a_format >= 98 && a_format <= 100)
+    return 4;
+  if( a_format >= 101 && a_format <= 103)
+    return 8;
+  if( a_format >= 104 && a_format <= 106)
+    return 12;
+  if( a_format >= 107 && a_format <= 109)
+    return 16;
+
+  else return 3;
+}
 
 VulkanMemory::VulkanMemory(const VkPhysicalDevice& a_physicalDevice, const VkDevice& a_logicalDevice, const VkQueue& a_graphicsQueue, int a_graphicsFamilyIndex)
   : m_physicalDevice(a_physicalDevice), m_logicalDevice(a_logicalDevice), m_graphicsFamilyIndex(a_graphicsFamilyIndex), m_graphicsQueue(a_graphicsQueue),
@@ -463,7 +856,9 @@ VulkanMemory::VulkanMemory(const VkPhysicalDevice& a_physicalDevice, const VkDev
   CreateCommandPool();
 }
 
-bool VulkanMemory::Init(const VkDeviceSize& a_stagingMemorySize, const VkDeviceSize& a_vertexMemorySize, const VkDeviceSize& a_indexMemorySize, const VkDeviceSize& a_uniformBufferMemorySize, const VkDeviceSize& a_mixBufferMemorySize )
+bool VulkanMemory::Init(const VkDeviceSize& a_stagingMemorySize, const VkDeviceSize& a_vertexMemorySize, const VkDeviceSize& a_indexMemorySize, 
+                        const VkDeviceSize& a_uniformBufferMemorySize, const VkDeviceSize& a_mixBufferMemorySize,
+                        const VkDeviceSize& a_shaderImagesSize, const VkDeviceSize& a_colourAttachmentsSize, const VkDeviceSize& a_downloadingColourAttachmentsSize )
 {
   CreateStagingBufferMemPool(a_stagingMemorySize);
   CreateVertexIndexBufferMemPool(a_vertexMemorySize);
@@ -477,6 +872,8 @@ bool VulkanMemory::Init(const VkDeviceSize& a_stagingMemorySize, const VkDeviceS
   {
     return false;
   }
+  
+  CreateImageMemPools(a_shaderImagesSize, a_colourAttachmentsSize, a_downloadingColourAttachmentsSize);
   return true;
 }
 
@@ -535,7 +932,38 @@ void VulkanMemory::CopyBuffer(std::shared_ptr< VulkanMemoryChunk > a_srcBuffer, 
   EndSingleTimeCommands(commandBuffer);
 }
 
-void VulkanMemory::CopyBufferToImage(){}
+void VulkanMemory::CopyBufferToImage(std::shared_ptr< VulkanMemoryChunk > a_srcBuffer, std::shared_ptr< VulkanImageMemoryChunk > a_dstImage)
+{
+  VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+  
+  VkBufferImageCopy region = {};
+  region.bufferOffset = a_srcBuffer->GetBufferOffset();
+  region.bufferRowLength = a_dstImage->m_width * SizeOfPixel(a_dstImage->m_format);
+  region.bufferImageHeight = a_dstImage->m_height;
+
+  region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  region.imageSubresource.mipLevel = 0;
+  region.imageSubresource.baseArrayLayer = 0;
+  region.imageSubresource.layerCount = 1;
+
+  region.imageOffset = {0, 0, 0};
+  region.imageExtent = {
+      (uint32_t)a_dstImage->m_width,
+      (uint32_t)a_dstImage->m_height,
+      1
+  };
+  
+  vkCmdCopyBufferToImage(
+    commandBuffer,
+    a_srcBuffer->m_buffer->m_buffer,
+    a_dstImage->m_image,
+    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    1,
+    &region
+  );
+  
+  EndSingleTimeCommands(commandBuffer);
+}
 
 std::shared_ptr<VulkanMemoryChunk> VulkanMemory::CreateVertexBuffer(char* a_vertexDataArray, const int& a_sizeInBytes)
 {
@@ -601,7 +1029,44 @@ std::pair< std::shared_ptr<VulkanMemoryChunk>, unsigned int> VulkanMemory::Creat
 
 
 
+std::shared_ptr<VulkanImageMemoryChunk> VulkanMemory::CreateMaterialTexture(char* a_data, const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format )
+{
+  // allocate image memory first so we can know how much memory we need
+  std::shared_ptr< VulkanImageMemoryChunk> l_imageMemory = m_imageMemoryPools[1]->AllocateMemory(a_width, a_height, a_format, VK_IMAGE_TILING_OPTIMAL);
+  
+  if(!l_imageMemory )
+    throw std::runtime_error("VulkanMemory::CreateMaterialTexture - Image Memory Pool could not allocate memory");
+  
+  if( UpdateTextureData(l_imageMemory, a_data, a_width, a_height, a_format) )
+    return l_imageMemory;
+  return nullptr;
+}
 
+bool VulkanMemory::UpdateTextureData(std::shared_ptr<VulkanImageMemoryChunk> a_memoryChunk, char* a_data, const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format )
+{
+  if( !a_memoryChunk )
+    return false;
+  if( a_memoryChunk->m_width != a_width || a_memoryChunk->m_height != a_height || a_memoryChunk->m_format != a_format )
+    return false;
+  
+  std::shared_ptr< VulkanMemoryChunk> l_stagingMemory = m_memoryPools[0]->AllocateMemory(a_memoryChunk->m_size);
+  // check is actually allocated
+  if( !l_stagingMemory )
+    throw std::runtime_error("VulkanMemory::CreateMaterialTexture - Staging Memory Pool could not allocate memory");
+  
+  // copy data to staging buffer
+  void* data;
+  vkMapMemory(m_logicalDevice, l_stagingMemory->m_memorySpace, l_stagingMemory->GetMemoryOffset(), l_stagingMemory->m_size, 0, &data);
+      memcpy(data, a_data, (size_t)( SizeOfPixel(a_format)*a_width*a_width) );
+  vkUnmapMemory(m_logicalDevice, l_stagingMemory->m_memorySpace);
+  
+  
+  // copy buffer to image
+  CopyBufferToImage(l_stagingMemory, a_memoryChunk);
+  // free staging memory chunk
+  m_memoryPools[0]->DeallocateMemory(l_stagingMemory);
+  return true;
+}
 
 
 uint32_t VulkanMemory::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
@@ -617,20 +1082,21 @@ uint32_t VulkanMemory::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
   throw std::runtime_error("failed to find suitable memory type!");
 }
 
-void VulkanMemory::TransitionImageLayout(VkCommandBuffer a_cmdBuffer, VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+// void VulkanMemory::TransitionImageLayout(VkCommandBuffer a_cmdBuffer, VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+void VulkanMemory::TransitionImageLayout(VkCommandBuffer a_cmdBuffer, std::shared_ptr<VulkanImageMemoryChunk> a_imageMemChunk, VkImageLayout newLayout)
 {
   VkImageMemoryBarrier barrier = {};
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  barrier.oldLayout = oldLayout;
+  barrier.oldLayout = a_imageMemChunk->m_layout;
   barrier.newLayout = newLayout;
   barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier.image = image;
+  barrier.image = a_imageMemChunk->m_image;
 
   if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
       barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
-      if (HasStencilComponent(format)) {
+      if (HasStencilComponent(a_imageMemChunk->m_format)) {
           barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
       }
   } else {
@@ -641,23 +1107,50 @@ void VulkanMemory::TransitionImageLayout(VkCommandBuffer a_cmdBuffer, VkImage im
   barrier.subresourceRange.levelCount = 1;
   barrier.subresourceRange.baseArrayLayer = 0;
   barrier.subresourceRange.layerCount = 1;
+  
+  VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+  VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+  
+  // undefined image to load texture
+  if (a_imageMemChunk->m_layout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
-  if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-      barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-      barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-  } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-      barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-      barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-  } else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+    sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+  } 
+  // after uploading data we use that to upload it to textures
+  else if (a_imageMemChunk->m_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) 
+  {
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    
+    sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+  } 
+  // for texture that was being used in shader to update
+  else if (a_imageMemChunk->m_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) 
+  {
+    barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    
+    sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+  }
+  // 
+  else if (a_imageMemChunk->m_layout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) 
+  {
       barrier.srcAccessMask = 0;
       barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-  } else {
+  } 
+  else 
+  {
       throw std::invalid_argument("unsupported layout transition!");
   }
 
   vkCmdPipelineBarrier(
       a_cmdBuffer,
-      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+      sourceStage, destinationStage,
       0,
       0, nullptr,
       0, nullptr,
@@ -665,11 +1158,11 @@ void VulkanMemory::TransitionImageLayout(VkCommandBuffer a_cmdBuffer, VkImage im
   );
   
 }
-void VulkanMemory::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) 
+void VulkanMemory::TransitionImageLayout(std::shared_ptr<VulkanImageMemoryChunk> a_imageMemChunk, VkImageLayout newLayout) 
 {
   VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
-  TransitionImageLayout( commandBuffer, image, format, oldLayout, newLayout);
+  TransitionImageLayout( a_imageMemChunk, newLayout);
 
   EndSingleTimeCommands(commandBuffer);
 }

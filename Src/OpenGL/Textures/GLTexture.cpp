@@ -59,7 +59,7 @@ void GLTexture::CreateFromData(char* data, int width, int height, int bpp, bool 
 
 void GLTexture::UpdateData(char* data, int width, int height, int bpp, bool generateMipMaps)
 {
-   GLenum format;
+  GLenum format;
   if(bpp == 32)format = GL_BGRA;
 	if(bpp == 24)format = GL_BGR;
 	if(bpp == 8)format = GL_LUMINANCE;
