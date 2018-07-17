@@ -1,14 +1,12 @@
 #include "Vulkan/VKGraphicsEngine.h"
 
-// #include "Vulkan/RenderControl/VKDeferredShadingPass.h"
+#include "Vulkan/RenderControl/VKDeferredShadingPass.h"
 // #include "Vulkan/RenderControl/VKCompositionPass.h"
 // #include "Vulkan/MaterialControl/VKMaterialManager.h"
 
 // #include "Vulkan/Shapes/VKShapeFactory.h"
 // #include "Vulkan/Textures/VKTextureFactory.h"
 
-#include "gl/include/glew.h"
-#include "gl/include/wglew.h"
 #include <iostream>
 
 
@@ -20,7 +18,7 @@ VKGraphicsEngine::VKGraphicsEngine(const glm::vec2& a_resolution, const glm::vec
   {
     
     std::vector<const char*> l_requiredInstanceExtensions = 
-    {"VK_KHR_win32_surface"};
+    {"VK_KHR_win32_surface", "VK_KHR_surface"};
     
     m_driver = std::make_unique<VulkanDriver>(l_requiredInstanceExtensions);
     
@@ -49,20 +47,23 @@ void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
   // m_textureFactory = new VKTextureFactory();
   
   
-  if(a_composite)
-  {
+  // if(a_composite)
+  // {
     // m_compositionPass = new RenderControl::VKCompositionPass(m_resolution, m_sceneManager, m_shapeFactory, m_textureFactory, a_subparts);
     // m_compositionPass->Init();
     // m_compositionPass->SetSceenOutputAttachment(0);
     // m_renderPassPipeline->PushBack(m_compositionPass);
-  }
-  else
-  {
-    // m_deferredShadingPass = new RenderControl::VKDeferredShadingPass( m_resolution, m_resolutionPart, m_viewPortSettings );
-    // m_deferredShadingPass->Init();
+  // }
+  // else
+  // {
+    
+    m_deferredShadingPass = new RenderControl::VKDeferredShadingPass( m_driver->GetLogicalDeviceManager(), m_driver->GetSelectedPhysicalDevice(), m_driver->GetLogicalDeviceManager()->GetMemoryManager(),
+                                                                      m_driver->GetLogicalDeviceManager()->GetGraphicsQueue(),m_driver->GetLogicalDeviceManager()->GetPresentQueue(), m_driver->GetLogicalDeviceManager()->GetQueueFamilyIndices(),
+                                                                      m_resolution, m_resolutionPart, m_viewPortSettings );
+    m_deferredShadingPass->Init();
     // m_deferredShadingPass->SetSceenOutputAttachment(3);
     // m_renderPassPipeline->PushBack(m_deferredShadingPass);    
-  }
+  // }
   
 
 }

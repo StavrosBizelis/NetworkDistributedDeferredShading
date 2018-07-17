@@ -109,13 +109,15 @@ void VulkanMemoryPool::Init()
   bufferInfo.usage = m_usage;
   bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   
-  VkBuffer l_buffer = m_buffer->m_buffer;
+  VkBuffer l_buffer;// = m_buffer->m_buffer;
   if (vkCreateBuffer(m_logicalDevice, &bufferInfo, nullptr, &l_buffer) != VK_SUCCESS) {
     throw std::runtime_error("VulkanMemoryPool::Init() - failed to create dummy buffer for memory pool initialization!");
   }
-
+  
   VkMemoryRequirements l_memRequirements;
-  vkGetBufferMemoryRequirements(m_logicalDevice, m_buffer->m_buffer, &l_memRequirements);
+  vkGetBufferMemoryRequirements(m_logicalDevice, l_buffer, &l_memRequirements);
+  
+  m_buffer->m_buffer = l_buffer;
   
   VkPhysicalDeviceMemoryProperties memProperties;
   vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
@@ -141,6 +143,7 @@ void VulkanMemoryPool::Init()
     throw std::runtime_error("VulkanMemoryPool::Init() - failed to allocate memory!");
   }
   
+
   // bind this single buffer to the whole memory
   vkBindBufferMemory(m_logicalDevice, m_buffer->m_buffer, m_memorySpace, 0);
   
@@ -394,7 +397,7 @@ void VulkanSampler::Create()
   samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 
   if (vkCreateSampler(m_logicalDevice, &samplerInfo, nullptr, &m_sampler) != VK_SUCCESS)
-    throw std::runtime_error("failed to create texture sampler!");
+    throw std::runtime_error("VulkanSampler::Create() - failed to create texture sampler!");
 }
 
 
@@ -465,7 +468,7 @@ VkImage VulkanImageMemoryPool::CreateImage(const uint32_t& a_width, const uint32
     imageInfo.arrayLayers = 6;
   }
   if (vkCreateImage(m_logicalDevice, &imageInfo, nullptr, &l_image) != VK_SUCCESS) {
-      throw std::runtime_error("failed to create image!");
+      throw std::runtime_error("VulkanImageMemoryPool::CreateImage - failed to create image!");
   }
   
   
@@ -494,20 +497,21 @@ void VulkanImageMemoryPool::Init()
   VkImageCreateInfo imageInfo = {};
   imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
   imageInfo.imageType = VK_IMAGE_TYPE_2D;
-  imageInfo.extent.width = 1;
-  imageInfo.extent.height = 1;
+  imageInfo.extent.width = 128;
+  imageInfo.extent.height =128;
   imageInfo.extent.depth = 1;
   imageInfo.mipLevels = 1;
   imageInfo.arrayLayers = 1;
-  imageInfo.format = VK_FORMAT_R8G8B8_UINT ;
-  imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL ;
+  imageInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
+  imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
   imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   imageInfo.usage = m_usage;
   imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
   imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  imageInfo.flags = 0;
 
   if (vkCreateImage(m_logicalDevice, &imageInfo, nullptr, &l_image) != VK_SUCCESS) {
-      throw std::runtime_error("failed to create image!");
+      throw std::runtime_error("VulkanImageMemoryPool::Init() - failed to create image!");
   }
   
 
@@ -849,13 +853,13 @@ void VulkanMemory::CreateUniformBufferMemPool(const VkDeviceSize& a_sizeInBytes)
 void VulkanMemory::CreateMixedBufferMemPool(const VkDeviceSize& a_sizeInBytes)
 {
    m_memoryPools[4] = std::make_shared<VulkanMemoryPool>( m_physicalDevice, m_logicalDevice, a_sizeInBytes, 
-   VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
-   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
+   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
    m_memoryPools[4]->Init();
 }
 
 
-void VulkanMemory::CreateImageMemPools(const VkDeviceSize& a_shaderImagesSize, const VkDeviceSize& a_colourAttachmentsSize, const VkDeviceSize& a_downloadingColourAttachmentsSize )
+void VulkanMemory::CreateImageMemPools(const VkDeviceSize& a_shaderImagesSize, const VkDeviceSize& a_colourAttachmentsSize, const VkDeviceSize& a_downloadingColourAttachmentsSize, const VkDeviceSize& a_depthStencilAttachmentsSize  )
 {
   m_imageMemoryPools[0] = std::make_shared<VulkanImageMemoryPool>( m_physicalDevice, m_logicalDevice, a_shaderImagesSize, 
    VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
@@ -868,10 +872,14 @@ void VulkanMemory::CreateImageMemPools(const VkDeviceSize& a_shaderImagesSize, c
   m_imageMemoryPools[1]->Init();
 
   m_imageMemoryPools[2] = std::make_shared<VulkanImageMemoryPool>( m_physicalDevice, m_logicalDevice, a_downloadingColourAttachmentsSize, 
-   VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, 
+   VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, 
    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
   m_imageMemoryPools[2]->Init();  
    
+  m_imageMemoryPools[3] = std::make_shared<VulkanImageMemoryPool>( m_physicalDevice, m_logicalDevice, a_depthStencilAttachmentsSize, 
+   VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
+   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  m_imageMemoryPools[3]->Init();
 }
 
 size_t VulkanMemory::SizeOfPixel(VkFormat a_format)
@@ -915,22 +923,16 @@ VulkanMemory::VulkanMemory(const VkPhysicalDevice& a_physicalDevice, const VkDev
 
 bool VulkanMemory::Init(const VkDeviceSize& a_stagingMemorySize, const VkDeviceSize& a_vertexMemorySize, const VkDeviceSize& a_indexMemorySize, 
                         const VkDeviceSize& a_uniformBufferMemorySize, const VkDeviceSize& a_mixBufferMemorySize,
-                        const VkDeviceSize& a_shaderImagesSize, const VkDeviceSize& a_colourAttachmentsSize, const VkDeviceSize& a_downloadingColourAttachmentsSize )
+                        const VkDeviceSize& a_shaderImagesSize, const VkDeviceSize& a_colourAttachmentsSize, const VkDeviceSize& a_downloadingColourAttachmentsSize,
+                        const VkDeviceSize& a_depthStencilAttachmentsSize )
 {
   CreateStagingBufferMemPool(a_stagingMemorySize);
   CreateVertexIndexBufferMemPool(a_vertexMemorySize);
   CreateIndexBufferMemPool(a_indexMemorySize);
   CreateUniformBufferMemPool(a_uniformBufferMemorySize);
-  try
-  {
-    CreateMixedBufferMemPool(a_mixBufferMemorySize);
-  }
-  catch(std::runtime_error&  a_e )
-  {
-    return false;
-  }
+  CreateMixedBufferMemPool(a_mixBufferMemorySize);
   
-  CreateImageMemPools(a_shaderImagesSize, a_colourAttachmentsSize, a_downloadingColourAttachmentsSize);
+  CreateImageMemPools(a_shaderImagesSize, a_colourAttachmentsSize, a_downloadingColourAttachmentsSize, a_depthStencilAttachmentsSize);
   return true;
 }
 
@@ -1100,7 +1102,7 @@ std::pair< std::shared_ptr<VulkanMemoryChunk>, unsigned int> VulkanMemory::Creat
 std::shared_ptr<VulkanImageMemoryChunk> VulkanMemory::CreateMaterialTexture(char* a_data, const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format )
 {
   // allocate image memory first so we can know how much memory we need
-  std::shared_ptr< VulkanImageMemoryChunk> l_imageMemory = m_imageMemoryPools[1]->AllocateMemory(a_width, a_height, a_format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_VIEW_TYPE_2D);
+  std::shared_ptr< VulkanImageMemoryChunk> l_imageMemory = m_imageMemoryPools[0]->AllocateMemory(a_width, a_height, a_format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_VIEW_TYPE_2D);
   
   if(!l_imageMemory )
     throw std::runtime_error("VulkanMemory::CreateMaterialTexture - Image Memory Pool could not allocate memory");
@@ -1137,6 +1139,7 @@ bool VulkanMemory::UpdateTextureData(std::shared_ptr<VulkanImageMemoryChunk> a_m
   CopyBufferToImage(l_stagingMemory, a_memoryChunk);
   // free staging memory chunk
   m_memoryPools[0]->DeallocateMemory(l_stagingMemory);
+  TransitionImageLayout(a_memoryChunk, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
   return true;
 }
 
@@ -1144,7 +1147,7 @@ std::shared_ptr<VulkanImageMemoryChunk> VulkanMemory::CreateCubemap(char* a_data
                                                                     const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format )
 {
   // allocate image memory first so we can know how much memory we need
-  std::shared_ptr< VulkanImageMemoryChunk> l_imageMemory = m_imageMemoryPools[1]->AllocateMemory(a_width, a_height*6, a_format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_VIEW_TYPE_CUBE);
+  std::shared_ptr< VulkanImageMemoryChunk> l_imageMemory = m_imageMemoryPools[0]->AllocateMemory(a_width, a_height*6, a_format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_VIEW_TYPE_CUBE);
   if(!l_imageMemory )
     throw std::runtime_error("VulkanMemory::CreateCubemap - Image Memory Pool could not allocate memory");
   
@@ -1165,23 +1168,74 @@ std::shared_ptr<VulkanImageMemoryChunk> VulkanMemory::CreateCubemap(char* a_data
     memcpy(data, a_data6, l_sizeOfImage );  data = ((char *) data) + l_sizeOfImage;
   vkUnmapMemory(m_logicalDevice, l_stagingMemory->m_memorySpace);
   
-  
   // copy buffer to image
   CopyBufferToImage(l_stagingMemory, l_imageMemory);
   // free staging memory chunk
   m_memoryPools[0]->DeallocateMemory(l_stagingMemory);
+  CreateImageView(l_imageMemory);  
+  TransitionImageLayout(l_imageMemory, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
   return l_imageMemory;
 }
 
 
-void VulkanMemory::CreateImageView(std::shared_ptr<VulkanImageMemoryChunk> a_memoryChunk)
+std::shared_ptr<VulkanImageMemoryChunk> VulkanMemory::CreateAttachmentTexture(const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format )
+{
+  std::shared_ptr< VulkanImageMemoryChunk> l_imageMemory = m_imageMemoryPools[1]->AllocateMemory(a_width, a_height, a_format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_VIEW_TYPE_2D);
+  if(!l_imageMemory )
+    throw std::runtime_error("VulkanMemory::CreateAttachmentTexture - Image Memory Pool could not allocate memory");
+  CreateImageView(l_imageMemory);
+  TransitionImageLayout(l_imageMemory, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL );
+  return l_imageMemory;
+}
+std::shared_ptr<VulkanImageMemoryChunk> VulkanMemory::CreateAttachmentToDownloadTexture(const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format )
+{
+  std::shared_ptr< VulkanImageMemoryChunk> l_imageMemory = m_imageMemoryPools[2]->AllocateMemory(a_width, a_height, a_format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_VIEW_TYPE_2D);
+  if(!l_imageMemory )
+    throw std::runtime_error("VulkanMemory::CreateAttachmentToDownloadTexture - Image Memory Pool could not allocate memory");
+  CreateImageView(l_imageMemory);
+  
+  TransitionImageLayout(l_imageMemory, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL );
+  
+  return l_imageMemory;
+}
+
+std::shared_ptr<VulkanImageMemoryChunk> VulkanMemory::CreateStencilDepthAttachmentTexture(const uint32_t& a_width, const uint32_t& a_height )
+{
+  VkFormat l_selectedFormat = VK_FORMAT_UNDEFINED;
+  VkFormatProperties props;
+  vkGetPhysicalDeviceFormatProperties(m_physicalDevice, VK_FORMAT_D32_SFLOAT_S8_UINT, &props);
+  
+  if( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT == VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT )
+    l_selectedFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
+  else
+  {
+    vkGetPhysicalDeviceFormatProperties(m_physicalDevice, VK_FORMAT_D24_UNORM_S8_UINT, &props);
+    if( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT == VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT )
+      l_selectedFormat = VK_FORMAT_D24_UNORM_S8_UINT;
+    else
+      std::runtime_error("VulkanMemory::CreateStencilDepthAttachmentTexture - failed to find supported format for depth stencil texture!");
+  }
+  
+  
+  std::shared_ptr< VulkanImageMemoryChunk> l_imageMemory = m_imageMemoryPools[3]->AllocateMemory(a_width, a_height, l_selectedFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_VIEW_TYPE_2D);
+  if(!l_imageMemory )
+    throw std::runtime_error("VulkanMemory::CreateAttachmentTexture - Image Memory Pool could not allocate memory");
+  CreateImageView(l_imageMemory, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT  );
+  
+  TransitionImageLayout(l_imageMemory, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+  
+  return l_imageMemory;
+  
+}
+
+void VulkanMemory::CreateImageView(std::shared_ptr<VulkanImageMemoryChunk> a_memoryChunk, VkImageAspectFlags aspectFlags)
 {
   VkImageViewCreateInfo viewInfo = {};
   viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   viewInfo.image = a_memoryChunk->m_image;
   viewInfo.viewType = a_memoryChunk->m_imageViewType;
   viewInfo.format = a_memoryChunk->m_format;
-  viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  viewInfo.subresourceRange.aspectMask = aspectFlags;
   viewInfo.subresourceRange.baseMipLevel = 0;
   viewInfo.subresourceRange.levelCount = 1;
   viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -1263,11 +1317,14 @@ void VulkanMemory::TransitionImageLayout(VkCommandBuffer a_cmdBuffer, std::share
     sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
     destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
   }
-  // 
+  // for stencil depth attachment transition
   else if (a_imageMemChunk->m_layout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) 
   {
-      barrier.srcAccessMask = 0;
-      barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    
+    sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
   } 
   else 
   {

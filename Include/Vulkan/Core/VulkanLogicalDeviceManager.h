@@ -1,6 +1,4 @@
-#ifndef ZR_VULKAN_LOGICAL_DEVICE_MAN_H
-#define ZR_VULKAN_LOGICAL_DEVICE_MAN_H
-
+#pragma once
 
 #include <vulkan/vulkan.hpp>
 
@@ -99,8 +97,3 @@ class VulkanLogicalDeviceManager
   
   void Shutdown();  ///< clears the Vulkan variables 
 };
-
-
-
-
-#endif

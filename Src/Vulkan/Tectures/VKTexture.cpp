@@ -61,7 +61,7 @@ VKTexture::UpdateData(char *data, int width, int height, int bpp, bool generateM
     return;
   VkFormat  format;
   if(bpp == 32)format = VK_FORMAT_B8G8R8A8_UINT;
-	if(bpp == 24)format = VK_FORMAT_B8G8R8_UINT;
+	if(bpp == 24)format = K_FORMAT_B8G8R8_UINT;
 	if(bpp == 8)format = VK_FORMAT_R8_UINT;
   
   // if for some reason its impossible to update the texture - create a new image

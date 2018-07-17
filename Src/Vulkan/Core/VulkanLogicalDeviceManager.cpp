@@ -68,10 +68,11 @@ void VulkanLogicalDeviceManager::Init(const VkPhysicalDevice& a_physicalDevice, 
   vkGetDeviceQueue(m_logicalDevice, a_queueFamilyIndexes.m_presentFamily, 0, &m_presentQueue);
   
   
-  /// @TODO Set as parameter the size of the local and the host memory
+
   m_memory = std::make_shared<VulkanMemory> ( 
               m_chosenPhysicalDevice, m_logicalDevice,
               this->GetGraphicsQueue(), m_queueFamilyIndexes.m_graphicsFamily  );
+              
             
 }
 

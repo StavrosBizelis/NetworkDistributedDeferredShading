@@ -7,7 +7,7 @@
 #include <stdexcept>
 
 
-// #include <VulkanDriver/VulkanPhysicalDeviceSelector.h>
+#include <Vulkan/Core/VulkanPhysicalDeviceSelector.h>
 #include "Vulkan/Core/VulkanLogicalDeviceManager.h"
 
 #include <glm/glm.hpp>
@@ -30,8 +30,8 @@ class VulkanDriver
   
   
   
-  // VulkanPhysicalDeviceSelector m_physicalDeviceMan;
-  // VkPhysicalDevice m_chosenPhysicalDevice;
+  VulkanPhysicalDeviceSelector m_physicalDeviceMan;
+  VkPhysicalDevice m_chosenPhysicalDevice;
   
   std::shared_ptr<VulkanLogicalDeviceManager> m_logicalDeviceMan;
   
@@ -65,11 +65,11 @@ class VulkanDriver
   
   
   
-  //VulkanPhysicalDeviceSelector& GetPhysicalDeviceSelector();  ///< Return the physical device manager for this instance
+  VulkanPhysicalDeviceSelector& GetPhysicalDeviceSelector();  ///< Return the physical device manager for this instance
   
-  //VkPhysicalDevice GetSelectedPhysicalDevice();   ///< call only after Init()
+  VkPhysicalDevice GetSelectedPhysicalDevice();   ///< call only after Init()
   
-  //std::shared_ptr<VulkanLogicalDeviceManager> GetLogicalDeviceManager();  ///<  return logical device manager
+  std::shared_ptr<VulkanLogicalDeviceManager> GetLogicalDeviceManager();  ///<  return logical device manager
   
   
   void Shutdown();  ///< clears the Vulkan variables 

@@ -159,9 +159,10 @@ WPARAM ServerApp::Execute()
 		return 1;
 	}
   RECT dimensions = m_gameWindow.GetDimensions();
-
+  // std::cout << "initializing with " << glm::abs(dimensions.right - dimensions.left) << " " << glm::abs(dimensions.top - dimensions.bottom);
   m_graphics->SetResolution( glm::vec2( glm::abs(dimensions.right - dimensions.left) , glm::abs(dimensions.top - dimensions.bottom) ) );
-  
+  m_graphics->SetPartRes( glm::vec2( glm::abs(dimensions.right - dimensions.left) , glm::abs(dimensions.top - dimensions.bottom) ) );
+  m_graphics->Init(true, m_clientsCount);
   
   
   Initialise();
@@ -353,7 +354,6 @@ ServerApp::Initialise()
   IFDBG( std::cout << "Initialise graphics engine... " << std::endl << std::endl;; );
   IFDBG( std::cout << "Send: " << std::endl; );
   // SERVER GENERATES AND SENDS RENDERING INFO TO CLIENTS
-  m_graphics->Init(true, m_clientsCount);
   const std::vector< RenderControl::CompositionEntity >& l_compositionSettings = m_graphics->GetCompositionPass()->GetSubpartsSettings();
   for( unsigned int i = 0; i < l_compositionSettings.size(); ++i)
   {

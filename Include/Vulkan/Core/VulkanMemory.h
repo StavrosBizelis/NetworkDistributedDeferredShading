@@ -293,7 +293,7 @@ class VulkanMemory
   void CreateMixedBufferMemPool(const VkDeviceSize& a_sizeInBytes);    ///< Create Memory Pool for everything except staging - used for packed data
   
   /// create three image memory pools for 
-  void CreateImageMemPools(const VkDeviceSize& a_shaderImagesSize, const VkDeviceSize& a_colourAttachmentsSize, const VkDeviceSize& a_downloadingColourAttachmentsSize );      
+  void CreateImageMemPools(const VkDeviceSize& a_shaderImagesSize, const VkDeviceSize& a_colourAttachmentsSize, const VkDeviceSize& a_downloadingColourAttachmentsSize, const VkDeviceSize& a_depthStencilAttachmentsSize );      
   
   /**
   *   [0] - StagingBufferMemoryPool
@@ -308,9 +308,11 @@ class VulkanMemory
   *   [1] - for framebuffer attachments which may be used through 
   *     ( usage : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT  | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT )
   *   [2] - for framebuffer attachments which be downloaded 
-  *     ( usage : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT )
+  *     ( usage : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT )
+  *   [3] - for framebuffer depth stencil attachments 
+  *     ( usage : VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT   | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT )
   */
-  std::array<std::shared_ptr<VulkanImageMemoryPool>, 3 > m_imageMemoryPools;
+  std::array<std::shared_ptr<VulkanImageMemoryPool>, 4 > m_imageMemoryPools;
   
   // utility helpers
   size_t SizeOfPixel(VkFormat a_format);
@@ -329,7 +331,7 @@ class VulkanMemory
   *   @param a_stagingMemorySize: staging is not covered by mixBufferMemorySize
   */
   bool Init(const VkDeviceSize& a_stagingMemorySize, const VkDeviceSize& a_vertexMemorySize, const VkDeviceSize& a_indexMemorySize, const VkDeviceSize& a_uniformBufferMemorySize, const VkDeviceSize& a_mixBufferMemorySize,
-            const VkDeviceSize& a_shaderImagesSize, const VkDeviceSize& a_colourAttachmentsSize, const VkDeviceSize& a_downloadingColourAttachmentsSize );
+            const VkDeviceSize& a_shaderImagesSize, const VkDeviceSize& a_colourAttachmentsSize, const VkDeviceSize& a_downloadingColourAttachmentsSize, const VkDeviceSize& a_depthStencilAttachmentsSize );
   
   void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
   void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
@@ -358,9 +360,16 @@ class VulkanMemory
   std::shared_ptr<VulkanImageMemoryChunk> CreateCubemap(char* a_data1, char* a_data2, char* a_data3, char* a_data4, char* a_data5, char* a_data6,
                                                         const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format );
   
+  /// @TODO IMPLEMENT
+  /// @brief do not need "data" - just allocate and create VkImage and VkImageView for it
+  std::shared_ptr<VulkanImageMemoryChunk> CreateAttachmentTexture(const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format );
+  std::shared_ptr<VulkanImageMemoryChunk> CreateAttachmentToDownloadTexture(const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format );
+  /// @TODO IMPLEMENT
+  /// @brief do not need "data" - just allocate and create VkImage and VkImageView for it
+  std::shared_ptr<VulkanImageMemoryChunk> CreateStencilDepthAttachmentTexture(const uint32_t& a_width, const uint32_t& a_height );
   
   
-  void CreateImageView(std::shared_ptr<VulkanImageMemoryChunk> a_memoryChunk);
+  void CreateImageView(std::shared_ptr<VulkanImageMemoryChunk> a_memoryChunk, VkImageAspectFlags a_aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT);
   
   
   uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
