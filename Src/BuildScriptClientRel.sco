@@ -31,8 +31,9 @@ OpenGL/Textures/GLTextureFactory.cpp OpenGL/Textures/GLTexture.cpp OpenGL/Textur
 OpenGL/Shapes/GLShapeFactory.cpp OpenGL/Shapes/GLRect.cpp OpenGL/Shapes/GLSphere.cpp OpenGL/Shapes/GLCone.cpp OpenGL/Shapes/GLCube.cpp OpenGL/Shapes/GLSkybox.cpp OpenGL/Shapes/GLOpenAssetImportMesh.cpp \
 OpenGL/GLGraphicsEngine.cpp \
 \
-Vulkan/Core/VulkanDriver.cpp Vulkan/Core/VulkanMemory.cpp Vulkan/Core/VulkanLogicalDeviceManager.cpp  Vulkan/Core/VulkanSwapChainDetails.cpp Vulkan/Core/VulkanPhysicalDeviceSelector.cpp \
+Vulkan/Core/VulkanDriver.cpp Vulkan/Core/VulkanMemory.cpp Vulkan/Core/VulkanLogicalDeviceManager.cpp  Vulkan/Core/VulkanSwapChainDetails.cpp Vulkan/Core/VulkanPhysicalDeviceSelector.cpp Vulkan/Core/VulkanUtilities.cpp \
 Vulkan/RenderControl/VKCompositionPass.cpp Vulkan/RenderControl/VKDeferredShadingPass.cpp \
+Vulkan/RenderControl/Pipelines/VKPipeline.cpp Vulkan/RenderControl/Pipelines/VKDeferredPipelines.cpp \
 Vulkan/Shapes/VKShapeFactory.cpp Vulkan/Shapes/VKRect.cpp Vulkan/Shapes/VKSphere.cpp Vulkan/Shapes/VKCone.cpp Vulkan/Shapes/VKCube.cpp Vulkan/Shapes/VKSkybox.cpp Vulkan/Shapes/VKOpenAssetImportMesh.cpp \
 Vulkan/VKGraphicsEngine.cpp \
 \

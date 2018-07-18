@@ -36,8 +36,14 @@ void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
 {
   AGraphicsEngine::Init(a_composite, a_subparts);  
   // Init vulkan driver
-  m_driver->Init(m_resolutionPart);
-  
+  try{ 
+    m_driver->Init(m_resolutionPart);
+  }
+  catch(std::runtime_error& e)
+  {
+    std::cout << e.what();
+    return;
+  }
   
   // MaterialControl::IMaterialManager* l_materialManager = new MaterialControl::VKMaterialManager();
   // m_renderPassPipeline->SetMaterialManager(l_materialManager);
@@ -56,11 +62,13 @@ void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
   // }
   // else
   // {
-    
+    std::cout << "before new deferred shading pass\n";
     m_deferredShadingPass = new RenderControl::VKDeferredShadingPass( m_driver->GetLogicalDeviceManager(), m_driver->GetSelectedPhysicalDevice(), m_driver->GetLogicalDeviceManager()->GetMemoryManager(),
                                                                       m_driver->GetLogicalDeviceManager()->GetGraphicsQueue(),m_driver->GetLogicalDeviceManager()->GetPresentQueue(), m_driver->GetLogicalDeviceManager()->GetQueueFamilyIndices(),
                                                                       m_resolution, m_resolutionPart, m_viewPortSettings );
+    std::cout << "before Init() deferred shading pass\n";
     m_deferredShadingPass->Init();
+    std::cout << "after Init() deferred shading pass\n";
     // m_deferredShadingPass->SetSceenOutputAttachment(3);
     // m_renderPassPipeline->PushBack(m_deferredShadingPass);    
   // }

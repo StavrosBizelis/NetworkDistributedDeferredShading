@@ -8,6 +8,8 @@
 #include <Vulkan/Core/VulkanMemory.h>
 #include <Vulkan/Core/VulkanLogicalDeviceManager.h>
 #include <Vulkan/Core/VulkanSwapChainDetails.h>
+#include "Vulkan/RenderControl/Pipelines/VKPipeline.h"
+
 namespace RenderControl
 {
 
@@ -50,7 +52,7 @@ namespace RenderControl
     void CreateFramebuffer();
     void CreateCommandBuffers();
     
-    
+    std::vector< std::shared_ptr<VKPipeline> > m_pipelines;
 	public:
 		VKDeferredShadingPass(const std::shared_ptr<VulkanLogicalDeviceManager>& a_device, const VkPhysicalDevice& a_physicalDevice, const std::shared_ptr<VulkanMemory>& a_memory,
                           const VkQueue& a_graphicsQueue, const VkQueue& a_presentQueue, const QueueFamilyIndices& a_indices,

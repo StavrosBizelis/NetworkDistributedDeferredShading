@@ -447,6 +447,7 @@ void VulkanImageMemoryPool::AddToTheAvailableChunks(const VkDeviceSize& a_size, 
 
 VkImage VulkanImageMemoryPool::CreateImage(const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format, VkImageTiling a_tiling, VkImageViewType a_imageViewType, VkDeviceSize& a_outSize)
 {
+
   VkImage l_image;
   VkImageCreateInfo imageInfo = {};
   imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -467,6 +468,7 @@ VkImage VulkanImageMemoryPool::CreateImage(const uint32_t& a_width, const uint32
     imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
     imageInfo.arrayLayers = 6;
   }
+  
   if (vkCreateImage(m_logicalDevice, &imageInfo, nullptr, &l_image) != VK_SUCCESS) {
       throw std::runtime_error("VulkanImageMemoryPool::CreateImage - failed to create image!");
   }
@@ -474,6 +476,7 @@ VkImage VulkanImageMemoryPool::CreateImage(const uint32_t& a_width, const uint32
   
   VkMemoryRequirements l_memRequirements;
   vkGetImageMemoryRequirements(m_logicalDevice, l_image, &l_memRequirements);
+  
   a_outSize = l_memRequirements.size;
   return l_image;
 }
@@ -513,22 +516,24 @@ void VulkanImageMemoryPool::Init()
   if (vkCreateImage(m_logicalDevice, &imageInfo, nullptr, &l_image) != VK_SUCCESS) {
       throw std::runtime_error("VulkanImageMemoryPool::Init() - failed to create image!");
   }
-  
 
   VkMemoryRequirements l_memRequirements;
   vkGetImageMemoryRequirements(m_logicalDevice, l_image, &l_memRequirements);
   VkPhysicalDeviceMemoryProperties memProperties;
   vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
 
-  uint32_t l_memoryIndex;
+  int l_memoryIndex = -1;
   for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) 
     if ((l_memRequirements.memoryTypeBits & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & m_properties) == m_properties)
     {
       l_memoryIndex = i;
       break;
     }
-  
+  if( l_memoryIndex == -1 )
+    throw std::runtime_error("VulkanImageMemoryPool::Init() - failed to find appropriate memory index!");
+    
   m_alignment = l_memRequirements.alignment;
+  
   
   VkMemoryAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -571,9 +576,10 @@ std::shared_ptr< VulkanImageMemoryChunk> VulkanImageMemoryPool::AllocateMemory(c
 {
   
   VkDeviceSize l_size;
+  
   VkImage l_img = CreateImage(a_width, a_height, a_format, a_tiling, a_imageViewType, l_size);
   l_size = l_size + l_size%m_alignment;
-  
+
   // best fit algorithm
   // using the map of the available chunks find in a linear fashion te best fit instead of searching the whole memory space
   for( std::map<VkDeviceSize, std::list< std::weak_ptr< VulkanImageMemoryChunk> > >::iterator l_iter = m_availableMemChunks->begin(); l_iter != m_availableMemChunks->end(); ++l_iter )
@@ -863,22 +869,22 @@ void VulkanMemory::CreateImageMemPools(const VkDeviceSize& a_shaderImagesSize, c
 {
   m_imageMemoryPools[0] = std::make_shared<VulkanImageMemoryPool>( m_physicalDevice, m_logicalDevice, a_shaderImagesSize, 
    VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
-   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   m_imageMemoryPools[0]->Init();
 
   m_imageMemoryPools[1] = std::make_shared<VulkanImageMemoryPool>( m_physicalDevice, m_logicalDevice, a_colourAttachmentsSize, 
    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT  | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
-   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   m_imageMemoryPools[1]->Init();
 
   m_imageMemoryPools[2] = std::make_shared<VulkanImageMemoryPool>( m_physicalDevice, m_logicalDevice, a_downloadingColourAttachmentsSize, 
    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, 
-   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   m_imageMemoryPools[2]->Init();  
    
   m_imageMemoryPools[3] = std::make_shared<VulkanImageMemoryPool>( m_physicalDevice, m_logicalDevice, a_depthStencilAttachmentsSize, 
    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
-   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   m_imageMemoryPools[3]->Init();
 }
 
@@ -1262,6 +1268,7 @@ uint32_t VulkanMemory::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 // void VulkanMemory::TransitionImageLayout(VkCommandBuffer a_cmdBuffer, VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
 void VulkanMemory::TransitionImageLayout(VkCommandBuffer a_cmdBuffer, std::shared_ptr<VulkanImageMemoryChunk> a_imageMemChunk, VkImageLayout newLayout)
 {
+
   if(a_imageMemChunk->m_layout == newLayout )
     return;
   VkImageMemoryBarrier barrier = {};
@@ -1282,7 +1289,7 @@ void VulkanMemory::TransitionImageLayout(VkCommandBuffer a_cmdBuffer, std::share
   } 
   else 
     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  
+
   barrier.subresourceRange.baseMipLevel = 0;
   barrier.subresourceRange.levelCount = 1;
   barrier.subresourceRange.baseArrayLayer = 0;
@@ -1325,12 +1332,20 @@ void VulkanMemory::TransitionImageLayout(VkCommandBuffer a_cmdBuffer, std::share
     
     sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
     destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+  }
+  else if (a_imageMemChunk->m_layout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) 
+  {
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT  | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT ;
+    
+    sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
   } 
   else 
   {
-      throw std::invalid_argument("unsupported layout transition!");
-  }
 
+      throw std::runtime_error("unsupported layout transition!");
+  }
   vkCmdPipelineBarrier(
       a_cmdBuffer,
       sourceStage, destinationStage,
@@ -1339,17 +1354,17 @@ void VulkanMemory::TransitionImageLayout(VkCommandBuffer a_cmdBuffer, std::share
       0, nullptr,
       1, &barrier
   );
-  
   a_imageMemChunk->m_layout = newLayout;
   
 }
 void VulkanMemory::TransitionImageLayout(std::shared_ptr<VulkanImageMemoryChunk> a_imageMemChunk, VkImageLayout newLayout) 
 {
   VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
-
-  TransitionImageLayout( a_imageMemChunk, newLayout);
-
+  
+  TransitionImageLayout(commandBuffer, a_imageMemChunk, newLayout);
+  
   EndSingleTimeCommands(commandBuffer);
+  
 }
 
 void VulkanMemory::Clear(){ vkDestroyCommandPool(m_logicalDevice, m_commandPool, nullptr); }

@@ -1,5 +1,7 @@
 #pragma once
 #include <cstdint>
+#include <vector>
+#include <string>
 
 #ifdef DEBUG
 #  define IFDBG(x) x
@@ -31,4 +33,5 @@ void ConsistentInt32ToCharArray(const int32_t& a_num, char* a_arr);
 void ConsistentFloatToCharArray(const float& a_num, char* a_arr);
 
 
-
+// temporary file reader
+std::vector<char> ReadFile(const std::string& filename);

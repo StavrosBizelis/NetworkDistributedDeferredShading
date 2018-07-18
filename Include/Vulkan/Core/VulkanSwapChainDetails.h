@@ -10,8 +10,7 @@
 
 
 
-// temporary file reader
-std::vector<char> ReadFile(const std::string& filename);
+
 
 
 struct SwapChainSupportDetails {

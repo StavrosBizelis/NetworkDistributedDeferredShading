@@ -67,11 +67,11 @@ void VulkanDriver::Init(const glm::vec2& a_windowSize )
   VkDeviceSize l_indexMemorySize = 4194304; // 1024*1024 * 4 = 4mb
   VkDeviceSize l_uniformBufferMemorySize = 4194304; // 1024*1024 * 4 = 4mb
   VkDeviceSize l_mixBufferMemorySize = 4194304; // 1024*1024 * 4 = 4mb
-  VkDeviceSize l_shaderImagesSize = 4194304; // 1024*1024 * 4 = 4mb
-  VkDeviceSize l_colourAttachmentsSize = 4194304; // 1024*1024 * 4 = 4mb
+  VkDeviceSize l_shaderImagesSize = 2*4194304; // 1024*1024 * 4 = 4mb
+  VkDeviceSize l_colourAttachmentsSize = 8*4194304; // 1024*1024 * 4 *8 = 24mb
   VkDeviceSize l_downloadingColourAttachmentsSize = 4194304; // 1024*1024 * 4 = 4mb
   VkDeviceSize l_depthStencilAttachmentsSize = 4194304; // 1024*1024 * 4 = 4mb
-  
+  std::cout << "before init() memory manager\n";
   try
   {
     m_logicalDeviceMan->GetMemoryManager()->Init(l_stagingMemorySize, l_vertexMemorySize, l_indexMemorySize, l_uniformBufferMemorySize, l_mixBufferMemorySize, 
@@ -81,7 +81,7 @@ void VulkanDriver::Init(const glm::vec2& a_windowSize )
   {
     std::cout << e.what() << std::endl;
   }
-  
+  std::cout << "before after() memory\n";
   // error in CreateSwapChain
   m_logicalDeviceMan->CreateSwapChain( l_swapChainDetails );
   m_logicalDeviceMan->CreateImageViews();
