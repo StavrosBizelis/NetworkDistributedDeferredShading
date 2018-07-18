@@ -618,7 +618,7 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   
   // dependencies - two major types of dependencies
   // geometry passes depend on the external
-  std::vector< VkSubpassDependency> l_dependencies(3);
+  std::vector< VkSubpassDependency> l_dependencies(8 + 2*8);
   for( unsigned int i = 0; i < 8; ++i )
   {
     l_dependencies[i].srcSubpass = VK_SUBPASS_EXTERNAL;
