@@ -83,8 +83,8 @@ void VulkanMemoryPool::AddToTheAvailableChunks(const VkDeviceSize& a_size, const
   m_availableMemChunks->at(a_size).push_back(a_chunk);
 }
 
-VulkanMemoryPool::VulkanMemoryPool(const VkPhysicalDevice& a_physicalDevice, const VkDevice& a_logicalDevice, const VkDeviceSize& a_size, const VkBufferUsageFlags& a_usage, const VkMemoryPropertyFlags& a_properties)
-: m_physicalDevice(a_physicalDevice), m_logicalDevice(a_logicalDevice), m_size(a_size), m_usage(a_usage), m_properties(a_properties), m_memorySpace(NULL), m_buffer(nullptr),
+VulkanMemoryPool::VulkanMemoryPool(const VkPhysicalDevice& a_physicalDevice, const VkDevice& a_logicalDevice, const VkDeviceSize& a_size, const VkBufferUsageFlags& a_usage, const VkMemoryPropertyFlags& a_properties, const int& a_alignment)
+: m_physicalDevice(a_physicalDevice), m_logicalDevice(a_logicalDevice), m_size(a_size), m_usage(a_usage), m_properties(a_properties), m_memorySpace(NULL), m_buffer(nullptr), m_alignment(a_alignment)
   m_memChunks(NULL), m_availableMemChunks( std::make_shared< std::map<VkDeviceSize, std::list< std::weak_ptr< VulkanMemoryChunk> > > >() ) {}
 
 VulkanMemoryPool::~VulkanMemoryPool()
@@ -130,7 +130,8 @@ void VulkanMemoryPool::Init()
       break;
     }
   
-  m_alignment = l_memRequirements.alignment;
+  if( a_alignment == -1)
+    m_alignment = l_memRequirements.alignment;
 
   VkMemoryAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -174,7 +175,7 @@ bool VulkanMemoryPool::Owns(const std::shared_ptr< VulkanMemoryChunk>& a_chunk)
 std::shared_ptr< VulkanMemoryChunk> VulkanMemoryPool::AllocateMemory(const VkDeviceSize& a_size)
 {
   // create l_size taking into account the alignement
-  VkDeviceSize l_size = a_size + a_size%m_alignment;
+  VkDeviceSize l_size = a_size + (m_alignment - a_size%m_alignment);
   
   // best fit algorithm
   // using the map of the available chunks find in a linear fashion te best fit instead of searching the whole memory space
@@ -355,7 +356,7 @@ std::string VulkanMemoryPool::AvailableMemoryChunks()
 
 
 VulkanSampler::VulkanSampler( const VkDevice& a_logicalDevice)
-:m_logicalDevice(a_logicalDevice)
+:m_logicalDevice(a_logicalDevice), m_sampler(NULL)
 {
   m_params[VLK_SMPL_MIN_FLTR] = VK_FILTER_LINEAR;
   m_params[VLK_SMPL_MAG_FLTR] = VK_FILTER_LINEAR;
@@ -856,12 +857,16 @@ void VulkanMemory::CreateUniformBufferMemPool(const VkDeviceSize& a_sizeInBytes)
    m_memoryPools[3]->Init();
 }
 
-void VulkanMemory::CreateMixedBufferMemPool(const VkDeviceSize& a_sizeInBytes)
+void VulkanMemory::CreateDynamicUniformBufferMemPool(const VkDeviceSize& a_sizeInBytes)
 {
-   m_memoryPools[4] = std::make_shared<VulkanMemoryPool>( m_physicalDevice, m_logicalDevice, a_sizeInBytes, 
-   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
-   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-   m_memoryPools[4]->Init();
+  VkPhysicalDeviceProperties l_props;
+  vkGetPhysicalDeviceProperties(m_physicalDevice, &l_props);
+  l_props.limits.minUniformBufferOffsetAlignment
+  
+  VkDeviceSize l_alignedSize = a_sizeInBytes + (l_props.limits.minUniformBufferOffsetAlignment - a_sizeInBytes%l_props.limits.minUniformBufferOffsetAlignment);
+   
+  m_memoryPools[4] = std::make_shared<VulkanMemoryPool>( m_physicalDevice, m_logicalDevice, l_alignedSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, l_props.limits.minUniformBufferOffsetAlignment );
+  m_memoryPools[4]->Init();
 }
 
 
@@ -936,7 +941,7 @@ bool VulkanMemory::Init(const VkDeviceSize& a_stagingMemorySize, const VkDeviceS
   CreateVertexIndexBufferMemPool(a_vertexMemorySize);
   CreateIndexBufferMemPool(a_indexMemorySize);
   CreateUniformBufferMemPool(a_uniformBufferMemorySize);
-  CreateMixedBufferMemPool(a_mixBufferMemorySize);
+  CreateDynamicUniformBufferMemPool(a_mixBufferMemorySize);
   
   CreateImageMemPools(a_shaderImagesSize, a_colourAttachmentsSize, a_downloadingColourAttachmentsSize, a_depthStencilAttachmentsSize);
   return true;
@@ -1094,13 +1099,13 @@ std::shared_ptr<VulkanMemoryChunk> VulkanMemory::CreateIndexBuffer(char* a_index
 
 
 
-std::pair< std::shared_ptr<VulkanMemoryChunk>, unsigned int> VulkanMemory::CreateUniformBuffer(const int& a_sizeInBytes)
+std::shared_ptr<VulkanMemoryChunk> VulkanMemory::CreateUniformBuffer(const int& a_sizeInBytes)
 {
   std::shared_ptr< VulkanMemoryChunk> l_uniformBuffMemory = m_memoryPools[3]->AllocateMemory(a_sizeInBytes);
   if( !l_uniformBuffMemory )
     throw std::runtime_error("VulkanMemory::CreateUniformBuffer - Uniform Memory Pool could not allocate memory");
   
-  return std::pair< std::shared_ptr<VulkanMemoryChunk>, unsigned int>( l_uniformBuffMemory, a_sizeInBytes );
+  return l_uniformBuffMemory;
 }
 
 

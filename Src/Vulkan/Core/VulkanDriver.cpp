@@ -43,6 +43,11 @@ VulkanDriver::~VulkanDriver()
 
 void VulkanDriver::Init(const glm::vec2& a_windowSize )
 {
+  
+  
+  
+  
+  
   m_windowSize = a_windowSize;
 
   m_logicalDeviceMan = std::make_shared<VulkanLogicalDeviceManager>();
@@ -89,7 +94,10 @@ void VulkanDriver::Init(const glm::vec2& a_windowSize )
   // VulkanRenderPassFactory l_factory(m_logicalDeviceMan);
   // m_logicalDeviceMan->SetRenderPass( l_factory.CreateColorRenderPass(true) );
   
-  
+  // // // // // // // VkPhysicalDeviceProperties l_props;
+  // // // // // // // vkGetPhysicalDeviceProperties(m_chosenPhysicalDevice, &l_props);
+  // // // // // // // std::cout << "maxDescriptorSetUniformBuffers" << l_props.limits.maxDescriptorSetUniformBuffers << std::endl;
+  // // // // // // // std::cout << "maxBoundDescriptorSets" << l_props.limits.maxBoundDescriptorSets << std::endl;
 }
 
 // void VulkanDriver::Update(){ m_logicalDeviceMan->Update(); }

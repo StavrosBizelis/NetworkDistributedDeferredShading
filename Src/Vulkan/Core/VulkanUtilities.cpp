@@ -34,22 +34,22 @@ std::vector<VkPipelineShaderStageCreateInfo> CreatePipelineShaderCreateInfo(VkSh
 
 
 
-VkDescriptorSetLayoutBinding GetUniformVertexLayoutBinding(const unsigned int& a_bindingNum, const unsigned int& a_count)
+VkDescriptorSetLayoutBinding GetUniformVertexLayoutBinding(const unsigned int& a_bindingNum)
 {
   VkDescriptorSetLayoutBinding l_materialBinding = {};
   l_materialBinding.binding = a_bindingNum;
-  l_materialBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-  l_materialBinding.descriptorCount = a_count;
+  l_materialBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  l_materialBinding.descriptorCount = 1;
   l_materialBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   l_materialBinding.pImmutableSamplers = NULL;
   return l_materialBinding;
 }
-VkDescriptorSetLayoutBinding GetUniformFragmentLayoutBinding(const unsigned int& a_bindingNum, const unsigned int& a_count)
+VkDescriptorSetLayoutBinding GetUniformFragmentLayoutBinding(const unsigned int& a_bindingNum)
 {
   VkDescriptorSetLayoutBinding l_materialBinding = {};
   l_materialBinding.binding = a_bindingNum;
-  l_materialBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-  l_materialBinding.descriptorCount = a_count;
+  l_materialBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  l_materialBinding.descriptorCount = 1;
   l_materialBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
   l_materialBinding.pImmutableSamplers = NULL;
   return l_materialBinding;

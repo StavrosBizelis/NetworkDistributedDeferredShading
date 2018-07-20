@@ -5,8 +5,8 @@ VkShaderModule CreateShaderModule(const std::vector<char>& a_code, const VkDevic
 
 std::vector<VkPipelineShaderStageCreateInfo> CreatePipelineShaderCreateInfo(VkShaderModule a_vertShaderModule, VkShaderModule a_fragShaderModule);
 
-VkDescriptorSetLayoutBinding GetUniformVertexLayoutBinding(const unsigned int& a_bindingNum, const unsigned int& a_count);
-VkDescriptorSetLayoutBinding GetUniformFragmentLayoutBinding(const unsigned int& a_bindingNum, const unsigned int& a_count);
+VkDescriptorSetLayoutBinding GetUniformVertexLayoutBinding(const unsigned int& a_bindingNum);
+VkDescriptorSetLayoutBinding GetUniformFragmentLayoutBinding(const unsigned int& a_bindingNum);
 VkDescriptorSetLayoutBinding GetSamplerFragmentLayoutBinding(const unsigned int& a_bindingNum);
 VkDescriptorSetLayoutBinding GetInputAttachmentFragmentLayoutBinding(const unsigned int& a_bindingNum);
 

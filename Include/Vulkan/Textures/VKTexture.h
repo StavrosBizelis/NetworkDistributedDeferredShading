@@ -19,4 +19,7 @@ public:
   
   virtual void SetSamplerObjectParameter(const unsigned int& parameter, const unsigned int& value);
 	virtual void SetSamplerObjectParameterf(const unsigned int& parameter, float value);
+  
+  std::shared_ptr<VulkanImageMemoryChunk> GetImage(){return m_image;}
+  std::shared_ptr<VulkanSampler> GetSampler(){return m_sampler;}
 };

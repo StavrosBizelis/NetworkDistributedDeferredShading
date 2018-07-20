@@ -3,9 +3,16 @@
 
 #include "Vulkan/Core/VulkanMemory.h"
 #include "Vulkan/Core/VulkanLogicalDeviceManager.h"
+#include <Vulkan/RenderControl/UniformBufferObjects.h>
 #include <Vulkan/Vulkan.hpp>
 #include <memory>
 #include <glm/glm.hpp>
+
+enum SceneGlobalDataType
+{
+  NO_GLOBAL_DATA = 0,
+  GLOBAL_PROJ_MATRIX
+};
 
 class VKPipeline
 {
@@ -39,7 +46,7 @@ class VKPipeline
   
   
 
-  
+  std::vector<VkDescriptorSetLayoutBinding> m_descLayoutBindings;
   public:
   VKPipeline(const std::shared_ptr<VulkanLogicalDeviceManager>& a_logicalDevice, VkRenderPass a_renderPass, const std::vector<VkPipelineShaderStageCreateInfo>& a_shaders, const unsigned int& a_subpassIndex, const glm::vec2& a_res, const glm::vec4& a_viewportSettings );
   virtual ~VKPipeline();
@@ -55,10 +62,15 @@ class VKPipeline
   
   // std::shared_ptr<std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > > GetSecondaryCommandBuffers();
   //  std::shared_ptr<std::vector< VkCommandBuffer> > GetSecondaryCommandBuffersHandles();    ///< returns the secondary command buffers ( +the first one is a plus - and is the one that binds the pipeline to the render pass)
-  VkPipeline GetPipelineHandle();
-  VkPipelineLayout GetPipelineLayout();
-  VkDescriptorSetLayout GetDescriptorSetLayout();
+  VkPipeline GetPipelineHandle() const;
+  VkPipelineLayout GetPipelineLayout() const;
+  VkDescriptorSetLayout GetDescriptorSetLayout() const;
+  
+  std::vector<VkDescriptorSetLayoutBinding> GetDescriptorSetLayoutBindings() const;
 
+  virtual SceneGlobalDataType GetGlobalDataTypes() const {return NO_GLOBAL_DATA; }
+  virtual size_t GetGlobalUboSize() const{return 0;}
+  virtual size_t GetObjUboSize() const{return 0;}
   
   void Clear();
 };

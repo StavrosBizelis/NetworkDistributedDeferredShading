@@ -52,14 +52,14 @@ namespace RenderControl
     
 		virtual bool AddRenderable(IRenderable* a_renderable, const GeometryPassMaterialFlags& a_geometryMaterialFlags = GeometryPassMaterialFlags::SIMPLE_GEOMETRY );
 		
-		void RemoveRenderable(IRenderable* a_renderable);
+		virtual void RemoveRenderable(IRenderable* a_renderable);
 		inline bool Exists(IRenderable* a_renderable) const;
 
 		virtual void SetMaterialManager(MaterialControl::IMaterialManager* a_materialManager);
 		/// in a deferred shading technique lights are renderable meshes
 		/// however the material and mesh must be set before adding it to the renderer
-		void AddLight(IRenderable* a_light, const LightTypeFlags& a_lightType);
-		void RemoveLight(IRenderable* a_light);
+		virtual void AddLight(IRenderable* a_light, const LightTypeFlags& a_lightType);
+		virtual void RemoveLight(IRenderable* a_light);
     virtual void UpdateViewportSettings(const glm::vec2& a_resolution, const glm::vec4& a_viewportSettings) = 0;
     
     /// @return the last-1 frame that was rendered

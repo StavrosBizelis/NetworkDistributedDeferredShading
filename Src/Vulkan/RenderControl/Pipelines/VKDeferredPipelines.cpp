@@ -111,23 +111,23 @@ VKGeometryPassPipeline::Init()
   colorBlending.blendConstants[3] = 0.0f;
   
   // create descripor set layout bindinds
-  VkDescriptorSetLayoutBinding l_vertexBinding = GetUniformVertexLayoutBinding(0,2);
-  VkDescriptorSetLayoutBinding l_fragBinding = GetUniformFragmentLayoutBinding(1,1);
-  VkDescriptorSetLayoutBinding l_fragBinding2 = GetUniformFragmentLayoutBinding(1,2);
+  VkDescriptorSetLayoutBinding l_vertexBinding = GetUniformVertexLayoutBinding(0);
+  VkDescriptorSetLayoutBinding l_vertexBinding2 = GetUniformVertexLayoutBinding(1);
+  VkDescriptorSetLayoutBinding l_fragBinding = GetUniformFragmentLayoutBinding(2);
   
-  VkDescriptorSetLayout l_descriptorSetLayouts;
-  std::vector<VkDescriptorSetLayoutBinding> l_descLayoutBindings = {l_vertexBinding, l_fragBinding};
+  m_descLayoutBindings = {l_vertexBinding, l_vertexBinding2, l_fragBinding};
   for( unsigned int i =0; i< m_inSamplersCount; ++i)
-    l_descLayoutBindings.push_back( GetSamplerFragmentLayoutBinding(i+2) );
+    m_descLayoutBindings.push_back( GetSamplerFragmentLayoutBinding(i+3) );
   // simple geometry
-  l_descriptorSetLayouts = CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), l_descLayoutBindings );
+  
+  m_descriptorSetLayout = CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), m_descLayoutBindings );
 
   
   
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 1;
-  pipelineLayoutInfo.pSetLayouts = &l_descriptorSetLayouts;
+  pipelineLayoutInfo.pSetLayouts = &m_descriptorSetLayout;
 
   pipelineLayoutInfo.pushConstantRangeCount = 0;
   
@@ -263,22 +263,22 @@ VKSkyboxPassPipeline::Init()
   colorBlending.blendConstants[3] = 0.0f;
   
   // create descripor set layout bindinds
-  VkDescriptorSetLayoutBinding l_vertexBinding = GetUniformVertexLayoutBinding(0,2);
-  VkDescriptorSetLayoutBinding l_fragBinding = GetUniformFragmentLayoutBinding(1,1);
-  VkDescriptorSetLayoutBinding l_fragBinding2 = GetUniformFragmentLayoutBinding(1,2);
+  VkDescriptorSetLayoutBinding l_vertexBinding = GetUniformVertexLayoutBinding(0);
+  VkDescriptorSetLayoutBinding l_fragBinding = GetUniformFragmentLayoutBinding(1);
+  VkDescriptorSetLayoutBinding l_fragBinding2 = GetUniformFragmentLayoutBinding(1);
   VkDescriptorSetLayoutBinding l_sampler1 = GetSamplerFragmentLayoutBinding(1);
   
-  VkDescriptorSetLayout l_descriptorSetLayouts;
-  std::vector<VkDescriptorSetLayoutBinding> l_descLayoutBindings = {l_vertexBinding, l_sampler1};
+
+  m_descLayoutBindings = {l_vertexBinding, l_sampler1};
   // simple geometry
-  l_descriptorSetLayouts = CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), l_descLayoutBindings );
+  m_descriptorSetLayout = CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), m_descLayoutBindings );
 
   
   
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 1;
-  pipelineLayoutInfo.pSetLayouts = &l_descriptorSetLayouts;
+  pipelineLayoutInfo.pSetLayouts = &m_descriptorSetLayout;
 
   pipelineLayoutInfo.pushConstantRangeCount = 0;
   
@@ -468,16 +468,16 @@ VKLightPassPipeline::Init()
   
   
   // create descripor set layout bindinds
-  VkDescriptorSetLayoutBinding l_vertexBinding = GetUniformVertexLayoutBinding(0,1);
-  VkDescriptorSetLayoutBinding l_fragBinding = GetUniformFragmentLayoutBinding(1,1);
-  VkDescriptorSetLayoutBinding l_fragBinding2 = GetUniformFragmentLayoutBinding(2,1);
+  VkDescriptorSetLayoutBinding l_vertexBinding = GetUniformVertexLayoutBinding(0);
+  VkDescriptorSetLayoutBinding l_fragBinding = GetUniformFragmentLayoutBinding(1);
+  VkDescriptorSetLayoutBinding l_fragBinding2 = GetUniformFragmentLayoutBinding(2);
   VkDescriptorSetLayoutBinding l_sampler1 = GetInputAttachmentFragmentLayoutBinding(3);
   VkDescriptorSetLayoutBinding l_sampler2 = GetInputAttachmentFragmentLayoutBinding(4);
   VkDescriptorSetLayoutBinding l_sampler3 = GetInputAttachmentFragmentLayoutBinding(5);
   VkDescriptorSetLayoutBinding l_sampler4 = GetInputAttachmentFragmentLayoutBinding(6);
   
-  std::vector<VkDescriptorSetLayout> l_descriptorSetLayouts;
-  l_descriptorSetLayouts.push_back(  CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), { l_vertexBinding, l_fragBinding, l_fragBinding2, l_sampler1, l_sampler2, l_sampler3, l_sampler4 } )  ); 
+  m_descLayoutBindings = { l_vertexBinding, l_fragBinding, l_fragBinding2, l_sampler1, l_sampler2, l_sampler3, l_sampler4 };
+  m_descriptorSetLayout = CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), m_descLayoutBindings ); 
 
   // else if( a_type == 3 ) // stencil pass 
   // {
@@ -487,8 +487,8 @@ VKLightPassPipeline::Init()
   
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipelineLayoutInfo.setLayoutCount = l_descriptorSetLayouts.size();
-  pipelineLayoutInfo.pSetLayouts = l_descriptorSetLayouts.data();
+  pipelineLayoutInfo.setLayoutCount = 1;
+  pipelineLayoutInfo.pSetLayouts = &m_descriptorSetLayout;
 
   
   pipelineLayoutInfo.pushConstantRangeCount = 0;
@@ -629,23 +629,23 @@ VKDirLightPassPipeline::Init()
   
   
   // create descripor set layout bindinds
-  VkDescriptorSetLayoutBinding l_vertexBinding = GetUniformVertexLayoutBinding(0,2);
-  VkDescriptorSetLayoutBinding l_fragBinding = GetUniformFragmentLayoutBinding(1,1);
-  VkDescriptorSetLayoutBinding l_fragBinding2 = GetUniformFragmentLayoutBinding(1,2);
+  VkDescriptorSetLayoutBinding l_vertexBinding = GetUniformVertexLayoutBinding(0);
+  VkDescriptorSetLayoutBinding l_fragBinding = GetUniformFragmentLayoutBinding(1);
+  VkDescriptorSetLayoutBinding l_fragBinding2 = GetUniformFragmentLayoutBinding(1);
   VkDescriptorSetLayoutBinding l_sampler1 = GetInputAttachmentFragmentLayoutBinding(2);
   VkDescriptorSetLayoutBinding l_sampler2 = GetInputAttachmentFragmentLayoutBinding(3);
   VkDescriptorSetLayoutBinding l_sampler3 = GetInputAttachmentFragmentLayoutBinding(4);
   VkDescriptorSetLayoutBinding l_sampler4 = GetInputAttachmentFragmentLayoutBinding(5);
   
-  std::vector<VkDescriptorSetLayout> l_descriptorSetLayouts;
-  l_descriptorSetLayouts.push_back(  CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), { l_fragBinding2, l_sampler1, l_sampler2, l_sampler3, l_sampler4 } )  ); 
+  m_descLayoutBindings = { l_fragBinding2, l_sampler1, l_sampler2, l_sampler3, l_sampler4 };
+  m_descriptorSetLayout = CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), m_descLayoutBindings ); 
 
 
   
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipelineLayoutInfo.setLayoutCount = l_descriptorSetLayouts.size();
-  pipelineLayoutInfo.pSetLayouts = l_descriptorSetLayouts.data();
+  pipelineLayoutInfo.setLayoutCount = 1;
+  pipelineLayoutInfo.pSetLayouts = &m_descriptorSetLayout;
 
   
   pipelineLayoutInfo.pushConstantRangeCount = 0;

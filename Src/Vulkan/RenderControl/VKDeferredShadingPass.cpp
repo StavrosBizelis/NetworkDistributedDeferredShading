@@ -10,7 +10,13 @@
 #include "Vulkan/Core/VulkanUtilities.h"
 #include "Vulkan/RenderControl/Pipelines/VKDeferredPipelines.h"
 #include "Vulkan/Shapes/VKShapeFactory.h"
+#include <Vulkan/Textures/VKTexture.h>
+#include <Vulkan/Textures/VKCubemap.h>
+
 #include <iostream>
+
+
+
 /*
  *  Method: RenderControl::VKDeferredShadingPass::VKDeferredShadingPass
  *  Params: const glm::vec2 &a_resolution
@@ -20,7 +26,8 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
                                                             const VkQueue& a_graphicsQueue, const VkQueue& a_presentQueue, const QueueFamilyIndices& a_indices,
                                                             const glm::vec2 &a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings)
   : ADeferredShadingPass(a_resolution, a_partialResolution, a_viewportSettings),
-    m_logicalDevice(a_device), m_physicalDevice(a_physicalDevice), m_memory(a_memory), m_graphicsQueue(a_graphicsQueue), m_presentQueue(a_presentQueue), m_indices(a_indices)
+    m_logicalDevice(a_device), m_physicalDevice(a_physicalDevice), m_memory(a_memory), m_graphicsQueue(a_graphicsQueue), m_presentQueue(a_presentQueue), m_indices(a_indices),
+    m_descriptorPool(NULL)
 {
   m_renderPass = NULL;
   m_frameBuffer = NULL;
@@ -48,8 +55,9 @@ bool RenderControl::VKDeferredShadingPass::Init()
   CreateSemaphores();
   CreateRenderPass();
   CreateFramebuffer();
-  CreateCommandBuffers();
-  
+  CreatePipelines();
+  CreateDescriptorPool();
+
   // // init camera
   std::shared_ptr<CCamera> l_cam = GetCamera();
 
@@ -323,129 +331,80 @@ void RenderControl::VKDeferredShadingPass::LightPass()
 
 void RenderControl::VKDeferredShadingPass::Clear()
 {
+  if( m_descriptorPool )
+    vkDestroyDescriptorPool(m_logicalDevice->GetDevice(), m_descriptorPool, nullptr);
+  
   if(m_frameBuffer)
     vkDestroyFramebuffer(m_logicalDevice->GetDevice(), m_frameBuffer, nullptr);
   
   if(m_renderPass)
     vkDestroyRenderPass(m_logicalDevice->GetDevice(), m_renderPass, nullptr);
-  
-  // if (m_fbo != 0)
-  // {
-    // glDeleteFramebuffers(1, &m_fbo);
-    // m_fbo = 0;
-  // }
-  // for( unsigned int i = 0; i < 2; ++i)
-  // {
-    // if( m_pbos[i] != 0 )
-    // {
-      // glDeleteBuffers(1,&m_pbos[i]);
-      // m_pbos[i] = 0;
-    // }
-  // }
-  
-  // for (int i = 0; i < 5; ++i)
-  // {
-    // if (m_outputTextures[i])
-    // {
-      // glDeleteTextures(1, &m_outputTextures[i]);
-      // m_outputTextures[i] = 0;
-    // }
-    // if (m_outputSamplers[i])
-    // {
-      // glDeleteSamplers(1, &m_outputSamplers[i]);
-      // m_outputSamplers[i] = 0;
-    // }
-  // }
 }
 
-void RenderControl::VKDeferredShadingPass::SetMaterialManager(MaterialControl::IMaterialManager* a_materialManager)
+void RenderControl::VKDeferredShadingPass::SetMaterialManager(MaterialControl::IMaterialManager* a_materialManager){}
+
+
+bool RenderControl::VKDeferredShadingPass::AddRenderable(RenderControl::IRenderable* a_renderable, const RenderControl::GeometryPassMaterialFlags& a_geometryMaterialFlags)
 {
-  ADeferredShadingPass::SetMaterialManager(a_materialManager);
-  // initiate materials
-  std::shared_ptr<IShaderProgram> GeometryMaterial =
-    a_materialManager->GetGeometryPassMaterial(
-      "..\\Assets\\GLSL_shaders\\GeometryShader.vert",
-      "..\\Assets\\GLSL_shaders\\GeometryShader.frag"
-    );
+  if (!Exists(a_renderable))
+		{
+			// std::shared_ptr<IShaderProgram> l_selectedMat;
+			// get the appropriate material func
+			// simple color
+			if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP | EMISSION_MAP)) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP | EMISSION_MAP))
+      {
+        
+      }
+			else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP )) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP))
+			{
+      }
+      else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP)) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP))
+			{
+      }
+      else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP)) == (NORMAL_MAP | DIFFUSE_MAP))
+			{
+      }
+      else if ((a_geometryMaterialFlags & (DIFFUSE_MAP)) == (DIFFUSE_MAP))
+			{
+      }
+      else if ((a_geometryMaterialFlags & (EMISSION_MAP)) == (EMISSION_MAP))
+			{
+      }
+      else if ((a_geometryMaterialFlags & (SKYBOX)) == (SKYBOX))
+			{
+      }
+      else 
+			{
+      }
+      
+			// a_renderable->SetMaterial(l_selectedMat);
+			// m_toRender[l_selectedMat].push_back(a_renderable);
+			return true;
+		} 
+		return false;
+}
 
-  std::shared_ptr<IShaderProgram> GeometryMaterialEmissiveMap =
-    GetMaterialManager()->GetEmissiveGeometryPassMaterial(
-      "..\\Assets\\GLSL_shaders\\GeometryShader.vert",
-      "..\\Assets\\GLSL_shaders\\GeometryEmissiveShader.frag"
-    );
+void RenderControl::VKDeferredShadingPass::AddLight(RenderControl::IRenderable* a_light, const RenderControl::LightTypeFlags& a_lightType)
+{
+  switch (a_lightType)
+		{
+		case LightTypeFlags::POINT_LIGHT:
+    {
+    }
+		break;
+		case LightTypeFlags::SPOT_LIGHT:
+		{
 
-  std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseMap =
-    a_materialManager->GetColourGeometryPassMaterial(
-      "..\\Assets\\GLSL_shaders\\GeometryShader.vert",
-      "..\\Assets\\GLSL_shaders\\GeometryColourShader.frag"
-    );
+    }
+		break;
+		case LightTypeFlags::DIRECTIONAL_LIGHT:
+		{
+      
+    }
+			break;
+		}
 
-  std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseNormalMap =
-    a_materialManager->GetColourNormalGeometryPassMaterial(
-      "..\\Assets\\GLSL_shaders\\GeometryShader.vert",
-      "..\\Assets\\GLSL_shaders\\GeometryColourNormalShader.frag"
-    );
-
-  std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseNormalSpecMap =
-    a_materialManager->GetColourNormalSpecGeometryPassMaterial(
-      "..\\Assets\\GLSL_shaders\\GeometryShader.vert",
-      "..\\Assets\\GLSL_shaders\\GeometryColourNormalSpecShader.frag"
-    );
-
-  std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseNormalSpecHardnessMap =
-    a_materialManager->GetColourNormalSpecHardnessGeometryPassMaterial(
-      "..\\Assets\\GLSL_shaders\\GeometryShader.vert",
-      "..\\Assets\\GLSL_shaders\\GeometryColourNormalSpecHardnessShader.frag"
-    );
-
-  std::shared_ptr<IShaderProgram> GeometryMaterialDiffuseNormalSpecHardnessEmissionMap =
-    a_materialManager->GetColourNormalSpecHardnessEmissionGeometryPassMaterial(
-      "..\\Assets\\GLSL_shaders\\GeometryShader.vert",
-      "..\\Assets\\GLSL_shaders\\GeometryColourNormalSpecHardnessEmissiveShader.frag"
-    );
-  
-
-  std::shared_ptr<IShaderProgram> GeometrySkybox =
-    a_materialManager->GetSkyCubeMaterial(
-      "..\\Assets\\GLSL_shaders\\GeometrySkyBoxShader.vert",
-      "..\\Assets\\GLSL_shaders\\GeometrySkyBoxShader.frag"
-    );
-
-  // create appropriate keys
-  m_toRender[GeometryMaterialDiffuseNormalSpecHardnessEmissionMap];
-  m_toRender[GeometryMaterialDiffuseNormalSpecHardnessMap];
-  m_toRender[GeometryMaterialDiffuseNormalSpecMap];
-  m_toRender[GeometryMaterialDiffuseNormalMap];
-  m_toRender[GeometryMaterialDiffuseMap];
-  m_toRender[GeometryMaterialEmissiveMap];
-  m_toRender[GeometryMaterial];
-  m_toRender[GeometrySkybox];
-
-
-  std::shared_ptr<IShaderProgram> l_nullMaterial =
-    a_materialManager->GetStencilLightPassMaterial(
-      "..\\Assets\\GLSL_shaders\\NullShader.vert",
-      "..\\Assets\\GLSL_shaders\\NullShader.frag"
-    );
-
-  std::shared_ptr<IShaderProgram> l_pointLightMaterial =
-    a_materialManager->GetPointLightPassMaterial(
-      "..\\Assets\\GLSL_shaders\\PointLightShader.vert",
-      "..\\Assets\\GLSL_shaders\\PointLightShader.frag"
-    );
-
-  std::shared_ptr<IShaderProgram> l_spotLightMaterial =
-    a_materialManager->GetSpotLightPassMaterial(
-      "..\\Assets\\GLSL_shaders\\SpotLightShader.vert",
-      "..\\Assets\\GLSL_shaders\\SpotLightShader.frag"
-    );
-
-  std::shared_ptr<IShaderProgram> l_directionalLightMaterial =
-    a_materialManager->GetFullScreenLightPassMaterial(
-      "..\\Assets\\GLSL_shaders\\DirectionalLightShader.vert",
-      "..\\Assets\\GLSL_shaders\\DirectionalLightShader.frag"
-    );
-  
+		m_lights.insert(a_light);
 }
 
 bool RenderControl::VKDeferredShadingPass::PackTexture( Network::NetworkMsgPtr& a_outMsg)
@@ -676,7 +635,7 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
       throw std::runtime_error("VKDeferredShadingPass::Init() - failed to create framebuffer!");
 }
 
-void RenderControl::VKDeferredShadingPass::CreateCommandBuffers()
+void RenderControl::VKDeferredShadingPass::CreatePipelines()
 {
   // geometry shader shaders
   VkShaderModule l_geomVert = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryShader.vert.spv"), m_logicalDevice->GetDevice());
@@ -754,12 +713,155 @@ void RenderControl::VKDeferredShadingPass::CreateCommandBuffers()
   // vkDestroyShaderModule(m_logicalDevice->GetDevice(), l_spotFrag, nullptr);
   vkDestroyShaderModule(m_logicalDevice->GetDevice(), l_directionalVert, nullptr);
   vkDestroyShaderModule(m_logicalDevice->GetDevice(), l_directionalFrag, nullptr);
+  
 }
 
+void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
+{
+  VkDescriptorPoolSize l_poolSize1 = {};
+  l_poolSize1.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  l_poolSize1.descriptorCount = 2000;
 
+  VkDescriptorPoolSize l_poolSize2 = {};
+  l_poolSize2.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  l_poolSize2.descriptorCount = 2000;
 
+  VkDescriptorPoolSize l_poolSize3 = {};
+  l_poolSize3.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+  l_poolSize3.descriptorCount = 2000;
+  
+  std::vector<VkDescriptorPoolSize> l_poolSizes = {l_poolSize1, l_poolSize2, l_poolSize3};
+  
+  VkDescriptorPoolCreateInfo l_poolInfo = {};
+  l_poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  l_poolInfo.poolSizeCount = l_poolSizes.size();
+  l_poolInfo.pPoolSizes = &l_poolSizes[0];
+  l_poolInfo.maxSets = 1000;
 
+  if (vkCreateDescriptorPool(m_logicalDevice->GetDevice(), &l_poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS) {
+    throw std::runtime_error("VKDeferredShadingPass::CreateDescriptorPool() - failed to create descriptor pool!");
+  }
+}
 
+VkDescriptorSet RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, const std::vector<std::shared_ptr<ITexture> >& a_images)
+{
+  VkDescriptorSetLayout l_layout = a_pipeline->GetDescriptorSetLayout();
+  VkDescriptorSetAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocInfo.descriptorPool = m_descriptorPool;
+  allocInfo.descriptorSetCount = 1;
+  allocInfo.pSetLayouts = &l_layout;
+
+  VkDescriptorSet l_descSet;
+  if (vkAllocateDescriptorSets(m_logicalDevice->GetDevice(), &allocInfo, &l_descSet ) != VK_SUCCESS) {
+    throw std::runtime_error("VKDeferredShadingPass::CreateDescriptorSet() - failed to allocate descriptor sets!");
+  }
+  
+  std::vector< VkWriteDescriptorSet > l_descriptorSetWrites;
+  // get appropriate size of ubo from pipeline - 
+  // and also need to know if this pipeline requires any type of global data and what type that is ( ex. VertexSingleMat4, FragDirLightGlobalVars )
+  // also need to know what kind of samplers does this pipeline requires and what type( input attachments or combined image samplers)
+  unsigned int l_imagesIndex = 0;
+  unsigned int l_inputAttachmentsIndex = 0;
+  std::vector<VkDescriptorSetLayoutBinding> l_bindings = a_pipeline->GetDescriptorSetLayoutBindings();
+  for( unsigned int i =0; i < l_bindings.size(); ++i)
+  {
+    if( l_bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER )
+    {
+      std::shared_ptr<VulkanMemoryChunk> l_uboMemBuffer = m_memory->CreateUniformBuffer( a_pipeline->GetObjUboSize() );
+    
+      VkDescriptorBufferInfo l_bufferInfo = {};
+      l_bufferInfo.buffer = l_uboMemBuffer->m_buffer->m_buffer;
+      l_bufferInfo.offset = l_uboMemBuffer->GetBufferOffset();
+      l_bufferInfo.range = l_uboMemBuffer->m_size;
+      
+      VkWriteDescriptorSet descriptorWrite = {};
+      descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      descriptorWrite.dstSet = l_descSet;
+      descriptorWrite.dstBinding = l_bindings[i].binding;
+      descriptorWrite.dstArrayElement = 0;
+      descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      descriptorWrite.descriptorCount = 1;
+      descriptorWrite.pBufferInfo = &l_bufferInfo;
+      
+      l_descriptorSetWrites.push_back(descriptorWrite);
+    }
+    else if( l_bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER )
+    {
+      if( a_images.size() > l_imagesIndex)
+      {
+        std::shared_ptr<VKTexture> l_texture = std::dynamic_pointer_cast<VKTexture>(a_images[l_imagesIndex] );
+        std::shared_ptr<VKCubemap> l_cubeBox = std::dynamic_pointer_cast<VKCubemap>(a_images[l_imagesIndex] );
+        
+        VkDescriptorImageInfo l_imageInfo = {};
+        if( l_texture )
+        {
+          l_imageInfo.sampler = l_texture->GetSampler()->m_sampler; // VkSampler                      
+          l_imageInfo.imageView = l_texture->GetImage()->m_imageView;  // VkImageView
+          l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
+        }
+        else if (l_cubeBox)
+        {
+          l_imageInfo.sampler = l_cubeBox->GetSampler()->m_sampler; // VkSampler                      
+          l_imageInfo.imageView = l_cubeBox->GetImage()->m_imageView;  // VkImageView
+          l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
+        }
+        else
+          continue;
+          
+
+        VkWriteDescriptorSet descriptorWrite = {};
+        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet = l_descSet;
+        descriptorWrite.dstBinding = l_bindings[i].binding;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pBufferInfo = nullptr;
+        descriptorWrite.pImageInfo = &l_imageInfo;
+        
+        l_descriptorSetWrites.push_back(descriptorWrite);
+        l_imagesIndex++;
+      }
+      
+    }
+    else if( l_bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT )
+    {
+      // this is the order of the geometry pass attachments
+      // diffuse attachment
+      // normals attachment
+      // specular
+      // emissive - final image
+      // stencil depth
+      
+      VkDescriptorImageInfo l_imageInfo = {};
+      l_imageInfo.sampler = NULL; // VkSampler                      
+      l_imageInfo.imageView = m_attachmentImages[l_inputAttachmentsIndex]->m_imageView;  // VkImageView
+      l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
+      
+      VkWriteDescriptorSet descriptorWrite = {};
+      descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      descriptorWrite.dstSet = l_descSet;
+      descriptorWrite.dstBinding = l_bindings[i].binding;
+      descriptorWrite.dstArrayElement = 0;
+      descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+      descriptorWrite.descriptorCount = 1;
+      descriptorWrite.pBufferInfo = nullptr;
+      descriptorWrite.pImageInfo = &l_imageInfo;
+      
+      l_descriptorSetWrites.push_back(descriptorWrite);
+      
+      l_inputAttachmentsIndex++;
+      // skip the emissive - final image attachment - we need only the other four
+      if(l_inputAttachmentsIndex == 3)
+      l_inputAttachmentsIndex = 4;
+        
+    }
+  }
+  
+  vkUpdateDescriptorSets(m_logicalDevice->GetDevice(), l_descriptorSetWrites.size(), l_descriptorSetWrites.data(), 0, nullptr);
+
+}
 
 
 

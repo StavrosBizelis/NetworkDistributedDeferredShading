@@ -84,7 +84,7 @@ class VulkanMemoryPool
   *   @param a_size - will try to allocate that many bytes in memory - if 0 then allocate as much as possible - IF a_size > available memory THEN a_size = available memory
   *   
   */
-  VulkanMemoryPool(const VkPhysicalDevice& a_physicalDevice, const VkDevice& a_logicalDevice, const VkDeviceSize& a_size, const VkBufferUsageFlags& a_usage, const VkMemoryPropertyFlags& a_properties);
+  VulkanMemoryPool(const VkPhysicalDevice& a_physicalDevice, const VkDevice& a_logicalDevice, const VkDeviceSize& a_size, const VkBufferUsageFlags& a_usage, const VkMemoryPropertyFlags& a_properties, const int& a_alignment = -1);
   ~VulkanMemoryPool();
   void Init();
   
@@ -290,7 +290,7 @@ class VulkanMemory
   void CreateVertexIndexBufferMemPool(const VkDeviceSize& a_sizeInBytes);   ///< Create Memory Pool for data local to the gpu (vertex/index data etc) - VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
   void CreateIndexBufferMemPool(const VkDeviceSize& a_sizeInBytes);    ///< Create Memory Pool for data local to the gpu (vertex/index data etc) - VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
   void CreateUniformBufferMemPool(const VkDeviceSize& a_sizeInBytes);    ///< Create Memory Pool for data visible to the cpu (staging buffers, uniform buffers etc) - VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT 
-  void CreateMixedBufferMemPool(const VkDeviceSize& a_sizeInBytes);    ///< Create Memory Pool for everything except staging - used for packed data
+  void CreateDynamicUniformBufferMemPool(const VkDeviceSize& a_sizeInBytes);    ///< Create Memory Pool for everything except staging - used for packed data
   
   /// create three image memory pools for 
   void CreateImageMemPools(const VkDeviceSize& a_shaderImagesSize, const VkDeviceSize& a_colourAttachmentsSize, const VkDeviceSize& a_downloadingColourAttachmentsSize, const VkDeviceSize& a_depthStencilAttachmentsSize );      
@@ -300,7 +300,8 @@ class VulkanMemory
   *   [1] - VertexBufferMemoryPool
   *   [2] - IndexBufferMemoryPool
   *   [3] - UniformBufferMemoryPool
-  *   [4] - MixBufferMemoryPool
+  *   [4] - DynamicUniformBufferMemoryPool
+
   */
   std::array<std::shared_ptr<VulkanMemoryPool>, 5 > m_memoryPools;
   /**
@@ -351,7 +352,8 @@ class VulkanMemory
   std::shared_ptr<VulkanMemoryChunk> CreateIndexBuffer(char* a_indexDataArray, const int& a_sizeInBytes);
   
   
-  std::pair< std::shared_ptr<VulkanMemoryChunk>, unsigned int> CreateUniformBuffer(const int& a_sizeInBytes);    ///< first is vulkan buffer, second is a_sizeInBytes
+  std::shared_ptr<VulkanMemoryChunk> CreateUniformBuffer(const int& a_sizeInBytes);    ///< first is vulkan buffer, second is a_sizeInBytes
+  std::shared_ptr<VulkanMemoryChunk> CreateDynamicUniformBuffer(const int& a_sizeInBytes);    ///< first is vulkan buffer, second is a_sizeInBytes
   
   /// Create texture for use in shaders
   std::shared_ptr<VulkanImageMemoryChunk> CreateMaterialTexture(char* a_data, const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format );

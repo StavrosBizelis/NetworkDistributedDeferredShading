@@ -5,10 +5,10 @@ layout (location = 1) in vec3 vEyeNorm;			// Interpolated normal
 layout (location = 2) in vec3 vEyeTan;	    // tangent
 
 
-layout (set = 0, binding = 2) uniform sampler2D u_diffuseMap;  // The diffuse colour sampler
+layout (set = 0, binding = 3) uniform sampler2D u_diffuseMap;  // The diffuse colour sampler
 
 
-layout (std140, set = 0, binding = 1) uniform MaterialData
+layout (std140, set = 0, binding = 2) uniform MaterialData
 {
   vec3 UDiffuse;
   vec3 USpecular;

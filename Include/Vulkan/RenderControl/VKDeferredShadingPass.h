@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include <Vulkan/Vulkan.hpp>
+#include <Common/Textures/ITexture.h>
 #include <Vulkan/Core/VulkanMemory.h>
 #include <Vulkan/Core/VulkanLogicalDeviceManager.h>
 #include <Vulkan/Core/VulkanSwapChainDetails.h>
@@ -50,9 +51,13 @@ namespace RenderControl
     void CreateSemaphores();
     void CreateRenderPass();
     void CreateFramebuffer();
-    void CreateCommandBuffers();
+    void CreatePipelines();
+    void CreateDescriptorPool();
+    VkDescriptorSet CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, const std::vector<std::shared_ptr<ITexture> >& a_images); // descriptor sets will be created and allocated on the fly as objects are introduced to the VKDeferredShadingPass
     
     std::vector< std::shared_ptr<VKPipeline> > m_pipelines;
+    VkDescriptorPool m_descriptorPool;
+    
 	public:
 		VKDeferredShadingPass(const std::shared_ptr<VulkanLogicalDeviceManager>& a_device, const VkPhysicalDevice& a_physicalDevice, const std::shared_ptr<VulkanMemory>& a_memory,
                           const VkQueue& a_graphicsQueue, const VkQueue& a_presentQueue, const QueueFamilyIndices& a_indices,
@@ -68,6 +73,13 @@ namespace RenderControl
     virtual void UpdateViewportSettings(const glm::vec2& a_resolution, const glm::vec4& a_viewportSettings);
 
     virtual void SetMaterialManager(MaterialControl::IMaterialManager* a_materialManager);
+    
+    
+    virtual bool AddRenderable(IRenderable* a_renderable, const GeometryPassMaterialFlags& a_geometryMaterialFlags = GeometryPassMaterialFlags::SIMPLE_GEOMETRY );
+    // virtual void RemoveRenderable(IRenderable* a_renderable);
+    virtual void AddLight(IRenderable* a_light, const LightTypeFlags& a_lightType);
+		// virtual void RemoveLight(IRenderable* a_light);
+    
     
     virtual bool PackTexture( Network::NetworkMsgPtr& a_outMsg);
 	};
