@@ -4,6 +4,7 @@
 #include "Vulkan/Core/VulkanMemory.h"
 #include "Vulkan/Core/VulkanLogicalDeviceManager.h"
 #include <Vulkan/RenderControl/UniformBufferObjects.h>
+#include <Vulkan/RenderControl/Pipelines/VulkanSecondaryCommandBuffer.h>
 #include <Vulkan/Vulkan.hpp>
 #include <memory>
 #include <glm/glm.hpp>
@@ -33,16 +34,9 @@ class VKPipeline
   VkPipelineLayout m_pipelineLayout;
   VkPipeline m_graphicsPipeline;
   unsigned int m_subpassIndex;
-  // std::shared_ptr<std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > > m_commandBuffers;
   
-
-  // helpers
-  // bool m_dirty;
-  
-  
-  
-  // use this secondary cmd buffer in order to bind the pipeline on recording
-  VkCommandBuffer m_secondaryCmdBuffer;
+  std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > m_commandBuffers;
+  bool m_dirty;
   
   
 
@@ -56,18 +50,18 @@ class VKPipeline
   // void ReInit();    ///< reinitialization - does not delete the internal objects - just reinitializes them
   
   
-  // bool IsDirty(bool a_clean); ///< return if changes have been made. a_clean - if true, the pipeline changes are supposed to be taken into consideration
-  
-  // void AddSecondaryBuffer(const std::shared_ptr<VulkanSecondaryCommandBuffer>& a_buffer);
-  
-  // std::shared_ptr<std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > > GetSecondaryCommandBuffers();
-  //  std::shared_ptr<std::vector< VkCommandBuffer> > GetSecondaryCommandBuffersHandles();    ///< returns the secondary command buffers ( +the first one is a plus - and is the one that binds the pipeline to the render pass)
+  // IMPLEMENT THESE
+  bool IsDirty(bool a_clean); ///< return if changes have been made. a_clean - if true, the pipeline changes are supposed to be taken into consideration
+  void AddSecondaryBuffer(const std::shared_ptr<VulkanSecondaryCommandBuffer>& a_buffer);
+  std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > GetSecondaryCommandBuffers();
+  std::vector< VkCommandBuffer> GetSecondaryCommandBuffersHandles();    ///< returns the secondary command buffers ( +the first one is a plus - and is the one that binds the pipeline to the render pass)
+
   VkPipeline GetPipelineHandle() const;
   VkPipelineLayout GetPipelineLayout() const;
   VkDescriptorSetLayout GetDescriptorSetLayout() const;
   
   std::vector<VkDescriptorSetLayoutBinding> GetDescriptorSetLayoutBindings() const;
-
+    
   virtual SceneGlobalDataType GetGlobalDataTypes() const {return NO_GLOBAL_DATA; }
   virtual size_t GetGlobalUboSize() const{return 0;}
   virtual size_t GetObjUboSize() const{return 0;}

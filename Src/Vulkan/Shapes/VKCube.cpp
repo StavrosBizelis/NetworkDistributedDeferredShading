@@ -81,7 +81,7 @@ VKCube::Create()
                                          12,13,14, 14,13,15, 
                                          16,17,18, 18,17,19, 
                                          20,21,22, 22,21,23 };
-  
+  m_indicesCount = l_indices.size();
   // upload data to the gpu
   m_vkVertices = m_memory->CreateVertexBuffer( (char*)m_vertices.data(), m_vertices.size() * sizeof(Vertex) );
   m_vkIndices = m_memory->CreateIndexBuffer( (char*)l_indices.data(), l_indices.size() * sizeof(unsigned int) );

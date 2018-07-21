@@ -1,9 +1,11 @@
 #pragma once
 
+
+
 /**
 *   Structure that holds a secondary buffer and provides an interface to easily add commands for use in a VulkanPipeline
 */
-struct ZRTYPE VulkanSecondaryCommandBuffer
+struct VulkanSecondaryCommandBuffer
 {
   private:
   VkDevice m_logicalDevice;
@@ -20,7 +22,7 @@ struct ZRTYPE VulkanSecondaryCommandBuffer
   
   
   /// key: id, pair< first: vertexBuffer, second: indexBuffer>
-  std::map<unsigned int, VulkanIndexedMesh > m_objectsToDraw;
+  // std::map<unsigned int, VulkanIndexedMesh > m_objectsToDraw;
   
   public:
   VulkanSecondaryCommandBuffer(const VkDevice& a_logicalDevice, const VkCommandPool& a_cmdPool, 
@@ -39,7 +41,7 @@ struct ZRTYPE VulkanSecondaryCommandBuffer
   
   
   
-  void AddIndexedMesh(const unsigned int& a_id, const VulkanIndexedMesh& a_indexedMesh);
+  // void AddIndexedMesh(const unsigned int& a_id, const VulkanIndexedMesh& a_indexedMesh);
   void RemoveIndexedMesh(const unsigned int& a_id);
   
   

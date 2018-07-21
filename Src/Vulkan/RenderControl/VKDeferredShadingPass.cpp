@@ -743,6 +743,12 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
   }
 }
 
+void RenderControl::VKDeferredShadingPass::CreateCommandBuffer()
+{
+  
+}
+
+
 VkDescriptorSet RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, const std::vector<std::shared_ptr<ITexture> >& a_images)
 {
   VkDescriptorSetLayout l_layout = a_pipeline->GetDescriptorSetLayout();

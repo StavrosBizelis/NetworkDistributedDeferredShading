@@ -84,7 +84,7 @@ void VulkanMemoryPool::AddToTheAvailableChunks(const VkDeviceSize& a_size, const
 }
 
 VulkanMemoryPool::VulkanMemoryPool(const VkPhysicalDevice& a_physicalDevice, const VkDevice& a_logicalDevice, const VkDeviceSize& a_size, const VkBufferUsageFlags& a_usage, const VkMemoryPropertyFlags& a_properties, const int& a_alignment)
-: m_physicalDevice(a_physicalDevice), m_logicalDevice(a_logicalDevice), m_size(a_size), m_usage(a_usage), m_properties(a_properties), m_memorySpace(NULL), m_buffer(nullptr), m_alignment(a_alignment)
+: m_physicalDevice(a_physicalDevice), m_logicalDevice(a_logicalDevice), m_size(a_size), m_usage(a_usage), m_properties(a_properties), m_memorySpace(NULL), m_buffer(nullptr), m_alignment(a_alignment),
   m_memChunks(NULL), m_availableMemChunks( std::make_shared< std::map<VkDeviceSize, std::list< std::weak_ptr< VulkanMemoryChunk> > > >() ) {}
 
 VulkanMemoryPool::~VulkanMemoryPool()
@@ -130,7 +130,7 @@ void VulkanMemoryPool::Init()
       break;
     }
   
-  if( a_alignment == -1)
+  if( m_alignment == -1)
     m_alignment = l_memRequirements.alignment;
 
   VkMemoryAllocateInfo allocInfo = {};
@@ -861,7 +861,7 @@ void VulkanMemory::CreateDynamicUniformBufferMemPool(const VkDeviceSize& a_sizeI
 {
   VkPhysicalDeviceProperties l_props;
   vkGetPhysicalDeviceProperties(m_physicalDevice, &l_props);
-  l_props.limits.minUniformBufferOffsetAlignment
+  // l_props.limits.minUniformBufferOffsetAlignment;
   
   VkDeviceSize l_alignedSize = a_sizeInBytes + (l_props.limits.minUniformBufferOffsetAlignment - a_sizeInBytes%l_props.limits.minUniformBufferOffsetAlignment);
    
