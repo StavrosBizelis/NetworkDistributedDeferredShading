@@ -14,7 +14,7 @@ VKGraphicsEngine::VKGraphicsEngine(const glm::vec2& a_resolution)
 : VKGraphicsEngine(a_resolution, a_resolution, glm::vec4(0,0, a_resolution.x, a_resolution.y) ) {}
 
 VKGraphicsEngine::VKGraphicsEngine(const glm::vec2& a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings ) 
-  : AGraphicsEngine(a_resolution, a_partialResolution, a_viewportSettings), m_deferredShadingPass(nullptr), m_compositionPass(nullptr)
+  : AGraphicsEngine(a_resolution, a_partialResolution, a_viewportSettings), m_deferredShadingPass(nullptr), m_compositionPass(nullptr), m_updateRegistry(std::make_shared<std::vector<VulkanRenderable*> >() )
   {
     
     std::vector<const char*> l_requiredInstanceExtensions = 
@@ -75,6 +75,32 @@ void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
   
 
 }
+
+virtual void VKGraphicsEngine::Update(const double& a_deltaTime)
+{
+  if( m_sceneManager )
+  {
+    // update scene objects
+    m_sceneManager->UpdateScene(a_deltaTime);
+  
+  // update vulkan Renderables uniform buffer
+  char* l_mappedBuffer = nullptr;
+  std::shared_ptr< VulkanMemory > l_memory = m_driver->GetLogicalDeviceManager()->GetMemoryManager();
+  
+  // update all the values in the big uniform buffer
+  void* l_data = l_memory->GetMemoryPool(3)->MapMemory();
+  std::shared_ptr< std::vector<VulkanRenderable*> > l_registry = m_sceneManager->GetUpdateRegistry();
+  for( std::vector<VulkanRenderable*>::iterator l_iter = l_registry->begin(); l_iter != l_registry->end(); ++l_iter )
+  {
+    (*l_iter)->VulkanUpdate(l_data);
+  }
+  l_memory->GetMemoryPool(3)->UnMapMemory();
+  
+  
+  // render pass -> re-record if needed -> render 
+  }  
+}
+
 
 RenderControl::ADeferredShadingPass* VKGraphicsEngine::GetDeferredRenderPass() const
 {

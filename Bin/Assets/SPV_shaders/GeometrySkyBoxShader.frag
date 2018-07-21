@@ -3,7 +3,7 @@
 
 layout(location = 0) in vec3 worldPosition;
 
-layout (set = 0, binding = 1) uniform samplerCube UCubeMap;  // The diffuse colour sampler
+layout (set = 0, binding = 2) uniform samplerCube UCubeMap;  // The diffuse colour sampler
 
 
 layout(location = 0) out vec4 diffuseOut;

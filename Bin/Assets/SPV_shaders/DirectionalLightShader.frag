@@ -6,7 +6,9 @@ layout (std140, set = 0, binding = 0) uniform GlobalVars
 {
   uniform mat4 UInverseViewProjectionMatrix;
   uniform vec3 UCamPos;
+  uniform vec2 UScreenResDiv;
 } globalVars;
+
 
 layout (std140, set = 0, binding = 1) uniform DirectionalLight
 {

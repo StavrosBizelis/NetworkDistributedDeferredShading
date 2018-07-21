@@ -1,6 +1,6 @@
 #pragma once
 
-
+#include <Vulkan/Vulkan.hpp>
 
 /**
 *   Structure that holds a secondary buffer and provides an interface to easily add commands for use in a VulkanPipeline

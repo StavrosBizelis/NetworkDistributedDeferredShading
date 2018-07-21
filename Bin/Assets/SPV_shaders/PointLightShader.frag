@@ -1,12 +1,12 @@
 #version 450 core
-layout (std140, set = 0, binding = 1) uniform GlobalVars
+layout (std140, set = 0, binding = 2) uniform GlobalVars
 {
   uniform mat4 UInverseViewProjectionMatrix;
   uniform vec3 UCamPos;
   uniform vec2 UScreenResDiv;
 } globalVars;
 
-layout (std140, set = 0, binding = 2) uniform PointLight
+layout (std140, set = 0, binding = 3) uniform PointLight
 {
   vec3 m_position;
 
@@ -24,10 +24,10 @@ layout (std140, set = 0, binding = 2) uniform PointLight
 
 layout(location = 0) out vec4 vOutputColour;		// The output colour
 
-layout (set = 0, binding = 3) uniform sampler2D UColor;
-layout (set = 0, binding = 4) uniform sampler2D UNormal;
-layout (set = 0, binding = 5) uniform sampler2D USpecularIntensityPower;
-layout (set = 0, binding = 6) uniform sampler2D UDepth;
+layout (set = 0, binding = 4) uniform sampler2D UColor;
+layout (set = 0, binding = 5) uniform sampler2D UNormal;
+layout (set = 0, binding = 6) uniform sampler2D USpecularIntensityPower;
+layout (set = 0, binding = 7) uniform sampler2D UDepth;
 
 
 

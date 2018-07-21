@@ -3,12 +3,12 @@
 layout (std140, set = 0, binding = 0) uniform GlobalMatrices 
 {
     mat4 projMatrix;
+    mat4 viewMatrix;
 } globalsMats;
 
 layout (std140, set = 0, binding = 1) uniform ObjectMatrices 
 {
-    mat4 modelViewMatrix;
-    mat3 normalMatrix;
+    mat4 modelMatrix;
 } objectMats;
 
 
@@ -42,13 +42,15 @@ layout (location = 2) out vec3 vEyeTan;	// tangent
 // This is the entry point into the vertex shader
 void main()
 {	
-
+  mat4 l_modelViewMat = globalsMats.viewMatrix * objectMats.modelMatrix;
 	// Transform the vertex spatial position using 
-	gl_Position = globalsMats.projMatrix * objectMats.modelViewMatrix * vec4(inPosition, 1.0f);
+	gl_Position = globalsMats.projMatrix * l_modelViewMat * vec4(inPosition, 1.0f);
 	//vo.vModelPosition = ( matrices.modelMatrix * vec4(inPosition, 1.0f) ).xyz;
   
-    vEyeTan = normalize(objectMats.normalMatrix * inTangent);
-    vEyeNorm = normalize(objectMats.normalMatrix * inNormal);
+  
+  
+  vEyeTan = normalize(inverse(transpose(l_modelViewMat) * inTangent);
+  vEyeNorm = normalize(inverse(transpose(l_modelViewMat) * inNormal);
 
 	// Pass through the texture coordinate
 	vTexCoord = inCoord;

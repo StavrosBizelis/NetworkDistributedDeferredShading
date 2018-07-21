@@ -32,9 +32,10 @@ OpenGL/Shapes/GLShapeFactory.cpp OpenGL/Shapes/GLRect.cpp OpenGL/Shapes/GLSphere
 OpenGL/GLGraphicsEngine.cpp \
 \
 Vulkan/Core/VulkanDriver.cpp Vulkan/Core/VulkanMemory.cpp Vulkan/Core/VulkanLogicalDeviceManager.cpp  Vulkan/Core/VulkanSwapChainDetails.cpp Vulkan/Core/VulkanPhysicalDeviceSelector.cpp Vulkan/Core/VulkanUtilities.cpp \
-Vulkan/RenderControl/VKCompositionPass.cpp Vulkan/RenderControl/VKDeferredShadingPass.cpp \
+Vulkan/RenderControl/VKCompositionPass.cpp Vulkan/RenderControl/VKDeferredShadingPass.cpp Vulkan/RenderControl/VulkanPrimaryCommandBuffer.cpp \
 Vulkan/RenderControl/Pipelines/VKPipeline.cpp Vulkan/RenderControl/Pipelines/VKDeferredPipelines.cpp \
 Vulkan/Shapes/VKShapeFactory.cpp Vulkan/Shapes/VKRect.cpp Vulkan/Shapes/VKSphere.cpp Vulkan/Shapes/VKCone.cpp Vulkan/Shapes/VKCube.cpp Vulkan/Shapes/VKSkybox.cpp Vulkan/Shapes/VKOpenAssetImportMesh.cpp \
+Vulkan/SceneControl/VKSceneManager.cpp Vulkan/SceneControl/VKPointLightSceneNode.cpp Vulkan/SceneControl/VKMeshSceneNode.cpp Vulkan/SceneControl/VKDirectionalLightSceneNode.cpp \
 Vulkan/VKGraphicsEngine.cpp \
 \
 Client/main.cpp Client/ClientApp.cpp Client/ClientControl.cpp  \

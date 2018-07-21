@@ -111,11 +111,11 @@ VKGeometryPassPipeline::Init()
   colorBlending.blendConstants[3] = 0.0f;
   
   // create descripor set layout bindinds
-  VkDescriptorSetLayoutBinding l_vertexBinding = GetUniformVertexLayoutBinding(0);
-  VkDescriptorSetLayoutBinding l_vertexBinding2 = GetUniformVertexLayoutBinding(1);
-  VkDescriptorSetLayoutBinding l_fragBinding = GetUniformFragmentLayoutBinding(2);
+  VkDescriptorSetLayoutBinding l_vertexBindingGlobal = GetUniformVertexLayoutBinding(0);
+  VkDescriptorSetLayoutBinding l_vertexBindingObject = GetUniformVertexLayoutBinding(1);
+  VkDescriptorSetLayoutBinding l_fragBindingObject = GetUniformFragmentLayoutBinding(2);
   
-  m_descLayoutBindings = {l_vertexBinding, l_vertexBinding2, l_fragBinding};
+  m_descLayoutBindings = {l_vertexBindingGlobal, l_vertexBindingObject, l_fragBindingObject};
   for( unsigned int i =0; i< m_inSamplersCount; ++i)
     m_descLayoutBindings.push_back( GetSamplerFragmentLayoutBinding(i+3) );
   // simple geometry
@@ -263,13 +263,11 @@ VKSkyboxPassPipeline::Init()
   colorBlending.blendConstants[3] = 0.0f;
   
   // create descripor set layout bindinds
-  VkDescriptorSetLayoutBinding l_vertexBinding = GetUniformVertexLayoutBinding(0);
-  VkDescriptorSetLayoutBinding l_fragBinding = GetUniformFragmentLayoutBinding(1);
-  VkDescriptorSetLayoutBinding l_fragBinding2 = GetUniformFragmentLayoutBinding(1);
-  VkDescriptorSetLayoutBinding l_sampler1 = GetSamplerFragmentLayoutBinding(1);
+  VkDescriptorSetLayoutBinding l_vertexBindingGlobal = GetUniformVertexLayoutBinding(0);
+  VkDescriptorSetLayoutBinding l_vertexBindingObject = GetUniformVertexLayoutBinding(1);
+  VkDescriptorSetLayoutBinding l_sampler1 = GetSamplerFragmentLayoutBinding(2);
   
-
-  m_descLayoutBindings = {l_vertexBinding, l_sampler1};
+  m_descLayoutBindings = {l_vertexBindingGlobal, l_vertexBindingObject, l_sampler1};
   // simple geometry
   m_descriptorSetLayout = CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), m_descLayoutBindings );
 
@@ -468,15 +466,16 @@ VKLightPassPipeline::Init()
   
   
   // create descripor set layout bindinds
-  VkDescriptorSetLayoutBinding l_vertexBinding = GetUniformVertexLayoutBinding(0);
-  VkDescriptorSetLayoutBinding l_fragBinding = GetUniformFragmentLayoutBinding(1);
-  VkDescriptorSetLayoutBinding l_fragBinding2 = GetUniformFragmentLayoutBinding(2);
-  VkDescriptorSetLayoutBinding l_sampler1 = GetInputAttachmentFragmentLayoutBinding(3);
-  VkDescriptorSetLayoutBinding l_sampler2 = GetInputAttachmentFragmentLayoutBinding(4);
-  VkDescriptorSetLayoutBinding l_sampler3 = GetInputAttachmentFragmentLayoutBinding(5);
-  VkDescriptorSetLayoutBinding l_sampler4 = GetInputAttachmentFragmentLayoutBinding(6);
+  VkDescriptorSetLayoutBinding l_vertexBindingGlobal = GetUniformVertexLayoutBinding(0);
+  VkDescriptorSetLayoutBinding l_vertexBindingObject = GetUniformVertexLayoutBinding(1);
+  VkDescriptorSetLayoutBinding l_fragBindingGlobal = GetUniformFragmentLayoutBinding(2);
+  VkDescriptorSetLayoutBinding l_fragBindingObject = GetUniformFragmentLayoutBinding(3);
+  VkDescriptorSetLayoutBinding l_sampler1 = GetInputAttachmentFragmentLayoutBinding(4);
+  VkDescriptorSetLayoutBinding l_sampler2 = GetInputAttachmentFragmentLayoutBinding(5);
+  VkDescriptorSetLayoutBinding l_sampler3 = GetInputAttachmentFragmentLayoutBinding(6);
+  VkDescriptorSetLayoutBinding l_sampler4 = GetInputAttachmentFragmentLayoutBinding(7);
   
-  m_descLayoutBindings = { l_vertexBinding, l_fragBinding, l_fragBinding2, l_sampler1, l_sampler2, l_sampler3, l_sampler4 };
+  m_descLayoutBindings = { l_vertexBindingGlobal, l_fragBindingGlobal, l_vertexBindingObject, l_fragBindingObject, l_sampler1, l_sampler2, l_sampler3, l_sampler4 };
   m_descriptorSetLayout = CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), m_descLayoutBindings ); 
 
   // else if( a_type == 3 ) // stencil pass 
@@ -629,15 +628,14 @@ VKDirLightPassPipeline::Init()
   
   
   // create descripor set layout bindinds
-  VkDescriptorSetLayoutBinding l_vertexBinding = GetUniformVertexLayoutBinding(0);
-  VkDescriptorSetLayoutBinding l_fragBinding = GetUniformFragmentLayoutBinding(1);
-  VkDescriptorSetLayoutBinding l_fragBinding2 = GetUniformFragmentLayoutBinding(1);
+  VkDescriptorSetLayoutBinding l_fragBindingGlobal = GetUniformFragmentLayoutBinding(0);
+  VkDescriptorSetLayoutBinding l_fragBindingObject = GetUniformFragmentLayoutBinding(1);
   VkDescriptorSetLayoutBinding l_sampler1 = GetInputAttachmentFragmentLayoutBinding(2);
   VkDescriptorSetLayoutBinding l_sampler2 = GetInputAttachmentFragmentLayoutBinding(3);
   VkDescriptorSetLayoutBinding l_sampler3 = GetInputAttachmentFragmentLayoutBinding(4);
   VkDescriptorSetLayoutBinding l_sampler4 = GetInputAttachmentFragmentLayoutBinding(5);
   
-  m_descLayoutBindings = { l_fragBinding2, l_sampler1, l_sampler2, l_sampler3, l_sampler4 };
+  m_descLayoutBindings = { l_fragBindingGlobal, l_fragBindingObject, l_sampler1, l_sampler2, l_sampler3, l_sampler4 };
   m_descriptorSetLayout = CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), m_descLayoutBindings ); 
 
 

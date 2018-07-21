@@ -1,9 +1,10 @@
 #pragma once
 
 #include "Common/Textures/ACubemap.h"
+#include "Vulkan/Textures/VKATexture.h"
 #include <string>
 // Class that provides a texture for texture mapping
-class VKCubemap : public ACubemap
+class VKCubemap : public ACubemap, public VKATexture
 {
   
   std::shared_ptr<VulkanMemory> m_memory;
@@ -23,6 +24,6 @@ public:
   
   virtual void Release();
   
-  std::shared_ptr<VulkanImageMemoryChunk> GetImage(){return m_image;}
-  std::shared_ptr<VulkanSampler> GetSampler(){return m_sampler;}
+  virtual std::shared_ptr<VulkanImageMemoryChunk> GetImage(){return m_image;}
+  virtual std::shared_ptr<VulkanSampler> GetSampler(){return m_sampler;}
 };

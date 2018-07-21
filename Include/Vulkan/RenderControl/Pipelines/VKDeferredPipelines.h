@@ -11,9 +11,9 @@ class VKGeometryPassPipeline : public VKPipeline
                          const std::vector<VkPipelineShaderStageCreateInfo>& a_shaders, const unsigned int& a_subpassIndex, 
                          const glm::vec2& a_res, const glm::vec4& a_viewportSettings, const unsigned int& a_inSamplersCount ); 
   virtual void Init();
-  virtual SceneGlobalDataType GetGlobalDataTypes() const {return GLOBAL_PROJ_MATRIX;}
-  virtual size_t GetObjUboSize() const{ return sizeof(VertexObjectMatrices); }
-  virtual size_t GetGlobalUboSize() const{return sizeof(VertexSingleMat4); }
+  virtual std::vector<SceneGlobalDataType> GetGlobalDataTypes() const {return {GLOBAL_PROJ_VIEW_MATRIX};}
+  virtual std::vector<size_t> GetObjUboSizes() const{ return {sizeof(VertexObjectMatrices), sizeof(FragMaterialData) }; }
+  virtual std::vector<size_t> GetGlobalUboSize() const{return {sizeof(VertexViewProjMatrices)}; }
 };
 
 class VKSkyboxPassPipeline : public VKPipeline
@@ -23,9 +23,9 @@ class VKSkyboxPassPipeline : public VKPipeline
                          const std::vector<VkPipelineShaderStageCreateInfo>& a_shaders, const unsigned int& a_subpassIndex, 
                          const glm::vec2& a_res, const glm::vec4& a_viewportSettings ); 
   virtual void Init();
-  virtual SceneGlobalDataType GetGlobalDataTypes() const {return NO_GLOBAL_DATA;}
-  virtual size_t GetObjUboSize() const{return 0;}
-  virtual size_t GetGlobalUboSize() const{return 0;}
+  virtual std::vector<SceneGlobalDataType> GetGlobalDataTypes() const {return {GLOBAL_PROJ_VIEW_MATRIX};}
+  virtual std::vector<size_t> GetObjUboSizes()() const{return { sizeof(VertexObjectMatrices) };}
+  virtual std::vector<size_t> GetGlobalUboSize() const{return { sizeof(VertexViewProjMatrices) };}
 };
 
 
@@ -35,9 +35,9 @@ class VKLightPassPipeline : public VKPipeline
   VKLightPassPipeline(const std::shared_ptr<VulkanLogicalDeviceManager>& a_logicalDevice, VkRenderPass a_renderPass, const std::vector<VkPipelineShaderStageCreateInfo>& a_shaders, 
                       const unsigned int& a_subpassIndex, const glm::vec2& a_res, const glm::vec4& a_viewportSettings ); 
   virtual void Init();
-  virtual SceneGlobalDataType GetGlobalDataTypes() const {return NO_GLOBAL_DATA;}
-  virtual size_t GetObjUboSize() const{return 0;}
-  virtual size_t GetGlobalUboSize() const{return 0;}
+  virtual std::vector<SceneGlobalDataType> GetGlobalDataTypes() const {return {GLOBAL_PROJ_VIEW_MATRIX, GLOBAL_LIGHT_FRAG_DATA};}
+  virtual std::vector<size_t> GetObjUboSizes() const{return { sizeof(VertexObjectMatrices), sizeof(FragPointLight) };}
+  virtual std::vector<size_t> GetGlobalUboSize() const{return { sizeof(VertexViewProjMatrices), sizeof(FragLightGlobalVars) };}
 };
 
 class VKDirLightPassPipeline : public VKPipeline
@@ -46,7 +46,7 @@ class VKDirLightPassPipeline : public VKPipeline
   VKDirLightPassPipeline(const std::shared_ptr<VulkanLogicalDeviceManager>& a_logicalDevice, VkRenderPass a_renderPass, const std::vector<VkPipelineShaderStageCreateInfo>& a_shaders, 
                       const unsigned int& a_subpassIndex, const glm::vec2& a_res, const glm::vec4& a_viewportSettings ); 
   virtual void Init();
-  virtual SceneGlobalDataType GetGlobalDataTypes() const {return NO_GLOBAL_DATA;}
-  virtual size_t GetObjUboSize() const{return 0;}
-  virtual size_t GetGlobalUboSize() const{return 0;}
+  virtual std::vector<SceneGlobalDataType> GetGlobalDataTypes() const {return {GLOBAL_LIGHT_FRAG_DATA};}
+  virtual std::vector<size_t> GetObjUboSizes() const{return { sizeof(FragDirectionalLight) };}
+  virtual std::vector<size_t> GetGlobalUboSize() const{return { sizeof(VertexViewProjMatrices), sizeof(FragLightGlobalVars) };}
 };

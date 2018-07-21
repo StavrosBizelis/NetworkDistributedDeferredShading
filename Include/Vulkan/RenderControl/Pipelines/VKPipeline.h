@@ -12,7 +12,9 @@
 enum SceneGlobalDataType
 {
   NO_GLOBAL_DATA = 0,
-  GLOBAL_PROJ_MATRIX
+  GLOBAL_PROJ_VIEW_MATRIX,
+  GLOBAL_LIGHT_FRAG_DATA,
+  GLOBAL_DIR_LIGHT_FRAG_DATA,
 };
 
 class VKPipeline
@@ -62,9 +64,9 @@ class VKPipeline
   
   std::vector<VkDescriptorSetLayoutBinding> GetDescriptorSetLayoutBindings() const;
     
-  virtual SceneGlobalDataType GetGlobalDataTypes() const {return NO_GLOBAL_DATA; }
-  virtual size_t GetGlobalUboSize() const{return 0;}
-  virtual size_t GetObjUboSize() const{return 0;}
+  virtual std::vector<SceneGlobalDataType> GetGlobalDataTypes() const {return {NO_GLOBAL_DATA}; }
+  virtual std::vector<size_t> GetGlobalUboSize() const{return {0};}
+  virtual std::vector<size_t> GetObjUboSizes() const{return {0};}
   
   void Clear();
 };

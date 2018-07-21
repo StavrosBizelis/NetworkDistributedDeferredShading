@@ -55,7 +55,7 @@ namespace RenderControl
     void CreateDescriptorPool();
     void CreateCommandBuffer();
     
-    VkDescriptorSet CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, const std::vector<std::shared_ptr<ITexture> >& a_images); // descriptor sets will be created and allocated on the fly as objects are introduced to the VKDeferredShadingPass
+    void CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, const std::shared_ptr<VulkanRenderable>& a_renderable); // descriptor sets will be created and allocated on the fly as objects are introduced to the VKDeferredShadingPass
     
     std::vector< std::shared_ptr<VKPipeline> > m_pipelines;
     VkDescriptorPool m_descriptorPool;

@@ -101,6 +101,9 @@ class VulkanMemoryPool
   
   VkDevice GetLogicalDevice(){ return m_logicalDevice; }
   
+  void* MapMemory();
+  void UnMapMemory();
+  
   // string output functions
   std::string MemoryChunks();
   std::string AvailableMemoryChunks();
@@ -301,7 +304,16 @@ class VulkanMemory
   *   [2] - IndexBufferMemoryPool
   *   [3] - UniformBufferMemoryPool
   *   [4] - DynamicUniformBufferMemoryPool
-
+  */
+  
+  std::shared_ptr<VulkanMemoryPool> GetMemoryPool(const unsigned int& a_index);
+  
+  /**
+  *   [0] - StagingBufferMemoryPool
+  *   [1] - VertexBufferMemoryPool
+  *   [2] - IndexBufferMemoryPool
+  *   [3] - UniformBufferMemoryPool
+  *   [4] - DynamicUniformBufferMemoryPool
   */
   std::array<std::shared_ptr<VulkanMemoryPool>, 5 > m_memoryPools;
   /**
@@ -338,6 +350,7 @@ class VulkanMemory
   void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
   void CopyBuffer(std::shared_ptr< VulkanMemoryChunk > a_srcBuffer, std::shared_ptr< VulkanMemoryChunk > a_dstBuffer);
   void CopyBufferToImage(std::shared_ptr< VulkanMemoryChunk > a_srcBuffer, std::shared_ptr< VulkanImageMemoryChunk > a_dstImage);
+  
   
   /**
   *   if vertex data are in std:vector<T> a_tmp then a_vertexDataArray == a_tmp.data() and a_sizeInBytes = sizeof(a_tmp) * a_tmp.size()

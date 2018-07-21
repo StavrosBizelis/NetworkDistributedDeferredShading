@@ -348,33 +348,63 @@ bool RenderControl::VKDeferredShadingPass::AddRenderable(RenderControl::IRendera
 {
   if (!Exists(a_renderable))
 		{
+      VulkanRenderable* l_renderable = (VulkanRenderable*)(a_renderable);
+      
+      // // simple geometry 
+      // m_pipelines[0] = std::make_shared<VKGeometryPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_geomVert, l_geomFrag), 0, m_resolutionPart, m_viewPortSetting, 0 );
+      // // emissive
+      // m_pipelines[1] = std::make_shared<VKGeometryPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_geomVert, l_geomEmissiveFrag), 1, m_resolutionPart, m_viewPortSetting, 1 );
+      // // colour
+      // m_pipelines[2] = std::make_shared<VKGeometryPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_geomVert, l_geomColourFrag), 2, m_resolutionPart, m_viewPortSetting, 1 );
+      // // colour normal
+      // m_pipelines[3] = std::make_shared<VKGeometryPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_geomVert, l_geomColourNormalFrag), 3, m_resolutionPart, m_viewPortSetting, 2 );
+      // // colour normal spec
+      // m_pipelines[4] = std::make_shared<VKGeometryPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_geomVert, l_geomColourNormalSpecFrag), 4, m_resolutionPart, m_viewPortSetting, 3 );
+      // // colour normal spec hard
+      // m_pipelines[5] = std::make_shared<VKGeometryPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_geomVert, l_geomColourNormalSpecHardnessFrag), 5, m_resolutionPart, m_viewPortSetting, 4 );
+      // // colour normal spec hard emissive
+      // m_pipelines[6] = std::make_shared<VKGeometryPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_geomVert, l_geomColourNormalSpecHardnessEmmisiveFrag), 6, m_resolutionPart, m_viewPortSetting, 5 );
+      // // sky box
+      // m_pipelines[7] = std::make_shared<VKSkyboxPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_skyboxVert, l_skyboxFrag), 7, m_resolutionPart, m_viewPortSetting );
+      // // light pass
+      // m_pipelines[8] = std::make_shared<VKLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_pointVert, l_pointFrag), 7, m_resolutionPart, m_viewPortSetting );
+      // // directional light pass
+      // m_pipelines[9] = std::make_shared<VKDirLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_directionalVert, l_directionalFrag), 8, m_resolutionPart, m_viewPortSetting );
+      
 			// std::shared_ptr<IShaderProgram> l_selectedMat;
 			// get the appropriate material func
 			// simple color
 			if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP | EMISSION_MAP)) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP | EMISSION_MAP))
       {
-        
+        CreateDescriptorSet(m_pipelines[6], l_renderable);
       }
 			else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP )) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP))
 			{
+        CreateDescriptorSet(m_pipelines[5], l_renderable);
       }
       else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP)) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP))
 			{
+        CreateDescriptorSet(m_pipelines[4], l_renderable);
       }
       else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP)) == (NORMAL_MAP | DIFFUSE_MAP))
 			{
+        CreateDescriptorSet(m_pipelines[3], l_renderable);
       }
       else if ((a_geometryMaterialFlags & (DIFFUSE_MAP)) == (DIFFUSE_MAP))
 			{
+        CreateDescriptorSet(m_pipelines[2], l_renderable);
       }
       else if ((a_geometryMaterialFlags & (EMISSION_MAP)) == (EMISSION_MAP))
 			{
+        CreateDescriptorSet(m_pipelines[1], l_renderable);
       }
       else if ((a_geometryMaterialFlags & (SKYBOX)) == (SKYBOX))
 			{
+        CreateDescriptorSet(m_pipelines[7], l_renderable);
       }
       else 
 			{
+        CreateDescriptorSet(m_pipelines[0], l_renderable);
       }
       
 			// a_renderable->SetMaterial(l_selectedMat);
@@ -386,20 +416,23 @@ bool RenderControl::VKDeferredShadingPass::AddRenderable(RenderControl::IRendera
 
 void RenderControl::VKDeferredShadingPass::AddLight(RenderControl::IRenderable* a_light, const RenderControl::LightTypeFlags& a_lightType)
 {
+  VulkanRenderable* l_renderable = (VulkanRenderable*)(a_renderable);
+  
   switch (a_lightType)
 		{
 		case LightTypeFlags::POINT_LIGHT:
     {
+      CreateDescriptorSet(m_pipelines[8], l_renderable);
     }
 		break;
 		case LightTypeFlags::SPOT_LIGHT:
 		{
-
+      CreateDescriptorSet(m_pipelines[8], l_renderable);
     }
 		break;
 		case LightTypeFlags::DIRECTIONAL_LIGHT:
 		{
-      
+      CreateDescriptorSet(m_pipelines[9], l_renderable);
     }
 			break;
 		}
@@ -749,7 +782,7 @@ void RenderControl::VKDeferredShadingPass::CreateCommandBuffer()
 }
 
 
-VkDescriptorSet RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, const std::vector<std::shared_ptr<ITexture> >& a_images)
+void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, const std::shared_ptr<VulkanRenderable>& a_renderable)
 {
   VkDescriptorSetLayout l_layout = a_pipeline->GetDescriptorSetLayout();
   VkDescriptorSetAllocateInfo allocInfo = {};
@@ -763,24 +796,58 @@ VkDescriptorSet RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const 
     throw std::runtime_error("VKDeferredShadingPass::CreateDescriptorSet() - failed to allocate descriptor sets!");
   }
   
+  // personal ubos here
+  std::vector<size_t> l_uboSizes = a_pipeline->GetObjUboSizes();
+  std::vector< std::shared_ptr<VulkanMemoryChunk> > l_uboMemBuffer = {nullptr,nullptr};
+  if( l_uboSizes > 0 )
+    l_uboMemBuffer[0] = m_memory->CreateUniformBuffer( l_uboSizes[0] );
+  if( l_uboSizes > 1 )
+    l_uboMemBuffer[1] = m_memory->CreateUniformBuffer( l_uboSizes[1] );
+  a_renderable->Init(l_descSet, l_uboMemBuffer[0], l_uboMemBuffer[1] );
+  
+  
   std::vector< VkWriteDescriptorSet > l_descriptorSetWrites;
   // get appropriate size of ubo from pipeline - 
   // and also need to know if this pipeline requires any type of global data and what type that is ( ex. VertexSingleMat4, FragDirLightGlobalVars )
   // also need to know what kind of samplers does this pipeline requires and what type( input attachments or combined image samplers)
+  unsigned int l_uboIndex = 0;
   unsigned int l_imagesIndex = 0;
   unsigned int l_inputAttachmentsIndex = 0;
+  unsigned int l_globalsToGo = a_pipeline->GetGlobalDataTypes().size();
   std::vector<VkDescriptorSetLayoutBinding> l_bindings = a_pipeline->GetDescriptorSetLayoutBindings();
   for( unsigned int i =0; i < l_bindings.size(); ++i)
   {
     if( l_bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER )
     {
-      std::shared_ptr<VulkanMemoryChunk> l_uboMemBuffer = m_memory->CreateUniformBuffer( a_pipeline->GetObjUboSize() );
-    
+      // first is the personal uniform buffer - then it is the global uniform buffer
       VkDescriptorBufferInfo l_bufferInfo = {};
-      l_bufferInfo.buffer = l_uboMemBuffer->m_buffer->m_buffer;
-      l_bufferInfo.offset = l_uboMemBuffer->GetBufferOffset();
-      l_bufferInfo.range = l_uboMemBuffer->m_size;
-      
+      if( l_globalsToGo == 0)
+      {
+        l_bufferInfo.buffer = l_uboMemBuffer[l_uboIndex]->m_buffer->m_buffer;
+        l_bufferInfo.offset = l_uboMemBuffer[l_uboIndex]->GetBufferOffset();
+        l_bufferInfo.range = l_uboMemBuffer[l_uboIndex]->m_size;
+        ++l_uboIndex;
+      }
+      else
+      {
+        --l_globalsToGo;
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // prepare global uniform buffer here
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      }
       VkWriteDescriptorSet descriptorWrite = {};
       descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
       descriptorWrite.dstSet = l_descSet;
@@ -794,41 +861,32 @@ VkDescriptorSet RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const 
     }
     else if( l_bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER )
     {
-      if( a_images.size() > l_imagesIndex)
+      std::shared_ptr<VKATexture> l_texture = a_renderable->GetVKTexture(l_imagesIndex);
+      
+      VkDescriptorImageInfo l_imageInfo = {};
+      if( l_texture )
       {
-        std::shared_ptr<VKTexture> l_texture = std::dynamic_pointer_cast<VKTexture>(a_images[l_imagesIndex] );
-        std::shared_ptr<VKCubemap> l_cubeBox = std::dynamic_pointer_cast<VKCubemap>(a_images[l_imagesIndex] );
-        
-        VkDescriptorImageInfo l_imageInfo = {};
-        if( l_texture )
-        {
-          l_imageInfo.sampler = l_texture->GetSampler()->m_sampler; // VkSampler                      
-          l_imageInfo.imageView = l_texture->GetImage()->m_imageView;  // VkImageView
-          l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
-        }
-        else if (l_cubeBox)
-        {
-          l_imageInfo.sampler = l_cubeBox->GetSampler()->m_sampler; // VkSampler                      
-          l_imageInfo.imageView = l_cubeBox->GetImage()->m_imageView;  // VkImageView
-          l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
-        }
-        else
-          continue;
-          
-
-        VkWriteDescriptorSet descriptorWrite = {};
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet = l_descSet;
-        descriptorWrite.dstBinding = l_bindings[i].binding;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = nullptr;
-        descriptorWrite.pImageInfo = &l_imageInfo;
-        
-        l_descriptorSetWrites.push_back(descriptorWrite);
-        l_imagesIndex++;
+        l_imageInfo.sampler = l_texture->GetSampler()->m_sampler; // VkSampler                      
+        l_imageInfo.imageView = l_texture->GetImage()->m_imageView;  // VkImageView
+        l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
       }
+      else
+        continue;
+        
+
+      VkWriteDescriptorSet descriptorWrite = {};
+      descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      descriptorWrite.dstSet = l_descSet;
+      descriptorWrite.dstBinding = l_bindings[i].binding;
+      descriptorWrite.dstArrayElement = 0;
+      descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      descriptorWrite.descriptorCount = 1;
+      descriptorWrite.pBufferInfo = nullptr;
+      descriptorWrite.pImageInfo = &l_imageInfo;
+      
+      l_descriptorSetWrites.push_back(descriptorWrite);
+      l_imagesIndex++;
+    
       
     }
     else if( l_bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT )

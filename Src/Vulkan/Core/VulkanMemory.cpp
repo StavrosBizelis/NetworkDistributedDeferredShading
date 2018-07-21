@@ -299,6 +299,20 @@ bool VulkanMemoryPool::DeallocateMemory(VulkanMemoryChunk* a_chunk )
   return false;
 }
 
+void* VulkanMemoryPool::MapMemory()
+{
+  void* l_data;
+  vkMapMemory(m_logicalDevice, m_memorySpace, 0, m_size, 0, &l_data);
+  return l_data;
+}
+void VulkanMemoryPool::UnMapMemory()
+{
+  vkUnmapMemory(m_logicalDevice, m_memorySpace );
+}
+
+
+
+
 std::string VulkanMemoryPool::MemoryChunks()
 {
   std::string l_toReturn = "MEMORY CHUNKS - Total memory " + std::to_string(this->m_size) + " Bytes \n";
@@ -892,6 +906,13 @@ void VulkanMemory::CreateImageMemPools(const VkDeviceSize& a_shaderImagesSize, c
    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   m_imageMemoryPools[3]->Init();
 }
+
+std::shared_ptr<VulkanMemoryPool> VulkanMemory::GetMemoryPool(const unsigned int& a_index)
+  {
+    if( a_index < 5 )
+      return m_memoryPools[a_index];
+    return nullptr;
+  }
 
 size_t VulkanMemory::SizeOfPixel(VkFormat a_format)
 {

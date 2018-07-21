@@ -3,12 +3,12 @@
 layout (std140, set = 0, binding = 0) uniform GlobalMatrices 
 {
     mat4 projMatrix;
+    mat4 viewMatrix;
 } globalsMats;
 
 layout (std140, set = 0, binding = 1) uniform ObjectMatrices 
 {
-    mat4 modelViewMatrix;
-    mat3 normalMatrix;
+    mat4 modelMatrix;
 } objectMats;
 
 
@@ -29,7 +29,10 @@ void main()
   worldPosition = inPosition;
   
 	// Transform the vertex spatial position using 
-	gl_Position = globalsMats.projMatrix * objectMats.modelViewMatrix * vec4(inPosition, 1.0f);
-
+	// gl_Position = globalsMats.projMatrix * objectMats.modelViewMatrix * vec4(inPosition, 1.0f);
+  
+  mat4 l_modelViewMat = globalsMats.viewMatrix * objectMats.modelMatrix;
+	// Transform the vertex spatial position using 
+	gl_Position = globalsMats.projMatrix * l_modelViewMat * vec4(inPosition, 1.0f);
 } 
 	

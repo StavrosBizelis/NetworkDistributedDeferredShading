@@ -1,8 +1,9 @@
 #pragma once
 
 #include "Common/Textures/ATexture.h"
+#include "Vulkan/Textures/VKATexture.h"
 // Class that provides a texture for texture mapping
-class VKTexture : public ATexture
+class VKTexture : public ATexture, public VKATexture
 {
   
   std::shared_ptr<VulkanMemory> m_memory;
@@ -20,6 +21,6 @@ public:
   virtual void SetSamplerObjectParameter(const unsigned int& parameter, const unsigned int& value);
 	virtual void SetSamplerObjectParameterf(const unsigned int& parameter, float value);
   
-  std::shared_ptr<VulkanImageMemoryChunk> GetImage(){return m_image;}
-  std::shared_ptr<VulkanSampler> GetSampler(){return m_sampler;}
+  virtual std::shared_ptr<VulkanImageMemoryChunk> GetImage(){return m_image;}
+  virtual std::shared_ptr<VulkanSampler> GetSampler(){return m_sampler;}
 };
