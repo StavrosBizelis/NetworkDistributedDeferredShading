@@ -298,15 +298,7 @@ class VulkanMemory
   /// create three image memory pools for 
   void CreateImageMemPools(const VkDeviceSize& a_shaderImagesSize, const VkDeviceSize& a_colourAttachmentsSize, const VkDeviceSize& a_downloadingColourAttachmentsSize, const VkDeviceSize& a_depthStencilAttachmentsSize );      
   
-  /**
-  *   [0] - StagingBufferMemoryPool
-  *   [1] - VertexBufferMemoryPool
-  *   [2] - IndexBufferMemoryPool
-  *   [3] - UniformBufferMemoryPool
-  *   [4] - DynamicUniformBufferMemoryPool
-  */
-  
-  std::shared_ptr<VulkanMemoryPool> GetMemoryPool(const unsigned int& a_index);
+
   
   /**
   *   [0] - StagingBufferMemoryPool
@@ -345,6 +337,18 @@ class VulkanMemory
   */
   bool Init(const VkDeviceSize& a_stagingMemorySize, const VkDeviceSize& a_vertexMemorySize, const VkDeviceSize& a_indexMemorySize, const VkDeviceSize& a_uniformBufferMemorySize, const VkDeviceSize& a_mixBufferMemorySize,
             const VkDeviceSize& a_shaderImagesSize, const VkDeviceSize& a_colourAttachmentsSize, const VkDeviceSize& a_downloadingColourAttachmentsSize, const VkDeviceSize& a_depthStencilAttachmentsSize );
+  
+  
+    /**
+  *   [0] - StagingBufferMemoryPool
+  *   [1] - VertexBufferMemoryPool
+  *   [2] - IndexBufferMemoryPool
+  *   [3] - UniformBufferMemoryPool
+  *   [4] - DynamicUniformBufferMemoryPool
+  */
+  
+  std::shared_ptr<VulkanMemoryPool> GetMemoryPool(const unsigned int& a_index);
+  
   
   void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
   void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);

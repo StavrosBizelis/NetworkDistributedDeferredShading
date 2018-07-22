@@ -5,10 +5,9 @@
 
 namespace SceneControl
 {
-  VKMeshSceneNode::VKMeshSceneNode(SceneNode* a_parent, const std::shared_ptr<IMesh>& a_mesh, std::vector<VKMeshSceneNode*>& a_updateRegistry  )
-  : TexturedSceneNode(a_parent), VulkanRenderable(a_updateRegistry)
+  VKMeshSceneNode::VKMeshSceneNode(SceneNode* a_parent, const std::shared_ptr<IMesh>& a_mesh, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry  )
+  : MeshSceneNode(a_parent, a_mesh), VulkanRenderable(a_updateRegistry)
   {
-    m_mesh = std::dynamic_pointer_cast<VKShape>(a_mesh);
     m_uniformBuffer = nullptr;
     m_descSet = NULL;
   }
@@ -27,19 +26,30 @@ namespace SceneControl
     m_uniformBuffer2 = a_uniformBuffer2;
   }
   
-  void VKMeshSceneNode::Render(glutil::MatrixStack& a_matrix = glutil::MatrixStack()) const
+  void VKMeshSceneNode::Render(glutil::MatrixStack& a_matrix ) const
   {
   }
   
-  void VKMeshSceneNode::Update(const double& a_deltaTime, bool a_dirty = false, const glm::mat4& a_parentAbsoluteTrans = glm::mat4() )
+  void VKMeshSceneNode::Update(const double& a_deltaTime, bool a_dirty, const glm::mat4& a_parentAbsoluteTrans )
   {
-    if( m_dirty || a_dirty )
-      RegisterForUpdate();
+    bool l_dirty = m_dirty || a_dirty;
     
     MeshSceneNode::Update(a_deltaTime, a_dirty, a_parentAbsoluteTrans);
+    
+    if( l_dirty )
+    {
+      // update the local ubo structure
+      m_ubo2.UDiffuse = glm::vec3(1);
+      m_ubo2.USpecular = glm::vec3(1);
+      m_ubo2.UHardness = 1;
+      m_ubo2.UEmissive = glm::vec3(1);;
+      
+      // register for update
+      RegisterForUpdate();
+    }
   }
   
-  virtual void VKMeshSceneNode::VulkanUpdate(char* a_mappedUBO)
+  void VKMeshSceneNode::VulkanUpdate(char* a_mappedUBO)
   {
     // map the model matrix
     memcpy(a_mappedUBO+m_uniformBuffer->GetMemoryOffset(), &m_lastAbsoluteTrans, sizeof(VertexObjectMatrices));

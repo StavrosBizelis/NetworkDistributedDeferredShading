@@ -1,6 +1,7 @@
 #include "Vulkan/VKGraphicsEngine.h"
 
 #include "Vulkan/RenderControl/VKDeferredShadingPass.h"
+#include "Vulkan/SceneControl/VKSceneManager.h"
 // #include "Vulkan/RenderControl/VKCompositionPass.h"
 // #include "Vulkan/MaterialControl/VKMaterialManager.h"
 
@@ -14,7 +15,7 @@ VKGraphicsEngine::VKGraphicsEngine(const glm::vec2& a_resolution)
 : VKGraphicsEngine(a_resolution, a_resolution, glm::vec4(0,0, a_resolution.x, a_resolution.y) ) {}
 
 VKGraphicsEngine::VKGraphicsEngine(const glm::vec2& a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings ) 
-  : AGraphicsEngine(a_resolution, a_partialResolution, a_viewportSettings), m_deferredShadingPass(nullptr), m_compositionPass(nullptr), m_updateRegistry(std::make_shared<std::vector<VulkanRenderable*> >() )
+  : AGraphicsEngine(a_resolution, a_partialResolution, a_viewportSettings), m_deferredShadingPass(nullptr), m_compositionPass(nullptr)
   {
     
     std::vector<const char*> l_requiredInstanceExtensions = 
@@ -34,7 +35,12 @@ VKGraphicsEngine::~VKGraphicsEngine()
 
 void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
 {
-  AGraphicsEngine::Init(a_composite, a_subparts);  
+  // AGraphicsEngine::Init(a_composite, a_subparts);  
+  
+  m_renderPassPipeline = new RenderControl::RenderPassPipeline();
+  m_sceneManager = new SceneControl::VKSceneManager();
+
+  
   // Init vulkan driver
   try{ 
     m_driver->Init(m_resolutionPart);
@@ -76,29 +82,43 @@ void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
 
 }
 
-virtual void VKGraphicsEngine::Update(const double& a_deltaTime)
+void VKGraphicsEngine::Update(const double& a_deltaTime)
 {
   if( m_sceneManager )
   {
     // update scene objects
     m_sceneManager->UpdateScene(a_deltaTime);
   
-  // update vulkan Renderables uniform buffer
-  char* l_mappedBuffer = nullptr;
-  std::shared_ptr< VulkanMemory > l_memory = m_driver->GetLogicalDeviceManager()->GetMemoryManager();
-  
-  // update all the values in the big uniform buffer
-  void* l_data = l_memory->GetMemoryPool(3)->MapMemory();
-  std::shared_ptr< std::vector<VulkanRenderable*> > l_registry = m_sceneManager->GetUpdateRegistry();
-  for( std::vector<VulkanRenderable*>::iterator l_iter = l_registry->begin(); l_iter != l_registry->end(); ++l_iter )
-  {
-    (*l_iter)->VulkanUpdate(l_data);
-  }
-  l_memory->GetMemoryPool(3)->UnMapMemory();
-  
-  
+    // update vulkan Renderables uniform buffer
+    char* l_mappedBuffer = nullptr;
+    std::shared_ptr< VulkanMemory > l_memory = m_driver->GetLogicalDeviceManager()->GetMemoryManager();
+    
+    // update all the values in the big uniform buffer
+    void* l_data = l_memory->GetMemoryPool(3)->MapMemory();
+    std::shared_ptr< std::vector<VulkanRenderable*> > l_registry = ((SceneControl::VKSceneManager*)m_sceneManager)->GetUpdateRegistry();
+    for( std::vector<VulkanRenderable*>::iterator l_iter = l_registry->begin(); l_iter != l_registry->end(); ++l_iter )
+    {
+      (*l_iter)->VulkanUpdate((char*)l_data);
+    }
+    // map global data too
+    
+    l_memory->GetMemoryPool(3)->UnMapMemory();
+    l_registry->clear();
+    
+    
+    
   // render pass -> re-record if needed -> render 
-  }  
+  }
+  if(m_compositionPass)
+  {
+    
+  }
+  else if(m_deferredShadingPass)
+  {
+    m_deferredShadingPass->Render();
+  }
+  
+  
 }
 
 

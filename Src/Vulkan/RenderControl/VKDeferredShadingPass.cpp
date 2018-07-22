@@ -12,6 +12,7 @@
 #include "Vulkan/Shapes/VKShapeFactory.h"
 #include <Vulkan/Textures/VKTexture.h>
 #include <Vulkan/Textures/VKCubemap.h>
+#include <Vulkan/RenderControl/VulkanRenderable.h>
 
 #include <iostream>
 
@@ -57,6 +58,7 @@ bool RenderControl::VKDeferredShadingPass::Init()
   CreateFramebuffer();
   CreatePipelines();
   CreateDescriptorPool();
+  CreateCommandBuffers();
 
   // // init camera
   std::shared_ptr<CCamera> l_cam = GetCamera();
@@ -64,90 +66,9 @@ bool RenderControl::VKDeferredShadingPass::Init()
   l_cam->SetOrthographicProjectionMatrix((int)m_resolution.x, (int)m_resolution.y);
   l_cam->SetPerspectiveProjectionMatrix(45.0f, m_resolution.x / m_resolution.y, 0.5f, 7000.0f);
 
-    
-    // // init pbos
-    // glGenBuffers(2, &m_pbos[0]);
-    // glBindBufferARB(GL_PIXEL_PACK_BUFFER_EXT, m_pbos[0]);
-    // glBufferDataARB(GL_PIXEL_PACK_BUFFER_EXT, 
-                    // (m_resolutionPart.x * m_resolutionPart.y * 3 ), 
-                    // NULL, 
-                    // GL_STREAM_READ);
-
-    // glBindBufferARB(GL_PIXEL_PACK_BUFFER_EXT, m_pbos[1]);
-    // glBufferDataARB(GL_PIXEL_PACK_BUFFER_EXT, 
-                    // (m_resolutionPart.x * m_resolutionPart.y * 3) , 
-                    // NULL, 
-                    // GL_STREAM_READ);
   
-    // glBindBufferARB(GL_PIXEL_PACK_BUFFER_EXT, 0);
   
-  		// // init camera
-		// std::shared_ptr<CCamera> l_cam = GetCamera();
-
-		// l_cam->SetOrthographicProjectionMatrix((int)m_resolution.x, (int)m_resolution.y);
-		// l_cam->SetPerspectiveProjectionMatrix(45.0f, m_resolution.x / m_resolution.y, 0.5f, 7000.0f);
-
-
-
-		// // create framebuffer textures
-		// glGenTextures(m_outputTextures.size(), &m_outputTextures[0]);
-		// glGenSamplers(m_outputSamplers.size(), &m_outputSamplers[0]);
-
-		// // create default samplers
-		// for (unsigned int i = 0; i<m_outputSamplers.size(); ++i)
-		// {
-			// glSamplerParameterf(m_outputSamplers[i], GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			// glSamplerParameterf(m_outputSamplers[i], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			// glSamplerParameterf(m_outputSamplers[i], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			// glSamplerParameterf(m_outputSamplers[i], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		// }
-
-
-		// glm::vec2 l_res = m_resolutionPart;
-		// // setup geometry frame buffer object and its textures
-		// glGenFramebuffers(1, &m_fbo);
-		// glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo);
-
-		// // diffuse image 
-		// glBindTexture(GL_TEXTURE_2D, m_outputTextures[0]);
-		// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, (GLsizei)l_res.x, (GLsizei)l_res.y, 0, GL_RGB, GL_FLOAT, NULL);
-		// glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, (GLuint)m_outputTextures[0], 0);
-
-		// // normals image
-		// glBindTexture(GL_TEXTURE_2D, m_outputTextures[1]);
-		// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, (GLsizei)l_res.x, (GLsizei)l_res.y, 0, GL_RGB, GL_FLOAT, NULL);
-		// glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, (GLuint)m_outputTextures[1], 0);
-
-		// // specular
-		// glBindTexture(GL_TEXTURE_2D, m_outputTextures[2]);
-		// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei)l_res.x, (GLsizei)l_res.y, 0, GL_RGB, GL_FLOAT, NULL);
-		// glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, (GLuint)m_outputTextures[2], 0);
-
-		// // final image
-		// glBindTexture(GL_TEXTURE_2D, m_outputTextures[3]);
-		// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, (GLsizei)l_res.x, (GLsizei)l_res.y, 0, GL_RGB, GL_FLOAT, NULL);
-		// glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, (GLuint)m_outputTextures[3], 0);
-
-
-		// // stencil depth
-		// glBindTexture(GL_TEXTURE_2D, m_outputTextures[4]);
-		// glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, (GLsizei)l_res.x, (GLsizei)l_res.y, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, NULL);
-		// glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, (GLuint)m_outputTextures[4], 0/*mipmap level*/);
-
-		
-
-
-		// GLenum Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-		// if (Status != GL_FRAMEBUFFER_COMPLETE)
-		// {
-			// printf("FB error, status: 0x%x\n", Status);
-			// return false;
-		// }
-
-		
-		// // restore default FBO
-		// glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		return true;
+  return true;
 }
 
 void RenderControl::VKDeferredShadingPass::Render()
@@ -373,22 +294,28 @@ bool RenderControl::VKDeferredShadingPass::AddRenderable(RenderControl::IRendera
       
 			// std::shared_ptr<IShaderProgram> l_selectedMat;
 			// get the appropriate material func
+      
+      std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > l_cmdBuffers;
 			// simple color
 			if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP | EMISSION_MAP)) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP | EMISSION_MAP))
       {
         CreateDescriptorSet(m_pipelines[6], l_renderable);
+        l_cmdBuffers = m_pipelines[6]->GetSecondaryCommandBuffers();
       }
 			else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP )) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP))
 			{
         CreateDescriptorSet(m_pipelines[5], l_renderable);
+        l_cmdBuffers = m_pipelines[5]->GetSecondaryCommandBuffers();
       }
       else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP)) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP))
 			{
         CreateDescriptorSet(m_pipelines[4], l_renderable);
+        l_cmdBuffers = m_pipelines[4]->GetSecondaryCommandBuffers();
       }
       else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP)) == (NORMAL_MAP | DIFFUSE_MAP))
 			{
         CreateDescriptorSet(m_pipelines[3], l_renderable);
+        l_cmdBuffers = m_pipelines[3]->GetSecondaryCommandBuffers();
       }
       else if ((a_geometryMaterialFlags & (DIFFUSE_MAP)) == (DIFFUSE_MAP))
 			{
@@ -397,15 +324,23 @@ bool RenderControl::VKDeferredShadingPass::AddRenderable(RenderControl::IRendera
       else if ((a_geometryMaterialFlags & (EMISSION_MAP)) == (EMISSION_MAP))
 			{
         CreateDescriptorSet(m_pipelines[1], l_renderable);
+        l_cmdBuffers = m_pipelines[1]->GetSecondaryCommandBuffers();
       }
       else if ((a_geometryMaterialFlags & (SKYBOX)) == (SKYBOX))
 			{
         CreateDescriptorSet(m_pipelines[7], l_renderable);
+        l_cmdBuffers = m_pipelines[7]->GetSecondaryCommandBuffers();
       }
       else 
 			{
         CreateDescriptorSet(m_pipelines[0], l_renderable);
+        l_cmdBuffers = m_pipelines[0]->GetSecondaryCommandBuffers();
       }
+      
+      
+      if( l_cmdBuffers.size() > 0 )
+        l_cmdBuffers[0]->AddMesh(l_renderable);
+      
       
 			// a_renderable->SetMaterial(l_selectedMat);
 			// m_toRender[l_selectedMat].push_back(a_renderable);
@@ -416,7 +351,7 @@ bool RenderControl::VKDeferredShadingPass::AddRenderable(RenderControl::IRendera
 
 void RenderControl::VKDeferredShadingPass::AddLight(RenderControl::IRenderable* a_light, const RenderControl::LightTypeFlags& a_lightType)
 {
-  VulkanRenderable* l_renderable = (VulkanRenderable*)(a_renderable);
+  VulkanRenderable* l_renderable = (VulkanRenderable*)(a_light);
   
   switch (a_lightType)
 		{
@@ -717,9 +652,9 @@ void RenderControl::VKDeferredShadingPass::CreatePipelines()
   // sky box
   m_pipelines[7] = std::make_shared<VKSkyboxPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_skyboxVert, l_skyboxFrag), 7, m_resolutionPart, m_viewPortSetting );
   // light pass
-  m_pipelines[8] = std::make_shared<VKLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_pointVert, l_pointFrag), 7, m_resolutionPart, m_viewPortSetting );
+  m_pipelines[8] = std::make_shared<VKLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_pointVert, l_pointFrag), 8, m_resolutionPart, m_viewPortSetting );
   // directional light pass
-  m_pipelines[9] = std::make_shared<VKDirLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_directionalVert, l_directionalFrag), 8, m_resolutionPart, m_viewPortSetting );
+  m_pipelines[9] = std::make_shared<VKDirLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_directionalVert, l_directionalFrag), 9, m_resolutionPart, m_viewPortSetting );
   
   // leaving stencil pass and spotlights out for the moment 
   // may implement tiled deferred shading with point lights
@@ -747,6 +682,13 @@ void RenderControl::VKDeferredShadingPass::CreatePipelines()
   vkDestroyShaderModule(m_logicalDevice->GetDevice(), l_directionalVert, nullptr);
   vkDestroyShaderModule(m_logicalDevice->GetDevice(), l_directionalFrag, nullptr);
   
+  std::shared_ptr<VulkanSecondaryCommandBuffer> l_secondaryCmdBufferTmp;
+  for( unsigned int i = 0; i < m_pipelines.size(); ++i)
+  {
+    l_secondaryCmdBufferTmp = std::make_shared<VulkanSecondaryCommandBuffer>(m_logicalDevice->GetDevice(), m_commandPool, m_pipelines[i]->GetPipelineLayout(), m_renderPass, i);
+    l_secondaryCmdBufferTmp->Init();
+    m_pipelines[i]->AddSecondaryBuffer(l_secondaryCmdBufferTmp);
+  }  
 }
 
 void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
@@ -776,13 +718,18 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
   }
 }
 
-void RenderControl::VKDeferredShadingPass::CreateCommandBuffer()
+void RenderControl::VKDeferredShadingPass::CreateCommandBuffers()
 {
+  
+  m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, {m_frameBuffer}, m_renderPass, m_resolutionPart) );
+  m_primaryCmdBuffer->Init();
+  for( auto l_pipeline : m_pipelines )
+    m_primaryCmdBuffer->AddPipeline(l_pipeline);
   
 }
 
 
-void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, const std::shared_ptr<VulkanRenderable>& a_renderable)
+void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, VulkanRenderable* a_renderable)
 {
   VkDescriptorSetLayout l_layout = a_pipeline->GetDescriptorSetLayout();
   VkDescriptorSetAllocateInfo allocInfo = {};
@@ -799,9 +746,9 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
   // personal ubos here
   std::vector<size_t> l_uboSizes = a_pipeline->GetObjUboSizes();
   std::vector< std::shared_ptr<VulkanMemoryChunk> > l_uboMemBuffer = {nullptr,nullptr};
-  if( l_uboSizes > 0 )
+  if( l_uboSizes.size() > 0 )
     l_uboMemBuffer[0] = m_memory->CreateUniformBuffer( l_uboSizes[0] );
-  if( l_uboSizes > 1 )
+  if( l_uboSizes.size() > 1 )
     l_uboMemBuffer[1] = m_memory->CreateUniformBuffer( l_uboSizes[1] );
   a_renderable->Init(l_descSet, l_uboMemBuffer[0], l_uboMemBuffer[1] );
   

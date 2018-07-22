@@ -7,7 +7,7 @@ namespace SceneControl
 	class PointLightSceneNode
 		: public LightSceneNode
 	{
-
+    protected:
 		// internal mesh vars
 		std::shared_ptr<ASphere> m_sphere;
 

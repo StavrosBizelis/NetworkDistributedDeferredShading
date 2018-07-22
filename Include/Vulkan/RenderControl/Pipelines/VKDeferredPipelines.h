@@ -24,7 +24,7 @@ class VKSkyboxPassPipeline : public VKPipeline
                          const glm::vec2& a_res, const glm::vec4& a_viewportSettings ); 
   virtual void Init();
   virtual std::vector<SceneGlobalDataType> GetGlobalDataTypes() const {return {GLOBAL_PROJ_VIEW_MATRIX};}
-  virtual std::vector<size_t> GetObjUboSizes()() const{return { sizeof(VertexObjectMatrices) };}
+  virtual std::vector<size_t> GetObjUboSizes() const{return { sizeof(VertexObjectMatrices) };}
   virtual std::vector<size_t> GetGlobalUboSize() const{return { sizeof(VertexViewProjMatrices) };}
 };
 

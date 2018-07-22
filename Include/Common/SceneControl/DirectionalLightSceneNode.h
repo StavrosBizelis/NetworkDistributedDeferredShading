@@ -9,12 +9,12 @@ namespace SceneControl
 	class DirectionalLightSceneNode
 		: public LightSceneNode
 	{
-
+    protected:
 		// internal mesh vars
 		std::shared_ptr<ARect> m_fullScreenRect;
 
 
-	public:
+    public:
 		DirectionalLightSceneNode(SceneNode* a_parent, std::shared_ptr<ARect> m_internalMesh);
 		~DirectionalLightSceneNode();
 

@@ -24,7 +24,7 @@ namespace SceneControl
     FragDirectionalLight m_ubo2;
 
 	public:
-		VKDirectionalLightSceneNode(SceneNode* a_parent, std::shared_ptr<ARect> m_internalMesh);
+		VKDirectionalLightSceneNode(SceneNode* a_parent, std::shared_ptr<ARect> m_internalMesh, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry);
 		~VKDirectionalLightSceneNode();
 
 		virtual void Init(const VkDescriptorSet& a_descSet, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer2 );
@@ -33,9 +33,9 @@ namespace SceneControl
 		virtual void Render(glutil::MatrixStack& a_matrix = glutil::MatrixStack()) const;
 		virtual void Update(const double& a_deltaTime, bool a_dirty = false, const glm::mat4& a_parentAbsoluteTrans = glm::mat4());
 
-    
+    virtual void SetDesciptorSet(const VkDescriptorSet& a_descSet){m_descSet = a_descSet;}
     virtual VkDescriptorSet* GetDesciptorSet(){return &m_descSet;}
-    virtual std::shared_ptr<VKShape> GetShape(){ return m_sphere;}
+    virtual std::shared_ptr<VKShape> GetShape(){ return std::dynamic_pointer_cast<VKShape>(m_fullScreenRect);}
     virtual std::shared_ptr<VulkanMemoryChunk> GetUniformBuffer(){return m_uniformBuffer;}
     virtual std::shared_ptr<VKATexture> GetVKTexture(const unsigned int& a_index){ return nullptr; }
     virtual void VulkanUpdate(char* a_mappedUBO);

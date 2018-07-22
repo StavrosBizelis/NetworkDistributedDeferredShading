@@ -4,6 +4,7 @@
 #include <memory>
 #include "Vulkan/Core/VulkanMemory.h"
 #include "Vulkan/Textures/VKATexture.h"
+#include "Vulkan/Shapes/VKShape.h"
 
 
 
@@ -15,7 +16,7 @@ class VulkanRenderable
   VulkanRenderable(std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry)
   : m_updateRegistry(a_updateRegistry){}
   
-  virtual void Init(const VkDescriptorSet& a_descSet, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer ) = 0;
+  virtual void Init(const VkDescriptorSet& a_descSet, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer1, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer2 ) = 0;
   // needed for the actual command recording
   virtual std::shared_ptr<VKShape> GetShape() = 0;
   virtual void SetDesciptorSet(const VkDescriptorSet& a_descSet) = 0; ///< pointer to a descriptor set because it can be non existant
@@ -30,7 +31,7 @@ class VulkanRenderable
   void RegisterForUpdate()
   {
     if( m_updateRegistry )
-      m_updateRegistry->push_back(this)
+      m_updateRegistry->push_back(this);
   }
   std::shared_ptr< std::vector<VulkanRenderable*> > GetUpdateRegistry() {return m_updateRegistry; }
   

@@ -2,7 +2,7 @@
 
 
 #include "Vulkan//SceneControl/VKMeshSceneNode.h"
-#include "Vulkan//SceneControl/VKCameraSceneNode.h"
+// #include "Vulkan//SceneControl/VKCameraSceneNode.h"
 #include "Vulkan//SceneControl/VKPointLightSceneNode.h"
 #include "Vulkan//SceneControl/VKDirectionalLightSceneNode.h"
 
@@ -29,7 +29,7 @@ namespace SceneControl
 
 
 
-	MeshSceneNode * SceneManager::AddMeshSceneNode(const std::shared_ptr<IMesh>& a_mesh, SceneNode * a_parent)
+	MeshSceneNode * VKSceneManager::AddMeshSceneNode(const std::shared_ptr<IMesh>& a_mesh, SceneNode * a_parent)
 	{
 		if (a_parent)
 		{
@@ -58,7 +58,7 @@ namespace SceneControl
 
 	// }
 
-	PointLightSceneNode * SceneManager::AddPointLightSceneNode( const std::shared_ptr<ASphere>& a_sphere, SceneNode* a_parent)
+	PointLightSceneNode * VKSceneManager::AddPointLightSceneNode( const std::shared_ptr<ASphere>& a_sphere, SceneNode* a_parent)
 	{
 		if (a_parent)
 		{
@@ -84,7 +84,7 @@ namespace SceneControl
 		// return new VKSpotLightSceneNode(m_sceneRoot, a_cone, m_updateRegistry);
 	// }
 
-	DirectionalLightSceneNode * SceneManager::AddDirectionalLightSceneNode( const std::shared_ptr<ARect>& a_rect, SceneNode * a_parent)
+	DirectionalLightSceneNode * VKSceneManager::AddDirectionalLightSceneNode( const std::shared_ptr<ARect>& a_rect, SceneNode * a_parent)
 	{
 		if (a_parent)
 		{

@@ -189,6 +189,7 @@ namespace SceneControl
 	{
 		if (a_materialIndex < m_materialUniformsInt.size())
 		{
+      m_dirty = true;
 			m_materialUniformsInt[a_materialIndex][a_name] = a_var;
 			return true;
 		}
@@ -199,6 +200,7 @@ namespace SceneControl
 	{
 		if (a_materialIndex < m_materialUniformsFloat.size())
 		{
+      m_dirty = true;
 			m_materialUniformsInt[a_materialIndex][a_name] = (int)a_var;
 			return true;
 		}
@@ -209,6 +211,7 @@ namespace SceneControl
 	{
 		if (a_materialIndex < m_materialUniformsVec2.size())
 		{
+      m_dirty = true;
 			m_materialUniformsVec2[a_materialIndex][a_name] = a_var;
 			return true;
 		}
@@ -219,6 +222,7 @@ namespace SceneControl
 	{
 		if (a_materialIndex < m_materialUniformsVec3.size())
 		{
+      m_dirty = true;
 			m_materialUniformsVec3[a_materialIndex][a_name] = a_var;
 			return true;
 		}
@@ -229,6 +233,7 @@ namespace SceneControl
 	{
 		if (a_materialIndex < m_materialUniformsVec4.size())
 		{
+      m_dirty = true;
 			m_materialUniformsVec4[a_materialIndex][a_name] = a_var;
 			return true;
 		}
@@ -239,6 +244,7 @@ namespace SceneControl
 	{
 		if (a_materialIndex < m_materialUniformsMat3.size())
 		{
+      m_dirty = true;
 			m_materialUniformsMat3[a_materialIndex][a_name] = a_var;
 			return true;
 		}
@@ -249,6 +255,7 @@ namespace SceneControl
 	{
 		if (a_materialIndex < m_materialUniformsMat4.size() )
 		{
+      m_dirty = true;
 			m_materialUniformsMat4[a_materialIndex][a_name] = a_var;
 			return true;
 		}

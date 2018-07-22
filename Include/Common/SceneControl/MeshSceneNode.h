@@ -10,6 +10,7 @@ namespace SceneControl
 	class MeshSceneNode :
 		public TexturedSceneNode
 	{
+    protected:
 		std::shared_ptr<IMesh> m_mesh;
 
 	public:

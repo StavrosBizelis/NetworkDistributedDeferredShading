@@ -1,14 +1,17 @@
 #pragma once
-#include "SceneNode.h"
-#include "CameraSceneNode.h"
-#include "MeshSceneNode.h"
+#include "Common/SceneControl/SceneManager.h"
+#include "Common/SceneControl/SceneNode.h"
+#include "Common/SceneControl/CameraSceneNode.h"
+#include "Common/SceneControl/MeshSceneNode.h"
 
 
 #include "Common//RenderControl/RenderPassPipeline.h"
+#include "Vulkan//RenderControl/VulkanRenderable.h"
 
-#include "DirectionalLightSceneNode.h"
-#include "PointLightSceneNode.h"
-#include "SpotLightSceneNode.h"
+#include "Common/SceneControl/DirectionalLightSceneNode.h"
+#include "Common/SceneControl/PointLightSceneNode.h"
+#include "Common/SceneControl/SpotLightSceneNode.h"
+#include <memory>
 
 namespace SceneControl
 {
@@ -36,7 +39,7 @@ namespace SceneControl
     
     /// removes and deletes scene node if it exists under this hierarchy
     /// @return - true for success
-    virtual bool DetachNode(SceneNode* a_node);
+    // virtual bool DetachNode(SceneNode* a_node);
 
 		// /// @return - if null, a_parent is not part of the scene
 		// virtual SceneNode* AddSceneNode(SceneNode* a_parent = nullptr);
@@ -49,7 +52,7 @@ namespace SceneControl
 		/// @return - if null, a_parent is not part of the scene
 		virtual PointLightSceneNode* AddPointLightSceneNode( const std::shared_ptr<ASphere>& a_sphere, SceneNode* a_parent = nullptr);
 		/// @return - if null, a_parent is not part of the scene
-		virtual SpotLightSceneNode* AddSpotLightSceneNode( const std::shared_ptr<ACone>& a_cone, SceneNode* a_parent = nullptr);
+		// virtual SpotLightSceneNode* AddSpotLightSceneNode( const std::shared_ptr<ACone>& a_cone, SceneNode* a_parent = nullptr);
 		/// @return - if null, a_parent is not part of the scene
 		virtual DirectionalLightSceneNode* AddDirectionalLightSceneNode( const std::shared_ptr<ARect>& a_rect, SceneNode* a_parent = nullptr);
 	};

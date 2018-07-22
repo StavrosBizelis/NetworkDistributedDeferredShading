@@ -10,6 +10,8 @@
 #include <Vulkan/Core/VulkanLogicalDeviceManager.h>
 #include <Vulkan/Core/VulkanSwapChainDetails.h>
 #include "Vulkan/RenderControl/Pipelines/VKPipeline.h"
+#include "Vulkan/RenderControl/VulkanRenderable.h"
+#include "Vulkan/RenderControl/Pipelines/VulkanPrimaryCommandBuffer.h"
 
 namespace RenderControl
 {
@@ -45,7 +47,7 @@ namespace RenderControl
     VkSemaphore m_renderFinishedSemaphore;
     
     // VulkanFramebuffer m_frameBuffer;
-    // std::shared_ptr<VulkanPrimaryCommandBuffer> m_primaryCmdBuffer;
+    std::shared_ptr<VulkanPrimaryCommandBuffer> m_primaryCmdBuffer;
     
     void CreateCommandPool();
     void CreateSemaphores();
@@ -53,9 +55,10 @@ namespace RenderControl
     void CreateFramebuffer();
     void CreatePipelines();
     void CreateDescriptorPool();
-    void CreateCommandBuffer();
+    void CreateCommandBuffers();
     
-    void CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, const std::shared_ptr<VulkanRenderable>& a_renderable); // descriptor sets will be created and allocated on the fly as objects are introduced to the VKDeferredShadingPass
+    void CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, VulkanRenderable* a_renderable); // descriptor sets will be created and allocated on the fly as objects are introduced to the VKDeferredShadingPass
+
     
     std::vector< std::shared_ptr<VKPipeline> > m_pipelines;
     VkDescriptorPool m_descriptorPool;
