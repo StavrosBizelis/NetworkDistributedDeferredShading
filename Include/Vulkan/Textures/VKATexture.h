@@ -1,5 +1,9 @@
 #pragma once
 
+
+#include "Vulkan/Core/VulkanMemory.h"
+#include <memory>
+
 class VKATexture
 {
   public:

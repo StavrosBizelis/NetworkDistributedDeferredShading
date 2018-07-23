@@ -3,6 +3,8 @@
 #include "Common/Textures/ACubemap.h"
 #include "Vulkan/Textures/VKATexture.h"
 #include <string>
+#include "Vulkan/Core/VulkanMemory.h"
+#include <memory>
 // Class that provides a texture for texture mapping
 class VKCubemap : public ACubemap, public VKATexture
 {

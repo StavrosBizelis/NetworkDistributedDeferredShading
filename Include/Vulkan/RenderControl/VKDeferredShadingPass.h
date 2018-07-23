@@ -34,6 +34,10 @@ namespace RenderControl
     VkFormat m_swapChainImageFormat;
     
     std::shared_ptr<VulkanMemory> m_memory;
+
+    FragLightGlobalVars m_globalsUbo1;
+    VertexViewProjMatrices m_globalsUbo2;
+    std::vector< std::shared_ptr<VulkanMemoryChunk> > m_uboMemBuffers;
     
     
     VkQueue m_graphicsQueue;
@@ -85,8 +89,9 @@ namespace RenderControl
     virtual void AddLight(IRenderable* a_light, const LightTypeFlags& a_lightType);
 		// virtual void RemoveLight(IRenderable* a_light);
     
-    
     virtual bool PackTexture( Network::NetworkMsgPtr& a_outMsg);
+    
+    void VulkanUpdate( char* a_mappedBuffer );
 	};
 
 }

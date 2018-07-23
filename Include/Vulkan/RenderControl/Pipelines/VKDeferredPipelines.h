@@ -48,5 +48,5 @@ class VKDirLightPassPipeline : public VKPipeline
   virtual void Init();
   virtual std::vector<SceneGlobalDataType> GetGlobalDataTypes() const {return {GLOBAL_LIGHT_FRAG_DATA};}
   virtual std::vector<size_t> GetObjUboSizes() const{return { sizeof(FragDirectionalLight) };}
-  virtual std::vector<size_t> GetGlobalUboSize() const{return { sizeof(VertexViewProjMatrices), sizeof(FragLightGlobalVars) };}
+  virtual std::vector<size_t> GetGlobalUboSize() const{return { sizeof(FragLightGlobalVars) };}
 };

@@ -48,15 +48,9 @@ VKCubemap::Create(std::string sPositiveX, std::string sNegativeX, std::string sP
   //  create a new cubmap - we are not updating with new data - just create it
   m_image = m_memory->CreateCubemap(pbImagePosX, pbImageNegX, pbImagePosY, pbImageNegY, pbImagePosZ, pbImageNegZ, iWidth, iHeight, VK_FORMAT_B8G8R8A8_UINT);
   
-  m_sampler= std::make_shared<VulkanSampler>();
+  m_sampler= std::make_shared<VulkanSampler>(m_memory->GetLogicalDevice() );
 
 	// if(generateMipMaps)glGenerateMipmap(GL_TEXTURE_2D);
-  
-  m_width = width;
-	m_height = height;
-	m_bpp = bpp;
-  m_mipMapsGenerated = generateMipMaps;
-  
 }
 
 
@@ -75,8 +69,6 @@ VKCubemap::Bind(int textureUnit) const
   samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   samplerLayoutBinding.pImmutableSamplers = nullptr;
   samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-  
-  
 }
 
 
@@ -90,7 +82,7 @@ void
 VKCubemap::SetSamplerObjectParameter(const unsigned int &parameter, const unsigned int &value)
 {
   if(m_sampler)
-    m_sampler->SetSamplerObjectParameter(parameter, value);
+    m_sampler->SetSamplerObjectParameter((VulkanSamplerOption)parameter, value);
 }
 
 
@@ -104,7 +96,7 @@ void
 VKCubemap::SetSamplerObjectParameterf(const unsigned int &parameter, float value)
 {
   if(m_sampler)
-    m_sampler->SetSamplerObjectParameter(parameter, value);
+    m_sampler->SetSamplerObjectParameter((VulkanSamplerOption)parameter, value);
 }
 
 

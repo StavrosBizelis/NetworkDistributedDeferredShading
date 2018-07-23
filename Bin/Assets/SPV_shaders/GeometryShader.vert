@@ -49,8 +49,8 @@ void main()
   
   
   
-  vEyeTan = normalize(inverse(transpose(l_modelViewMat) * inTangent);
-  vEyeNorm = normalize(inverse(transpose(l_modelViewMat) * inNormal);
+  vEyeTan = normalize(inverse(transpose(l_modelViewMat) ) * vec4(inTangent,1) ).xyz;
+  vEyeNorm = normalize(inverse(transpose(l_modelViewMat) ) * vec4(inNormal,1) ).xyz;
 
 	// Pass through the texture coordinate
 	vTexCoord = inCoord;

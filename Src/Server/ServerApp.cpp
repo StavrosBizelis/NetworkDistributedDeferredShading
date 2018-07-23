@@ -406,12 +406,12 @@ ServerApp::InitialiseScene()
   l_skyText.m_id = 1;
   l_skyText.m_textureLayer = 0;
   l_skyText.m_cubeText = true ;
-  l_skyText.m_path[0] = std::string("../Assets/Skybox/spacebox/X+.jpg");
-  l_skyText.m_path[1] = std::string("../Assets/Skybox/spacebox/X-.jpg");
-  l_skyText.m_path[2] = std::string("../Assets/Skybox/spacebox/Y+.jpg");
-  l_skyText.m_path[3] = std::string("../Assets/Skybox/spacebox/Y-.jpg");
-  l_skyText.m_path[4] = std::string("../Assets/Skybox/spacebox/Z+.jpg");
-  l_skyText.m_path[5] = std::string("../Assets/Skybox/spacebox/Z-.jpg");
+  l_skyText.m_path[0] = std::string("../Assets/Skybox/spacebox/X+.png");
+  l_skyText.m_path[1] = std::string("../Assets/Skybox/spacebox/X-.png");
+  l_skyText.m_path[2] = std::string("../Assets/Skybox/spacebox/Y+.png");
+  l_skyText.m_path[3] = std::string("../Assets/Skybox/spacebox/Y-.png");
+  l_skyText.m_path[4] = std::string("../Assets/Skybox/spacebox/Z+.png");
+  l_skyText.m_path[5] = std::string("../Assets/Skybox/spacebox/Z-.png");
   
   
   
@@ -433,7 +433,7 @@ ServerApp::InitialiseScene()
   l_asteroidText.m_id = 2;
   l_asteroidText.m_textureLayer = 0;
   l_asteroidText.m_cubeText = false;
-  l_asteroidText.m_path[0] = std::string("../Assets/Models/Asteroid/diffuse.jpg");
+  l_asteroidText.m_path[0] = std::string("../Assets/Models/Asteroid/diffuse.png");
   
   
   

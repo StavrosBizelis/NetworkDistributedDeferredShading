@@ -1,12 +1,14 @@
 #include "Vulkan/VKGraphicsEngine.h"
 
 #include "Vulkan/RenderControl/VKDeferredShadingPass.h"
+#include "Vulkan/RenderControl/VKCompositionPass.h"
 #include "Vulkan/SceneControl/VKSceneManager.h"
-// #include "Vulkan/RenderControl/VKCompositionPass.h"
+#include "Vulkan/RenderControl/VKCompositionPass.h"
+#include <Common/Core/MyUtilities.h>
 // #include "Vulkan/MaterialControl/VKMaterialManager.h"
 
-// #include "Vulkan/Shapes/VKShapeFactory.h"
-// #include "Vulkan/Textures/VKTextureFactory.h"
+#include "Vulkan/Shapes/VKShapeFactory.h"
+#include "Vulkan/Textures/VKTextureFactory.h"
 
 #include <iostream>
 
@@ -27,10 +29,10 @@ VKGraphicsEngine::VKGraphicsEngine(const glm::vec2& a_resolution, const glm::vec
 
 VKGraphicsEngine::~VKGraphicsEngine()
 {
-  // if( m_shapeFactory ) 
-    // delete m_shapeFactory;
-  // if( m_textureFactory ) 
-    // delete m_textureFactory;
+  if( m_shapeFactory ) 
+    delete m_shapeFactory;
+  if( m_textureFactory ) 
+    delete m_textureFactory;
 }
 
 void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
@@ -54,20 +56,27 @@ void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
   // MaterialControl::IMaterialManager* l_materialManager = new MaterialControl::VKMaterialManager();
   // m_renderPassPipeline->SetMaterialManager(l_materialManager);
   
-  // m_shapeFactory = new VKShapeFactory();
-  // m_shapeFactory->Init();
-  // m_textureFactory = new VKTextureFactory();
+  m_shapeFactory = new VKShapeFactory(m_driver->GetLogicalDeviceManager()->GetMemoryManager());
+  m_shapeFactory->Init();
+  m_textureFactory = new VKTextureFactory(m_driver->GetLogicalDeviceManager()->GetMemoryManager());
   
+  IFDBG( std::cout << "Driver Initialized \n"; );
   
-  // if(a_composite)
-  // {
-    // m_compositionPass = new RenderControl::VKCompositionPass(m_resolution, m_sceneManager, m_shapeFactory, m_textureFactory, a_subparts);
+  if(a_composite)
+  {
+    IFDBG( std::cout << "next: Create m_compositionPass \n"; );
+    
+    m_compositionPass = new RenderControl::VKCompositionPass(m_driver->GetLogicalDeviceManager(), m_driver->GetSelectedPhysicalDevice(), m_driver->GetLogicalDeviceManager()->GetMemoryManager(),
+                                                             m_driver->GetLogicalDeviceManager()->GetGraphicsQueue(),m_driver->GetLogicalDeviceManager()->GetPresentQueue(), m_driver->GetLogicalDeviceManager()->GetQueueFamilyIndices(),
+                                                             m_resolution, m_sceneManager, m_shapeFactory, m_textureFactory, a_subparts);
+    IFDBG( std::cout << "m_compositionPass Created \n"; );
     // m_compositionPass->Init();
+    // IFDBG( std::cout << "m_compositionPass Initialized \n"; );
     // m_compositionPass->SetSceenOutputAttachment(0);
     // m_renderPassPipeline->PushBack(m_compositionPass);
-  // }
-  // else
-  // {
+  }
+  else
+  {
     std::cout << "before new deferred shading pass\n";
     m_deferredShadingPass = new RenderControl::VKDeferredShadingPass( m_driver->GetLogicalDeviceManager(), m_driver->GetSelectedPhysicalDevice(), m_driver->GetLogicalDeviceManager()->GetMemoryManager(),
                                                                       m_driver->GetLogicalDeviceManager()->GetGraphicsQueue(),m_driver->GetLogicalDeviceManager()->GetPresentQueue(), m_driver->GetLogicalDeviceManager()->GetQueueFamilyIndices(),
@@ -77,7 +86,7 @@ void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
     std::cout << "after Init() deferred shading pass\n";
     // m_deferredShadingPass->SetSceenOutputAttachment(3);
     // m_renderPassPipeline->PushBack(m_deferredShadingPass);    
-  // }
+  }
   
 
 }
@@ -101,22 +110,22 @@ void VKGraphicsEngine::Update(const double& a_deltaTime)
       (*l_iter)->VulkanUpdate((char*)l_data);
     }
     // map global data too
+    if(m_compositionPass) static_cast<RenderControl::VKCompositionPass*>(m_compositionPass)->VulkanUpdate((char*)l_data);
+    else if(m_deferredShadingPass) static_cast<RenderControl::VKDeferredShadingPass*>(m_deferredShadingPass)->VulkanUpdate((char*)l_data);
     
     l_memory->GetMemoryPool(3)->UnMapMemory();
     l_registry->clear();
     
     
-    
-  // render pass -> re-record if needed -> render 
+  // // // // // render pass -> re-record if needed -> render 
+  // // // // // {}
+  
+  // submit queues
   }
   if(m_compositionPass)
-  {
-    
-  }
+    m_compositionPass->Render();
   else if(m_deferredShadingPass)
-  {
     m_deferredShadingPass->Render();
-  }
   
   
 }

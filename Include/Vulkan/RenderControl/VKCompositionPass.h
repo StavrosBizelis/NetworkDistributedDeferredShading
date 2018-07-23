@@ -5,6 +5,10 @@
 #include <Vulkan/Core/VulkanMemory.h>
 #include <Vulkan/Core/VulkanLogicalDeviceManager.h>
 #include <Vulkan/Core/VulkanSwapChainDetails.h>
+#include "Vulkan/RenderControl/UniformBufferObjects.h"
+#include "Vulkan/RenderControl/Pipelines/VKPipeline.h"
+#include "Vulkan/RenderControl/VulkanRenderable.h"
+#include "Vulkan/RenderControl/Pipelines/VulkanPrimaryCommandBuffer.h"
 namespace RenderControl
 {
   
@@ -18,12 +22,20 @@ namespace RenderControl
     std::shared_ptr<IShaderProgram> m_material;
     
     // VULKAN VARS
+    // std::vector< std::shared_ptr<VulkanImageMemoryChunk> > m_attachmentImages;
+    // swapchain images and image views
+    std::vector<VkImage> m_swapChainImages;
+    std::vector<VkImageView> m_swapChainImageViews;
+    
     std::shared_ptr<VulkanLogicalDeviceManager> m_logicalDevice;
     VkPhysicalDevice m_physicalDevice;
     VkRenderPass m_renderPass;
     VkFormat m_swapChainImageFormat;
     
     std::shared_ptr<VulkanMemory> m_memory;
+
+    VertexViewProjMatrices m_globalsUbo;
+    std::shared_ptr<VulkanMemoryChunk> m_uboMemBuffer;
     
     
     VkQueue m_graphicsQueue;
@@ -35,6 +47,23 @@ namespace RenderControl
     // semaphores for the rendering process
     VkSemaphore m_imageAvailableSemaphore;
     VkSemaphore m_renderFinishedSemaphore;
+    
+    // VulkanFramebuffer m_frameBuffer;
+    std::shared_ptr<VulkanPrimaryCommandBuffer> m_primaryCmdBuffer;
+    
+    void CreateCommandPool();
+    void CreateSemaphores();
+    void CreateRenderPass();
+    void CreateFramebuffer();
+    void CreatePipelines();
+    void CreateDescriptorPool();
+    void CreateCommandBuffers();
+    
+    void CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, VulkanRenderable* a_renderable); // descriptor sets will be created and allocated on the fly as objects are introduced to the VKDeferredShadingPass
+
+    
+    std::vector< std::shared_ptr<VKPipeline> > m_pipelines;
+    VkDescriptorPool m_descriptorPool;
     
     void Clear();
     
@@ -53,6 +82,7 @@ namespace RenderControl
 		virtual void Render() override;
 		virtual void OutputOnScreen() override;
     
+    void VulkanUpdate( char* a_mappedBuffer );
 	};
 
 }

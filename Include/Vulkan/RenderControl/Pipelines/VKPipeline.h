@@ -14,7 +14,6 @@ enum SceneGlobalDataType
   NO_GLOBAL_DATA = 0,
   GLOBAL_PROJ_VIEW_MATRIX,
   GLOBAL_LIGHT_FRAG_DATA,
-  GLOBAL_DIR_LIGHT_FRAG_DATA,
 };
 
 class VKPipeline

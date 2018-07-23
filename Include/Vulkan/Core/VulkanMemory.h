@@ -330,7 +330,7 @@ class VulkanMemory
   VulkanMemory(const VkPhysicalDevice& a_physicalDevice, const VkDevice& a_logicalDevice, const VkQueue& a_graphicsQueue, int a_graphicsFamilyIndex); ///< default constructor
   ~VulkanMemory() = default;
   
-  
+  VkDevice GetLogicalDevice() const {return m_logicalDevice;}
   /**
   *   @param all: if 0 this memory type will not be allocated,
   *   @param a_stagingMemorySize: staging is not covered by mixBufferMemorySize

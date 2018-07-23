@@ -38,7 +38,7 @@ VKTexture::CreateFromData(char *data, int width, int height, int bpp, bool gener
 {
   UpdateData(data, width, height, bpp, generateMipMaps);
   
-  m_sampler= std::make_shared<VulkanSampler>();
+  m_sampler= std::make_shared<VulkanSampler>( m_memory->GetLogicalDevice() );
   
 	m_path = "";
 	m_width = width;
@@ -61,7 +61,7 @@ VKTexture::UpdateData(char *data, int width, int height, int bpp, bool generateM
     return;
   VkFormat  format;
   if(bpp == 32)format = VK_FORMAT_B8G8R8A8_UINT;
-	if(bpp == 24)format = K_FORMAT_B8G8R8_UINT;
+	if(bpp == 24)format = VK_FORMAT_B8G8R8_UINT;
 	if(bpp == 8)format = VK_FORMAT_R8_UINT;
   
   // if for some reason its impossible to update the texture - create a new image
@@ -69,7 +69,7 @@ VKTexture::UpdateData(char *data, int width, int height, int bpp, bool generateM
   {
     if( m_image )
       m_image->Free();
-    m_image = CreateMaterialTexture(data, width, height, format);
+    m_image = m_memory->CreateMaterialTexture(data, width, height, format);
   }
   
 
@@ -104,7 +104,7 @@ void
 VKTexture::SetSamplerObjectParameter(const unsigned int &parameter, const unsigned int &value)
 {
   if(m_sampler)
-    m_sampler->SetSamplerObjectParameter(parameter, value);
+    m_sampler->SetSamplerObjectParameter((VulkanSamplerOption)parameter, value);
 }
 
 
@@ -118,7 +118,7 @@ void
 VKTexture::SetSamplerObjectParameterf(const unsigned int &parameter, float value)
 {
   if(m_sampler)
-    m_sampler->SetSamplerObjectParameter(parameter, value);
+    m_sampler->SetSamplerObjectParameter((VulkanSamplerOption)parameter, value);
 }
 
 

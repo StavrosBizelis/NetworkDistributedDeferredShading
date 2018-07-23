@@ -2,6 +2,8 @@
 
 #include "Common/Textures/ATexture.h"
 #include "Vulkan/Textures/VKATexture.h"
+#include "Vulkan/Core/VulkanMemory.h"
+#include <memory>
 // Class that provides a texture for texture mapping
 class VKTexture : public ATexture, public VKATexture
 {

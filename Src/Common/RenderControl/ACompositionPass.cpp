@@ -17,17 +17,19 @@ RenderControl::ACompositionPass::ACompositionPass(const glm::vec2 &a_resolution,
   :IRenderPass(a_resolution), m_scnManager(a_scnManager)
 {
   m_subpartsSettings.resize(a_subparts);
-  
+  std::cout<< a_resolution.x << " " << a_resolution.y << " " << a_subparts << std::endl;
   
   std::shared_ptr<ARect> l_rec = a_shapeFactory->GetRectangle();
   for( unsigned int i =0; i < a_subparts; ++i)
   {
-    std::shared_ptr<ITexture> l_text = a_textFactory->GetTexture();
-    // std::shared_ptr<ITexture> l_text = a_textFactory->GetTexture("..\\Assets\\Skybox\\spacebox\\DX+.jpg");
-    m_subpartRects.push_back( m_scnManager->AddMeshSceneNode(l_rec) );
-    m_subpartRects.back()->SetTexture(0,l_text);
+    // std::shared_ptr<ITexture> l_text = a_textFactory->GetTexture();
+    // // std::shared_ptr<ITexture> l_text = a_textFactory->GetTexture("..\\Assets\\Skybox\\spacebox\\DX+.jpg");
+    // m_subpartRects.push_back( m_scnManager->AddMeshSceneNode(l_rec) );
+    // m_subpartRects.back()->SetTexture(0,l_text);
   }
-  UpdateSubpartsSettings();
+  
+  // UpdateSubpartsSettings();
+  std::cout<< a_resolution.x << " " << a_resolution.y << " " << a_subparts << std::endl;
 }
 
 

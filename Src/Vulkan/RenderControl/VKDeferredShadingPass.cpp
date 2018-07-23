@@ -60,22 +60,45 @@ bool RenderControl::VKDeferredShadingPass::Init()
   CreateDescriptorPool();
   CreateCommandBuffers();
 
+  
   // // init camera
   std::shared_ptr<CCamera> l_cam = GetCamera();
 
   l_cam->SetOrthographicProjectionMatrix((int)m_resolution.x, (int)m_resolution.y);
   l_cam->SetPerspectiveProjectionMatrix(45.0f, m_resolution.x / m_resolution.y, 0.5f, 7000.0f);
 
-  
+  // init buffers for global ubos
+  m_uboMemBuffers.resize(2);  
+  m_uboMemBuffers[0] = m_memory->CreateUniformBuffer( sizeof(FragLightGlobalVars) );
+  m_uboMemBuffers[1] = m_memory->CreateUniformBuffer( sizeof(VertexViewProjMatrices) );
   
   return true;
 }
 
 void RenderControl::VKDeferredShadingPass::Render()
 {
-  GeometryPass();
-		
-  LightPass();
+  VkSubmitInfo submitInfo = {};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  
+  // Wait for swap chain presentation to finish
+	submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = &m_renderFinishedSemaphore;
+  // Signal ready with offscreen semaphore
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = &m_renderFinishedSemaphore;
+  
+  
+  VkCommandBuffer l_cmdBuffer = m_primaryCmdBuffer->GetNextCommandBufferHandle();
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &l_cmdBuffer;
+	if( vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS )
+    throw std::runtime_error("failed to submit draw command buffer!");
+  
+  // wait for the graphics queue to finish
+  vkQueueWaitIdle(m_graphicsQueue);
+  
+  
+  
 }
 
 void RenderControl::VKDeferredShadingPass::OutputOnScreen()
@@ -414,6 +437,16 @@ bool RenderControl::VKDeferredShadingPass::PackTexture( Network::NetworkMsgPtr& 
   return false;
 }
 
+void RenderControl::VKDeferredShadingPass::VulkanUpdate( char* a_mappedBuffer )
+{
+  
+  m_primaryCmdBuffer->Update();
+  
+  // copy global camera matrices and screen resolution for lights fragments shaders
+  memcpy(a_mappedBuffer+m_uboMemBuffers[0]->GetMemoryOffset(), &m_globalsUbo1, sizeof(FragLightGlobalVars) );
+  // copy global camera matrices for objects
+  memcpy(a_mappedBuffer+m_uboMemBuffers[1]->GetMemoryOffset(), &m_globalsUbo2, sizeof(VertexViewProjMatrices) ); 
+}
 
 
 void RenderControl::VKDeferredShadingPass::CreateCommandPool() 
@@ -656,6 +689,9 @@ void RenderControl::VKDeferredShadingPass::CreatePipelines()
   // directional light pass
   m_pipelines[9] = std::make_shared<VKDirLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_directionalVert, l_directionalFrag), 9, m_resolutionPart, m_viewPortSetting );
   
+  for( auto l_pipeline : m_pipelines)
+    l_pipeline->Init();
+  
   // leaving stencil pass and spotlights out for the moment 
   // may implement tiled deferred shading with point lights
   // CreatePipeline(CreatePipelineShaderCreateInfo(l_stencilVert, l_stencilFrag), 3, 1,  );
@@ -760,13 +796,15 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
   unsigned int l_uboIndex = 0;
   unsigned int l_imagesIndex = 0;
   unsigned int l_inputAttachmentsIndex = 0;
+  std::vector<SceneGlobalDataType> l_globals = a_pipeline->GetGlobalDataTypes();
   unsigned int l_globalsToGo = a_pipeline->GetGlobalDataTypes().size();
+  // descriptor layout bindings are always global first, then object bindings
   std::vector<VkDescriptorSetLayoutBinding> l_bindings = a_pipeline->GetDescriptorSetLayoutBindings();
   for( unsigned int i =0; i < l_bindings.size(); ++i)
   {
     if( l_bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER )
     {
-      // first is the personal uniform buffer - then it is the global uniform buffer
+      // first handle global uniform buffers then the object ones
       VkDescriptorBufferInfo l_bufferInfo = {};
       if( l_globalsToGo == 0)
       {
@@ -778,22 +816,18 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
       else
       {
         --l_globalsToGo;
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // prepare global uniform buffer here
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if( l_globals[l_globalsToGo] == GLOBAL_PROJ_VIEW_MATRIX )
+        {
+          l_bufferInfo.buffer = m_uboMemBuffers[1]->m_buffer->m_buffer;
+          l_bufferInfo.offset = m_uboMemBuffers[1]->GetBufferOffset();
+          l_bufferInfo.range = m_uboMemBuffers[1]->m_size;
+        }
+        else if( l_globals[l_globalsToGo] == GLOBAL_LIGHT_FRAG_DATA )
+        {
+          l_bufferInfo.buffer = m_uboMemBuffers[0]->m_buffer->m_buffer;
+          l_bufferInfo.offset = m_uboMemBuffers[0]->GetBufferOffset();
+          l_bufferInfo.range = m_uboMemBuffers[0]->m_size;
+        }
       }
       VkWriteDescriptorSet descriptorWrite = {};
       descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

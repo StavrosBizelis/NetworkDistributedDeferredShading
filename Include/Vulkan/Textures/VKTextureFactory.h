@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Common/Textures/ITextureFactory.h"
+#include "Vulkan/Core/VulkanMemory.h"
 #include <map>
+#include <memory>
 #include <string>
 
 class VKTextureFactory : public ITextureFactory
