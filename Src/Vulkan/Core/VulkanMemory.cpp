@@ -12,6 +12,36 @@
 
 
 
+VkFormat findSupportedFormat(VkPhysicalDevice a_physicalDevice, const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) 
+{
+  for (VkFormat format : candidates) 
+  {
+    VkFormatProperties props;
+    vkGetPhysicalDeviceFormatProperties(a_physicalDevice, format, &props);
+
+    if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+      return format;
+    } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+      return format;
+    }
+  }
+  throw std::runtime_error("failed to find supported format!");
+}
+
+
+
+VkFormat findDepthFormat(VkPhysicalDevice a_physicalDevice) 
+{
+  return findSupportedFormat( a_physicalDevice, 
+  {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+    VK_IMAGE_TILING_OPTIMAL,
+    VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+  );
+}
+
+
+
+
 
 
 VulkanMemorySubBuffer::VulkanMemorySubBuffer()
@@ -902,7 +932,7 @@ void VulkanMemory::CreateImageMemPools(const VkDeviceSize& a_shaderImagesSize, c
   m_imageMemoryPools[2]->Init();  
    
   m_imageMemoryPools[3] = std::make_shared<VulkanImageMemoryPool>( m_physicalDevice, m_logicalDevice, a_depthStencilAttachmentsSize, 
-   VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
+   VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, 
    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   m_imageMemoryPools[3]->Init();
 }
@@ -1233,22 +1263,9 @@ std::shared_ptr<VulkanImageMemoryChunk> VulkanMemory::CreateAttachmentToDownload
 
 std::shared_ptr<VulkanImageMemoryChunk> VulkanMemory::CreateStencilDepthAttachmentTexture(const uint32_t& a_width, const uint32_t& a_height )
 {
-  VkFormat l_selectedFormat = VK_FORMAT_UNDEFINED;
-  VkFormatProperties props;
-  vkGetPhysicalDeviceFormatProperties(m_physicalDevice, VK_FORMAT_D32_SFLOAT_S8_UINT, &props);
   
-  if( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT == VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT )
-    l_selectedFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
-  else
-  {
-    vkGetPhysicalDeviceFormatProperties(m_physicalDevice, VK_FORMAT_D24_UNORM_S8_UINT, &props);
-    if( props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT == VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT )
-      l_selectedFormat = VK_FORMAT_D24_UNORM_S8_UINT;
-    else
-      std::runtime_error("VulkanMemory::CreateStencilDepthAttachmentTexture - failed to find supported format for depth stencil texture!");
-  }
-  
-  
+  VkFormat l_selectedFormat = findDepthFormat( m_physicalDevice );
+
   std::shared_ptr< VulkanImageMemoryChunk> l_imageMemory = m_imageMemoryPools[3]->AllocateMemory(a_width, a_height, l_selectedFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_VIEW_TYPE_2D);
   if(!l_imageMemory )
     throw std::runtime_error("VulkanMemory::CreateAttachmentTexture - Image Memory Pool could not allocate memory");

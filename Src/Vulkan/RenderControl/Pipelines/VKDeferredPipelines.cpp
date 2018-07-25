@@ -28,6 +28,7 @@ VKGeometryPassPipeline::VKGeometryPassPipeline(const std::shared_ptr<VulkanLogic
 void
 VKGeometryPassPipeline::Init()
 {
+  
   VkVertexInputBindingDescription l_bindingDesc = VKShapeFactory::GetBindingDescription();
   VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
   vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -131,6 +132,7 @@ VKGeometryPassPipeline::Init()
 
   pipelineLayoutInfo.pushConstantRangeCount = 0;
   
+  std::cout << "RIGHT BEFORE LAOUT CREATION\n";
   if (vkCreatePipelineLayout(m_logicalDevice->GetDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS)
     throw std::runtime_error("VKSimpleGeometryPassPipeline::Init() - failed to create pipeline layout!");
   
@@ -144,13 +146,23 @@ VKGeometryPassPipeline::Init()
   pipelineInfo.pRasterizationState = &rasterizer;
   pipelineInfo.pMultisampleState = &multisampling;
   pipelineInfo.pColorBlendState = &colorBlending;
+  pipelineInfo.pDepthStencilState = &depthStencil;
   pipelineInfo.layout = m_pipelineLayout;
   pipelineInfo.renderPass = m_renderPass;
   pipelineInfo.subpass = m_subpassIndex;
   pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
   
+ 
+  
+  std::cout << "RIGHT BEFORE PIPELINE CREATION\n" << m_logicalDevice->GetDevice();
   if (vkCreateGraphicsPipelines(m_logicalDevice->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_graphicsPipeline )  != VK_SUCCESS)
+  {
     throw std::runtime_error("VKSimpleGeometryPassPipeline::Init() - failed to create graphics pipeline!");
+  }
+  
+
+  
+  std::cout << "RIGHT AFTER PIPELINE CREATION\n";
 }
 
 
@@ -293,6 +305,7 @@ VKSkyboxPassPipeline::Init()
   pipelineInfo.pRasterizationState = &rasterizer;
   pipelineInfo.pMultisampleState = &multisampling;
   pipelineInfo.pColorBlendState = &colorBlending;
+  pipelineInfo.pDepthStencilState = &depthStencil;
   pipelineInfo.layout = m_pipelineLayout;
   pipelineInfo.renderPass = m_renderPass;
   pipelineInfo.subpass = m_subpassIndex;

@@ -89,6 +89,7 @@ VKCompositionPipeline::Init()
   depthStencil.front = {};
   depthStencil.back = {};
   
+
   
 
   VkPipelineColorBlendAttachmentState colorBlendAttachment = {};

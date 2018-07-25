@@ -75,7 +75,7 @@ WPARAM ClientApp::Execute()
   {
     VKGraphicsEngine* l_graphics = new VKGraphicsEngine();
     m_graphics = l_graphics;
-    m_gameWindow.Init(m_hInstance, glm::vec2(10,10), l_graphics->GetVkInstance(), l_graphics->GetVkSurface() );
+    m_gameWindow.Init(m_hInstance, glm::vec2(680, 420), l_graphics->GetVkInstance(), l_graphics->GetVkSurface() );
   }
   
   if(!m_gameWindow.Hdc()) {

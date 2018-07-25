@@ -211,6 +211,8 @@ void RenderControl::VKCompositionPass::CreateSemaphores()
 
 void RenderControl::VKCompositionPass::CreateRenderPass()
 {
+  std::shared_ptr<VulkanImageMemoryChunk> l_depthAttachmentMemory = m_memory->CreateStencilDepthAttachmentTexture(m_resolution.x, m_resolution.y );
+  
   VkAttachmentDescription colorAttachment = {};
   colorAttachment.format = m_logicalDevice->GetSwapChainImageFormat();
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -220,11 +222,13 @@ void RenderControl::VKCompositionPass::CreateRenderPass()
   colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
+  
+  
   VkAttachmentReference colorAttachmentRef = {};
   colorAttachmentRef.attachment = 0;
   colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+  
   VkSubpassDescription subpass = {};
   subpass.inputAttachmentCount = 0;
   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -253,11 +257,11 @@ void RenderControl::VKCompositionPass::CreateRenderPass()
   
   std::vector< VkSubpassDependency> l_dependencies = {l_dependency1, l_dependency2};
   
-  
+  std::array<VkAttachmentDescription, 2> attachments = {colorAttachment};
   VkRenderPassCreateInfo renderPassInfo = {};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  renderPassInfo.attachmentCount = 1;
-  renderPassInfo.pAttachments = &colorAttachment;
+  renderPassInfo.attachmentCount = attachments.size();
+  renderPassInfo.pAttachments = attachments.data();
   renderPassInfo.subpassCount = 1;
   renderPassInfo.pSubpasses = &subpass;
   renderPassInfo.dependencyCount = l_dependencies.size();
@@ -271,6 +275,7 @@ void RenderControl::VKCompositionPass::CreateRenderPass()
 
 void RenderControl::VKCompositionPass::CreateFramebuffer()
 {
+  
     // create frame buffer
     m_swapChainImageViews = m_logicalDevice->GetSwapChainImageViews();
     

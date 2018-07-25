@@ -9,6 +9,7 @@
 #include "Common/Core/MyUtilities.h"
 #include "Vulkan/Core/VulkanUtilities.h"
 #include "Vulkan/RenderControl/Pipelines/VKDeferredPipelines.h"
+#include "Vulkan/RenderControl/Pipelines/VKCompositionPipeline.h"
 #include "Vulkan/Shapes/VKShapeFactory.h"
 #include <Vulkan/Textures/VKTexture.h>
 #include <Vulkan/Textures/VKCubemap.h>
@@ -66,6 +67,7 @@ bool RenderControl::VKDeferredShadingPass::Init()
   CreatePipelines();
   CreateDescriptorPool();
   CreateCommandBuffers();
+
 
   
   // // init camera
@@ -483,32 +485,44 @@ void RenderControl::VKDeferredShadingPass::CreateSemaphores()
 
 void RenderControl::VKDeferredShadingPass::CreateRenderPass()
 {
-    // init attachments
+  
+
+  
+  //  init attachments
   // no swapchain attachments for deferred shading pass
   // create the attachments image
   m_attachmentImages.reserve(5);
   try{
-    // diffuse attachment
+    //diffuse attachment
     m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R8G8B8A8_UNORM ) );
-    // normals attachment
+    //normals attachment
     m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R16G16B16A16_SFLOAT ) );
-    // specular
+    //specular
     m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R8G8B8A8_UNORM ) );
-    // emissive - final image
-    // BREAKS HERE
+    //emissive - final image
     m_attachmentImages.push_back( m_memory->CreateAttachmentToDownloadTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R8G8B8A8_UNORM ) );
-    // stencil depth
+    //stencil depth
     m_attachmentImages.push_back( m_memory->CreateStencilDepthAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y ) );
   }
   catch(std::runtime_error& e)
   {
-    std::cout<< e.what();
+    std::cout<< "EXCEPTION: " << e.what();
   }
 
+
+  // VkAttachmentDescription colorAttachment = {};
+  // colorAttachment.format = m_logicalDevice->GetSwapChainImageFormat();
+  // colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  // colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  // colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  // colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  // colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  // colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  // colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
   
-  std::vector< VkAttachmentDescription > l_attachments(5);
+  std::vector< VkAttachmentDescription > l_attachments( m_attachmentImages.size() );
   // create attachments
-  for( unsigned int i = 0; i < 5; ++i)
+  for( unsigned int i = 0; i < l_attachments.size(); ++i)
   {
     l_attachments[i].format = VkFormat(m_attachmentImages[i]->m_format);
     l_attachments[i].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -517,23 +531,19 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
     l_attachments[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     l_attachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     
-    l_attachments[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    l_attachments[i].finalLayout = VK_IMAGE_LAYOUT_GENERAL; // dont care since they are not going to be used for anything else
-    
-    if( i == 3 )  //if it is the final image stencil attachment
-    {
-      l_attachments[i].finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;  
-    }
-    
+    l_attachments[i].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    l_attachments[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+      
     if( i == 4 )  //if it is the depth stencil attachment
     {
-      l_attachments[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-      l_attachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+      l_attachments[i].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+      l_attachments[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
     }    
   }
   
-
-  // create attachment references 
+  std::vector<VkSubpassDescription> l_subpasses(10);
+   
   // geometry sub pass references
   std::vector <VkAttachmentReference> l_colourAttachmentRefs(4);
   for( unsigned int i = 0; i < 4; ++i)
@@ -541,6 +551,23 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
     l_colourAttachmentRefs[i].attachment = i;
     l_colourAttachmentRefs[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   }
+  
+  VkAttachmentReference l_depthAttachmentRef = {};
+  l_depthAttachmentRef.attachment = 4;
+  l_depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  
+  
+  for( unsigned int i = 0; i < 8; ++i )
+  {
+    l_subpasses[i].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    l_subpasses[i].inputAttachmentCount = 0;
+    l_subpasses[i].colorAttachmentCount = l_colourAttachmentRefs.size();
+    l_subpasses[i].pColorAttachments = l_colourAttachmentRefs.data();
+    l_subpasses[i].pDepthStencilAttachment = &l_depthAttachmentRef;
+  }
+  
+  
+  
   
   // light pass references
   std::vector <VkAttachmentReference> l_lightInputAttachmentRefs(4);
@@ -550,31 +577,13 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
     l_lightInputAttachmentRefs[i].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   }  
   l_lightInputAttachmentRefs[3].attachment = 4;
-  l_lightInputAttachmentRefs[3].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  l_lightInputAttachmentRefs[3].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+  
   
   VkAttachmentReference l_lightColourAttachment = {};
   l_lightColourAttachment.attachment = 3;
   l_lightColourAttachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   
-  
-  VkAttachmentReference l_depthAttachmentRef = {};
-  l_depthAttachmentRef.attachment = 4;
-  l_depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-  
-  
-  
-  // create subpasses
-  std::vector<VkSubpassDescription> l_subpasses(10);
-  // geometry sub pass
-  for( unsigned int i = 0; i < 8; ++i )
-  {
-    l_subpasses[i].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    l_subpasses[i].inputAttachmentCount = 0;
-    l_subpasses[i].colorAttachmentCount = l_colourAttachmentRefs.size();
-    l_subpasses[i].pColorAttachments = l_colourAttachmentRefs.data();
-    l_subpasses[i].pDepthStencilAttachment = &l_depthAttachmentRef;
-  }
-  // light subpass
   for( unsigned int i= 8; i < 10; ++i)
   {
     l_subpasses[i].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -582,21 +591,14 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
     l_subpasses[i].pInputAttachments = l_lightInputAttachmentRefs.data();
     l_subpasses[i].colorAttachmentCount = 1;
     l_subpasses[i].pColorAttachments = &l_lightColourAttachment;
-    l_subpasses[i].pDepthStencilAttachment = &l_depthAttachmentRef;
+    // l_subpasses[i].pDepthStencilAttachment = &l_depthAttachmentRef;
   }
   
+
   // dependencies - two major types of dependencies
   // geometry passes depend on the external
-  std::vector< VkSubpassDependency> l_dependencies(8 + 2*8);
-  for( unsigned int i = 0; i < 8; ++i )
-  {
-    l_dependencies[i].srcSubpass = VK_SUBPASS_EXTERNAL;
-    l_dependencies[i].dstSubpass = i;
-    l_dependencies[i].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    l_dependencies[i].srcAccessMask = 0;
-    l_dependencies[i].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    l_dependencies[i].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  }
+  std::vector< VkSubpassDependency> l_dependencies( 2*8 );
+
   // light passes depend on the geometry ones
   for( unsigned int i = 8; i < 10; ++i)
   {
@@ -604,10 +606,11 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
     {
       l_dependencies[i].srcSubpass = j;
       l_dependencies[i].dstSubpass = i;
-      l_dependencies[i].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-      l_dependencies[i].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+      l_dependencies[i].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
       l_dependencies[i].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-      l_dependencies[i].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT; 
+      l_dependencies[i].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+      l_dependencies[i].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+      l_dependencies[i].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
     }
   }
   
@@ -621,8 +624,12 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   l_renderPassInfo.dependencyCount = l_dependencies.size();
   l_renderPassInfo.pDependencies = l_dependencies.data();
   
+  // if (vkCreateRenderPass(m_logicalDevice->GetDevice(), &renderPassInfo, nullptr, &m_renderPass) != VK_SUCCESS) {
+      // throw std::runtime_error("failed to create render pass!");
+  // }
   if (vkCreateRenderPass(m_logicalDevice->GetDevice(), &l_renderPassInfo, nullptr, &m_renderPass) != VK_SUCCESS) 
     throw std::runtime_error("VKDeferredShadingPass::Init() - failed to create render pass!");
+
 }
 
 void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
@@ -648,8 +655,8 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
 void RenderControl::VKDeferredShadingPass::CreatePipelines()
 {
   // geometry shader shaders
-  VkShaderModule l_geomVert = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryShader.vert.spv"), m_logicalDevice->GetDevice());
-  VkShaderModule l_geomFrag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryShader.frag.spv"), m_logicalDevice->GetDevice());
+  VkShaderModule l_geomVert = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\HUDImage.vert.spv"), m_logicalDevice->GetDevice());
+  VkShaderModule l_geomFrag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\HUDImage.frag.spv"), m_logicalDevice->GetDevice());
   VkShaderModule l_geomEmissiveFrag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryEmissiveShader.frag.spv"), m_logicalDevice->GetDevice());
   VkShaderModule l_geomColourFrag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryColourShader.frag.spv"), m_logicalDevice->GetDevice());
   VkShaderModule l_geomColourNormalFrag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryColourNormalShader.frag.spv"), m_logicalDevice->GetDevice());
@@ -674,10 +681,11 @@ void RenderControl::VKDeferredShadingPass::CreatePipelines()
   VkShaderModule l_directionalFrag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\DirectionalLightShader.frag.spv"), m_logicalDevice->GetDevice());
   
   
-  
 
   m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(10);
   // simple geometry 
+
+  
   m_pipelines[0] = std::make_shared<VKGeometryPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_geomVert, l_geomFrag), 0, m_resolutionPart, m_viewPortSetting, 0 );
   // emissive
   m_pipelines[1] = std::make_shared<VKGeometryPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_geomVert, l_geomEmissiveFrag), 1, m_resolutionPart, m_viewPortSetting, 1 );
@@ -699,13 +707,17 @@ void RenderControl::VKDeferredShadingPass::CreatePipelines()
   m_pipelines[9] = std::make_shared<VKDirLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_directionalVert, l_directionalFrag), 9, m_resolutionPart, m_viewPortSetting );
   
   for( auto l_pipeline : m_pipelines)
+  {
+    std::cout << "MY TEST\n";
     l_pipeline->Init();
-  
+  }
+    std::cout << "MY TEST2\n";
   // leaving stencil pass and spotlights out for the moment 
   // may implement tiled deferred shading with point lights
   // CreatePipeline(CreatePipelineShaderCreateInfo(l_stencilVert, l_stencilFrag), 3, 1,  );
   // CreatePipeline(CreatePipelineShaderCreateInfo(l_spotVert, l_spotFrag), 4, 1, 9 );
 
+  
   
   // destroy shader modules
   vkDestroyShaderModule(m_logicalDevice->GetDevice(), l_geomVert, nullptr);

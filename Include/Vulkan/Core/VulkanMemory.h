@@ -7,7 +7,7 @@
 #include <memory> // shared_ptr, unique_ptr
 
 class VulkanMemoryPool;
-class VulkanMemoryChunk;
+struct VulkanMemoryChunk;
 
 
 struct VulkanMemorySubBuffer
