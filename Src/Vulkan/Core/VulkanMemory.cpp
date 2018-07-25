@@ -1156,7 +1156,7 @@ bool VulkanMemory::UpdateTextureData(std::shared_ptr<VulkanImageMemoryChunk> a_m
     return false;
   
   std::shared_ptr< VulkanMemoryChunk> l_stagingMemory = m_memoryPools[0]->AllocateMemory(a_memoryChunk->m_size);
-  // check is actually allocated
+  // // check is actually allocated
   if( !l_stagingMemory )
     throw std::runtime_error("VulkanMemory::UpdateTextureData - Staging Memory Pool could not allocate memory");
   

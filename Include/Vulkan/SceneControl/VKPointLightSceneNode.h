@@ -7,7 +7,7 @@ namespace SceneControl
 {
 	/// point light scene node - to be used in a Deferred Shading Pass
 	class VKPointLightSceneNode
-		: public PointLightSceneNode, public VulkanRenderable
+		: public PointLightSceneNode
 	{
 
 		// internal mesh vars
@@ -19,24 +19,19 @@ namespace SceneControl
     VertexObjectMatrices m_ubo;
     FragPointLight m_ubo2;
     
+    VulkanPointLightRenderable* m_vulkanRenderOperations;
+    
 		// virtual void UpdateMesh();
 			
 	public:
 		VKPointLightSceneNode(SceneNode* a_parent, std::shared_ptr<ASphere> a_sphere, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry);
 		~VKPointLightSceneNode();
-
-		virtual void Init(const VkDescriptorSet& a_descSet, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer2 );
+  
+    virtual void* GetExtra();
     
     
 		virtual void Render(glutil::MatrixStack& a_matrix = glutil::MatrixStack()) const;
 		virtual void Update(const double& a_deltaTime, bool a_dirty = false, const glm::mat4& a_parentAbsoluteTrans = glm::mat4());
-    
-    virtual void SetDesciptorSet(const VkDescriptorSet& a_descSet){m_descSet = a_descSet;}
-    virtual VkDescriptorSet* GetDesciptorSet(){return &m_descSet;}
-    virtual std::shared_ptr<VKShape> GetShape(){ return std::dynamic_pointer_cast<VKShape>(m_sphere);}
-    virtual std::shared_ptr<VulkanMemoryChunk> GetUniformBuffer(){return m_uniformBuffer;}
-    virtual std::shared_ptr<VKATexture> GetVKTexture(const unsigned int& a_index){ return nullptr; }
-    virtual void VulkanUpdate(char* a_mappedUBO);
 
 	};
 

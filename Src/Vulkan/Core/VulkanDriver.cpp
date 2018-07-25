@@ -7,12 +7,14 @@
 
 
 VkResult CreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback) {
+    
     auto func = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
     if (func != nullptr) {
         return func(instance, pCreateInfo, pAllocator, pCallback);
     } else {
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
+
 }
 
 void DestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* pAllocator) {
@@ -27,10 +29,11 @@ VulkanDriver::VulkanDriver( const std::vector<const char*>& a_requiredInstanceEx
 {
   // init required extensions before anything
   m_requiredInstanceExtensions = a_requiredInstanceExtensions;
-  IFDBG( m_requiredInstanceExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME); );
+  if( g_enableValidationLayers ) m_requiredInstanceExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
   
   CreateVulkanInstance();
-  SetupDebugCallback();
+  if( g_enableValidationLayers ) SetupDebugCallback();
+  
 }
 
 
@@ -43,10 +46,6 @@ VulkanDriver::~VulkanDriver()
 
 void VulkanDriver::Init(const glm::vec2& a_windowSize )
 {
-  
-  
-  
-  
   
   m_windowSize = a_windowSize;
 
@@ -67,7 +66,7 @@ void VulkanDriver::Init(const glm::vec2& a_windowSize )
   
   m_logicalDeviceMan->Init(m_chosenPhysicalDevice, m_surface, m_physicalDeviceMan.FindQueueFamilies(m_chosenPhysicalDevice, m_surface) , l_features, m_physicalDeviceMan.GetDeviceExtensions());
   // setup memory
-  VkDeviceSize l_stagingMemorySize = 4194304; // 1024*1024 * 8 = 8mb
+  VkDeviceSize l_stagingMemorySize = 4194304 * 2; // 1024*1024 * 8 = 8mb
   VkDeviceSize l_vertexMemorySize = 4194304; // 1024*1024 * 4 = 4mb
   VkDeviceSize l_indexMemorySize = 4194304; // 1024*1024 * 4 = 4mb
   VkDeviceSize l_uniformBufferMemorySize = 4194304; // 1024*1024 * 4 = 4mb
@@ -147,34 +146,32 @@ void VulkanDriver::CreateVulkanInstance()
   l_createInfo.enabledExtensionCount = static_cast<uint32_t>(m_requiredInstanceExtensions.size());
   l_createInfo.ppEnabledExtensionNames = m_requiredInstanceExtensions.data();
   
-  l_createInfo.enabledLayerCount = 0;
   
-  IFDBG(
-    {
-      l_createInfo.enabledLayerCount = static_cast<uint32_t>(g_validationLayers.size());
-      l_createInfo.ppEnabledLayerNames = g_validationLayers.data();
-    }
-  );
-
+  if( g_enableValidationLayers )
+  {
+    std::cout << "Enable Validation Layers\n";
+    l_createInfo.enabledLayerCount = static_cast<uint32_t>(g_validationLayers.size());
+    l_createInfo.ppEnabledLayerNames = g_validationLayers.data();
+  }
+  else l_createInfo.enabledLayerCount = 0;
+  
+  
   if (vkCreateInstance(&l_createInfo, nullptr, &m_instance) != VK_SUCCESS) {
     throw std::runtime_error("failed to create instance!");
   }
-  printf("Created instance\n");
 }
 
 
-void VulkanDriver::SetupDebugCallback() {
-  IFDBG(
-  {
-    VkDebugReportCallbackCreateInfoEXT l_createInfo = {};
-    l_createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-    l_createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-    l_createInfo.pfnCallback = DebugCallback;
+void VulkanDriver::SetupDebugCallback() 
+{
+  VkDebugReportCallbackCreateInfoEXT l_createInfo = {};
+  l_createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+  l_createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+  l_createInfo.pfnCallback = DebugCallback;
 
-    if (CreateDebugReportCallbackEXT(m_instance, &l_createInfo, nullptr, &m_callback) != VK_SUCCESS) {
-      throw std::runtime_error("failed to set up debug callback!");
-    }
+  if (CreateDebugReportCallbackEXT(m_instance, &l_createInfo, nullptr, &m_callback) != VK_SUCCESS) {
+    throw std::runtime_error("failed to set up debug callback!");
   }
-  );
+
 }
 

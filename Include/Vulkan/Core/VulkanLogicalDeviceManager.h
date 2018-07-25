@@ -50,6 +50,13 @@ class VulkanLogicalDeviceManager
   // helper that updates uniform buffers
   void UpdateUniformBuffers();
   
+  // imported functions
+  PFN_vkCreateSwapchainKHR vkCreateSwapchainKHR;
+  PFN_vkGetSwapchainImagesKHR vkGetSwapchainImagesKHR;
+  PFN_vkDestroySwapchainKHR vkDestroySwapchainKHR;
+  PFN_vkQueuePresentKHR vkQueuePresentKHR;
+  
+  
   public:
   VulkanLogicalDeviceManager();  ///< default Constructor
   ~VulkanLogicalDeviceManager(); ///< Destructor
@@ -88,6 +95,7 @@ class VulkanLogicalDeviceManager
   VkExtent2D GetSwapChainExtend();
   VkQueue GetGraphicsQueue();
   VkQueue GetPresentQueue();
+  VkSwapchainKHR GetSwapChain();
   std::vector<VkImage> GetSwapChainImages();
   std::vector<VkImageView> GetSwapChainImageViews();
   QueueFamilyIndices GetQueueFamilyIndices();

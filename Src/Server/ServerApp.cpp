@@ -143,8 +143,8 @@ WPARAM ServerApp::Execute()
   
   if( m_implTech == ImplTech::OPENGL )
   {    
-    m_graphics = new GLGraphicsEngine();
     m_gameWindow.Init(m_hInstance, m_dimensions );
+    m_graphics = new GLGraphicsEngine();
   }
   else if( m_implTech == ImplTech::VULKAN )  
   {
@@ -241,11 +241,12 @@ ServerApp::Update()
         unsigned int l_index = m_clients[l_iter->first];
         std::shared_ptr<ATexture> l_text = std::dynamic_pointer_cast< ATexture > ( l_rects[l_index]->GetTexture(0) );
         if( l_text )
+        {
           l_text->UpdateData(m_textureData, l_resolution.x, l_resolution.y, 24, false);
+        }
       }
     }
   }
-  // IFDBG( std::cout << "Stopped Receiving Messages" << std::endl<< std::endl; );
   m_graphics->Update(m_dt);
   
   m_dt = m_pHighResolutionTimer->Elapsed();

@@ -2,38 +2,79 @@
 
 #include <Vulkan/Vulkan.hpp>
 #include <memory>
+
+#include "Common/Shapes/IMesh.h"
 #include "Vulkan/Core/VulkanMemory.h"
 #include "Vulkan/Textures/VKATexture.h"
 #include "Vulkan/Shapes/VKShape.h"
+#include "Vulkan/RenderControl/UniformBufferObjects.h"
+#include "glm/glm.hpp"
 
-
+#include <iostream>
 
 class VulkanRenderable
 {
   protected:
   std::shared_ptr< std::vector<VulkanRenderable*> > m_updateRegistry;
+
+  std::shared_ptr<VulkanMemoryChunk> m_uniformBuffer;
+  std::shared_ptr<VulkanMemoryChunk> m_uniformBuffer2;
+  VkDescriptorSet m_descSet;
+  
+  std::shared_ptr<IMesh> m_shape;
+  
   public:
-  VulkanRenderable(std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry)
-  : m_updateRegistry(a_updateRegistry){}
+  VulkanRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry);
   
-  virtual void Init(const VkDescriptorSet& a_descSet, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer1, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer2 ) = 0;
+  ~VulkanRenderable();
+  
+  virtual void Init(const VkDescriptorSet& a_descSet, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer1, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer2 );
+  
   // needed for the actual command recording
-  virtual std::shared_ptr<VKShape> GetShape() = 0;
-  virtual void SetDesciptorSet(const VkDescriptorSet& a_descSet) = 0; ///< pointer to a descriptor set because it can be non existant
-  virtual VkDescriptorSet* GetDesciptorSet() = 0; ///< pointer to a descriptor set because it can be non existant
+  virtual std::shared_ptr<IMesh> GetShape();
+  virtual void SetDesciptorSet(const VkDescriptorSet& a_descSet); ///< pointer to a descriptor set because it can be non existant
+  virtual VkDescriptorSet* GetDesciptorSet(); ///< pointer to a descriptor set because it can be non existant
   
   
-  // needed for possible data updates
-  virtual std::shared_ptr<VulkanMemoryChunk> GetUniformBuffer() = 0;
-  virtual std::shared_ptr<VKATexture> GetVKTexture(const unsigned int& a_index) = 0;
+  void RegisterForUpdate();
   
-  
-  void RegisterForUpdate()
-  {
-    if( m_updateRegistry )
-      m_updateRegistry->push_back(this);
-  }
-  std::shared_ptr< std::vector<VulkanRenderable*> > GetUpdateRegistry() {return m_updateRegistry; }
+  std::shared_ptr< std::vector<VulkanRenderable*> > GetUpdateRegistry();
   
   virtual void VulkanUpdate(char* a_mappedUBO) = 0;
 };
+
+
+class VulkanMeshRenderable : public VulkanRenderable
+{
+  public :
+  glm::mat4 m_lastAbsoluteTrans;
+  FragMaterialData m_ubo2;
+  
+  VulkanMeshRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry);
+    
+  void VulkanUpdate(char* a_mappedUBO);
+};
+
+
+class VulkanDirLightRenderable : public VulkanRenderable
+{
+  public :
+  VertexObjectMatrices m_ubo;
+  FragDirectionalLight m_ubo2;
+  
+  VulkanDirLightRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry);
+    
+  void VulkanUpdate(char* a_mappedUBO);
+};
+
+class VulkanPointLightRenderable : public VulkanRenderable
+{
+  public :
+  VertexObjectMatrices m_ubo;
+  FragPointLight m_ubo2;
+  
+  VulkanPointLightRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry);
+    
+  void VulkanUpdate(char* a_mappedUBO);
+};
+

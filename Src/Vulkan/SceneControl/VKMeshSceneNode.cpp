@@ -1,29 +1,28 @@
 #pragma once
 #include "Vulkan/SceneControl/VKMeshSceneNode.h"
-
+#include <iostream>
 
 
 namespace SceneControl
 {
   VKMeshSceneNode::VKMeshSceneNode(SceneNode* a_parent, const std::shared_ptr<IMesh>& a_mesh, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry  )
-  : MeshSceneNode(a_parent, a_mesh), VulkanRenderable(a_updateRegistry)
+  : MeshSceneNode(a_parent, a_mesh)
   {
-    m_uniformBuffer = nullptr;
-    m_descSet = NULL;
+   
+    m_vulkanRenderOperations = new VulkanMeshRenderable(a_mesh, a_updateRegistry);
   }
   
   VKMeshSceneNode::~VKMeshSceneNode()
   {
-    if( m_uniformBuffer )
-      m_uniformBuffer->Free();
+   
     // in future - free the descSet
+    
+    delete m_vulkanRenderOperations;
   }
   
-  void VKMeshSceneNode::Init(const VkDescriptorSet& a_descSet, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer2)
+  void* VKMeshSceneNode::GetExtra()
   {
-    m_descSet = a_descSet;
-    m_uniformBuffer = a_uniformBuffer;
-    m_uniformBuffer2 = a_uniformBuffer2;
+    return reinterpret_cast<void*>(m_vulkanRenderOperations);
   }
   
   void VKMeshSceneNode::Render(glutil::MatrixStack& a_matrix ) const
@@ -39,23 +38,18 @@ namespace SceneControl
     if( l_dirty )
     {
       // update the local ubo structure
-      m_ubo2.UDiffuse = glm::vec3(1);
-      m_ubo2.USpecular = glm::vec3(1);
-      m_ubo2.UHardness = 1;
-      m_ubo2.UEmissive = glm::vec3(1);;
+      m_vulkanRenderOperations->m_ubo2.UDiffuse = glm::vec3(1);
+      m_vulkanRenderOperations->m_ubo2.USpecular = glm::vec3(1);
+      m_vulkanRenderOperations->m_ubo2.UHardness = 1;
+      m_vulkanRenderOperations->m_ubo2.UEmissive = glm::vec3(1);;
+      
+      m_vulkanRenderOperations->m_lastAbsoluteTrans = m_lastAbsoluteTrans;
       
       // register for update
-      RegisterForUpdate();
+      m_vulkanRenderOperations->RegisterForUpdate();
     }
   }
   
-  void VKMeshSceneNode::VulkanUpdate(char* a_mappedUBO)
-  {
-    // map the model matrix
-    memcpy(a_mappedUBO+m_uniformBuffer->GetMemoryOffset(), &m_lastAbsoluteTrans, sizeof(VertexObjectMatrices));
-    // map the material data
-    memcpy(a_mappedUBO+m_uniformBuffer2->GetMemoryOffset(), &m_ubo2, sizeof(FragMaterialData));
-  }
   
   
 }

@@ -68,8 +68,8 @@ WPARAM ClientApp::Execute()
   
   if( m_implTech == ImplTech::OPENGL )
   {    
-    m_graphics = new GLGraphicsEngine();
     m_gameWindow.Init(m_hInstance, glm::vec2(10,10) );
+    m_graphics = new GLGraphicsEngine();
   }
   else if( m_implTech == ImplTech::VULKAN )  
   {

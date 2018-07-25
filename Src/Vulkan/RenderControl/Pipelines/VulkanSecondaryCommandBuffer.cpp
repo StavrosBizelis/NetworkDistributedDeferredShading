@@ -67,26 +67,29 @@
     {
 
       // render each object's meshes
-      unsigned int l_meshes = (*it)->GetShape()->GetMeshesCount();
-      for( unsigned int i = 0; i < l_meshes; ++i)
+      VKShape* l_shape = reinterpret_cast<VKShape*>( (*it)->GetShape()->GetExtra() );
+      if( l_shape )
       {
-        VkBuffer l_vertBuff = (*it)->GetShape()->GetVertices(i)->m_buffer->m_buffer;
-        VkDeviceSize l_vertBuffOffset = (*it)->GetShape()->GetVertices(i)->GetBufferOffset();
-        VkBuffer l_indexBuff = (*it)->GetShape()->GetIndices(i)->m_buffer->m_buffer;
-        VkDeviceSize l_indexBuffOffset = (*it)->GetShape()->GetIndices(i)->GetBufferOffset();
+        unsigned int l_meshes = l_shape->GetMeshesCount();
+        for( unsigned int i = 0; i < l_meshes; ++i)
+        {
+          VkBuffer l_vertBuff = l_shape->GetVertices(i)->m_buffer->m_buffer;
+          VkDeviceSize l_vertBuffOffset = l_shape->GetVertices(i)->GetBufferOffset();
+          VkBuffer l_indexBuff = l_shape->GetIndices(i)->m_buffer->m_buffer;
+          VkDeviceSize l_indexBuffOffset = l_shape->GetIndices(i)->GetBufferOffset();
+          
+          unsigned int l_indexCount = l_shape->GetIndicesCount(i);
+          VkDescriptorSet* l_descSet = (*it)->GetDesciptorSet();
+          
+          vkCmdBindVertexBuffers(m_secondaryCmdBuffer, 0, 1, &l_vertBuff, &l_vertBuffOffset );
+          vkCmdBindIndexBuffer(m_secondaryCmdBuffer, l_indexBuff, l_indexBuffOffset, VK_INDEX_TYPE_UINT16);
+          
+          
+          vkCmdBindDescriptorSets(m_secondaryCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, l_descSet, 0, nullptr);
         
-        unsigned int l_indexCount = (*it)->GetShape()->GetIndicesCount(i);
-        VkDescriptorSet* l_descSet = (*it)->GetDesciptorSet();
-        
-        vkCmdBindVertexBuffers(m_secondaryCmdBuffer, 0, 1, &l_vertBuff, &l_vertBuffOffset );
-        vkCmdBindIndexBuffer(m_secondaryCmdBuffer, l_indexBuff, l_indexBuffOffset, VK_INDEX_TYPE_UINT16);
-        
-        
-        vkCmdBindDescriptorSets(m_secondaryCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, l_descSet, 0, nullptr);
-      
-        vkCmdDrawIndexed(m_secondaryCmdBuffer, static_cast<uint32_t>(l_indexCount), 1, 0, 0, 0);
+          vkCmdDrawIndexed(m_secondaryCmdBuffer, static_cast<uint32_t>(l_indexCount), 1, 0, 0, 0);
+        }
       }
-      
     }
     
     if (vkEndCommandBuffer(m_secondaryCmdBuffer) == VK_SUCCESS)

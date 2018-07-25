@@ -13,6 +13,8 @@ namespace RenderControl
 		bool m_enabled;
 	public:
 		IRenderable() : m_enabled(true) {}
+    virtual void* GetExtra() {return nullptr;}  ///< used for extra functionlity of classes that inherit this
+    
 		/// Implement to have this object render itself
 		virtual void Render(glutil::MatrixStack& a_matrix = glutil::MatrixStack() ) const = 0;
 

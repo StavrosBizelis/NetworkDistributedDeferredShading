@@ -23,7 +23,7 @@ std::shared_ptr<ITexture>
 VKTextureFactory::GetTexture()
 {
   std::shared_ptr<VKTexture> l_text = std::make_shared<VKTexture>(m_memory);
-  l_text->Load("../Assets/EmptyTexture.jpg", true);
+  l_text->Load("../Assets/EmptyTexture.png", true);
   return l_text;
 }
 

@@ -4,10 +4,10 @@
 
 #include <vector>
 
-#ifdef NDEBUG
-const bool g_enableValidationLayers = false;
-#else
+#ifdef DEBUG
 const bool g_enableValidationLayers = true;
+#else
+const bool g_enableValidationLayers = false;
 #endif
 
 const std::vector<const char*> g_validationLayers = {

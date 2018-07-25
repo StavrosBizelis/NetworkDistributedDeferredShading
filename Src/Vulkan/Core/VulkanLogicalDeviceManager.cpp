@@ -14,6 +14,7 @@ VulkanLogicalDeviceManager::VulkanLogicalDeviceManager()
 {
   m_swapChainImages = std::make_shared< std::vector<VkImage> >();
   m_swapChainImageViews = std::make_shared< std::vector<VkImageView> >();
+  
 }
 
 
@@ -55,11 +56,16 @@ void VulkanLogicalDeviceManager::Init(const VkPhysicalDevice& a_physicalDevice, 
 
   createInfo.enabledExtensionCount = static_cast<uint32_t>(a_deviceExtensions.size());
   createInfo.ppEnabledExtensionNames = a_deviceExtensions.data();
-  createInfo.enabledLayerCount = 0;
 
-  IFDBG(    createInfo.enabledLayerCount = static_cast<uint32_t>(g_validationLayers.size()) );
-  IFDBG(    createInfo.ppEnabledLayerNames = g_validationLayers.data() );
-  
+  if(g_enableValidationLayers)
+  {
+    createInfo.enabledLayerCount = static_cast<uint32_t>(g_validationLayers.size());
+    createInfo.ppEnabledLayerNames = g_validationLayers.data();
+  }
+  else
+  {
+    createInfo.enabledLayerCount = 0;    
+  }
   
   if (vkCreateDevice(a_physicalDevice, &createInfo, nullptr, &m_logicalDevice) != VK_SUCCESS)
     throw std::runtime_error("failed to create logical device!");
@@ -73,7 +79,15 @@ void VulkanLogicalDeviceManager::Init(const VkPhysicalDevice& a_physicalDevice, 
               m_chosenPhysicalDevice, m_logicalDevice,
               this->GetGraphicsQueue(), m_queueFamilyIndexes.m_graphicsFamily  );
               
-            
+
+  vkCreateSwapchainKHR = (PFN_vkCreateSwapchainKHR) vkGetDeviceProcAddr(m_logicalDevice, "vkCreateSwapchainKHR");
+  vkGetSwapchainImagesKHR = (PFN_vkGetSwapchainImagesKHR) vkGetDeviceProcAddr(m_logicalDevice, "vkGetSwapchainImagesKHR");
+  vkDestroySwapchainKHR = (PFN_vkDestroySwapchainKHR) vkGetDeviceProcAddr(m_logicalDevice, "vkDestroySwapchainKHR");
+  vkQueuePresentKHR = (PFN_vkQueuePresentKHR) vkGetDeviceProcAddr(m_logicalDevice, "vkQueuePresentKHR");
+
+  if( !vkCreateSwapchainKHR || !vkGetSwapchainImagesKHR || !vkDestroySwapchainKHR || !vkQueuePresentKHR)
+    throw std::runtime_error("VulkanLogicalDeviceManager::Init - failed to load swapchain functions!");
+  
 }
 
 
@@ -249,6 +263,7 @@ VkFormat VulkanLogicalDeviceManager::GetSwapChainImageFormat(){  return m_swapCh
 VkExtent2D VulkanLogicalDeviceManager::GetSwapChainExtend(){  return m_swapChainExtent;  } 
 VkQueue VulkanLogicalDeviceManager::GetGraphicsQueue(){ return m_graphicsQueue; }
 VkQueue VulkanLogicalDeviceManager::GetPresentQueue(){ return m_presentQueue; }
+VkSwapchainKHR VulkanLogicalDeviceManager::GetSwapChain(){ return m_swapChain; }
 std::vector<VkImage> VulkanLogicalDeviceManager::GetSwapChainImages(){ return *m_swapChainImages; }
 std::vector<VkImageView> VulkanLogicalDeviceManager::GetSwapChainImageViews(){ return *m_swapChainImageViews; }
 QueueFamilyIndices VulkanLogicalDeviceManager::GetQueueFamilyIndices(){ return m_queueFamilyIndexes; }

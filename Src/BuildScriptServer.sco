@@ -32,7 +32,7 @@ OpenGL/Shapes/GLShapeFactory.cpp OpenGL/Shapes/GLRect.cpp OpenGL/Shapes/GLSphere
 OpenGL/GLGraphicsEngine.cpp \
 \
 Vulkan/Core/VulkanDriver.cpp Vulkan/Core/VulkanMemory.cpp Vulkan/Core/VulkanLogicalDeviceManager.cpp  Vulkan/Core/VulkanSwapChainDetails.cpp Vulkan/Core/VulkanPhysicalDeviceSelector.cpp Vulkan/Core/VulkanUtilities.cpp  \
-Vulkan/RenderControl/VKCompositionPass.cpp Vulkan/RenderControl/VKDeferredShadingPass.cpp \
+Vulkan/RenderControl/VKCompositionPass.cpp Vulkan/RenderControl/VKDeferredShadingPass.cpp  Vulkan/RenderControl/VulkanRenderable.cpp \
 Vulkan/RenderControl/Pipelines/VKPipeline.cpp Vulkan/RenderControl/Pipelines/VKDeferredPipelines.cpp Vulkan/RenderControl/Pipelines/VulkanPrimaryCommandBuffer.cpp Vulkan/RenderControl/Pipelines/VulkanSecondaryCommandBuffer.cpp \
 Vulkan/RenderControl/Pipelines/VKCompositionPipeline.cpp \
 Vulkan/Textures/VKTextureFactory.cpp Vulkan/Textures/VKTexture.cpp Vulkan/Textures/VKCubemap.cpp \

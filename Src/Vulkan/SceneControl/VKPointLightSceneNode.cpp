@@ -5,26 +5,21 @@
 namespace SceneControl
 {
   VKPointLightSceneNode::VKPointLightSceneNode(SceneNode* a_parent, std::shared_ptr<ASphere> a_sphere, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry  )
-  : PointLightSceneNode(a_parent, a_sphere), VulkanRenderable(a_updateRegistry)
+  : PointLightSceneNode(a_parent, a_sphere)
   {
-    m_uniformBuffer = nullptr;
-    m_descSet = NULL;
+    m_vulkanRenderOperations = new VulkanPointLightRenderable(a_sphere, a_updateRegistry);
   }
   
   VKPointLightSceneNode::~VKPointLightSceneNode()
   {
-    if( m_uniformBuffer )
-      m_uniformBuffer->Free();
-    // in future - free the descSet
+    delete m_vulkanRenderOperations;
   }
   
-  void VKPointLightSceneNode::Init(const VkDescriptorSet& a_descSet, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer, const std::shared_ptr<VulkanMemoryChunk>& a_uniformBuffer2)
+  void* VKPointLightSceneNode::GetExtra()
   {
-    m_descSet = a_descSet;
-    m_uniformBuffer = a_uniformBuffer;
-    m_uniformBuffer2 = a_uniformBuffer2;
+    return reinterpret_cast<void*>(m_vulkanRenderOperations);
   }
-  
+
   void VKPointLightSceneNode::Render(glutil::MatrixStack& a_matrix ) const{}
   
   void VKPointLightSceneNode::Update(const double& a_deltaTime, bool a_dirty, const glm::mat4& a_parentAbsoluteTrans )
@@ -36,27 +31,22 @@ namespace SceneControl
     if( l_dirty )
     {
       // update the local ubo structure
-      m_ubo2.m_position =  GetPos();
+      m_vulkanRenderOperations->m_ubo2.m_position =  GetPos();
 
-      m_ubo2.m_diffuse = GetDiffuse();
-      m_ubo2.m_specular = GetSpecular();
+      m_vulkanRenderOperations->m_ubo2.m_diffuse = GetDiffuse();
+      m_vulkanRenderOperations->m_ubo2.m_specular = GetSpecular();
   
-      m_ubo2.m_constantAtt = GetConstAttenuation();
-      m_ubo2.m_linearAtt = GetLinAttenuation();
-      m_ubo2.m_quadraticAtt = GetQuadAttenuation();
+      m_vulkanRenderOperations->m_ubo2.m_constantAtt = GetConstAttenuation();
+      m_vulkanRenderOperations->m_ubo2.m_linearAtt = GetLinAttenuation();
+      m_vulkanRenderOperations->m_ubo2.m_quadraticAtt = GetQuadAttenuation();
       
+      m_vulkanRenderOperations->m_ubo.modelMatrix = m_lastAbsoluteTrans;
       // register for update
-      RegisterForUpdate();
+      m_vulkanRenderOperations->RegisterForUpdate();
     }
   }
   
-  void VKPointLightSceneNode::VulkanUpdate(char* a_mappedUBO)
-  {
-    // map the model matrix
-    memcpy(a_mappedUBO+m_uniformBuffer->GetMemoryOffset(), &m_lastAbsoluteTrans, sizeof(VertexObjectMatrices));
-    // map the point light data
-    memcpy(a_mappedUBO+m_uniformBuffer2->GetMemoryOffset(), &m_ubo2, sizeof(FragPointLight) );
-  }
+
   
   
 }

@@ -14,6 +14,8 @@
 #include <Vulkan/Textures/VKCubemap.h>
 #include <Vulkan/RenderControl/VulkanRenderable.h>
 
+#include "Common/SceneControl/TexturedSceneNode.h"
+
 #include <iostream>
 
 
@@ -52,6 +54,11 @@ RenderControl::VKDeferredShadingPass::~VKDeferredShadingPass()
 
 bool RenderControl::VKDeferredShadingPass::Init()
 {
+  vkAcquireNextImageKHR = (PFN_vkAcquireNextImageKHR) vkGetDeviceProcAddr(m_logicalDevice->GetDevice(), "vkAcquireNextImageKHR");
+  vkQueuePresentKHR = (PFN_vkQueuePresentKHR) vkGetDeviceProcAddr(m_logicalDevice->GetDevice(), "vkQueuePresentKHR");
+  if( !vkAcquireNextImageKHR || !vkQueuePresentKHR)
+    throw std::runtime_error("VKCompositionPass::Init - failed to load presentation functions!");
+
   CreateCommandPool();
   CreateSemaphores();
   CreateRenderPass();
@@ -292,7 +299,7 @@ bool RenderControl::VKDeferredShadingPass::AddRenderable(RenderControl::IRendera
 {
   if (!Exists(a_renderable))
 		{
-      VulkanRenderable* l_renderable = (VulkanRenderable*)(a_renderable);
+      
       
       // // simple geometry 
       // m_pipelines[0] = std::make_shared<VKGeometryPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_geomVert, l_geomFrag), 0, m_resolutionPart, m_viewPortSetting, 0 );
@@ -322,46 +329,46 @@ bool RenderControl::VKDeferredShadingPass::AddRenderable(RenderControl::IRendera
 			// simple color
 			if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP | EMISSION_MAP)) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP | EMISSION_MAP))
       {
-        CreateDescriptorSet(m_pipelines[6], l_renderable);
+        CreateDescriptorSet(m_pipelines[6], a_renderable);
         l_cmdBuffers = m_pipelines[6]->GetSecondaryCommandBuffers();
       }
 			else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP )) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP))
 			{
-        CreateDescriptorSet(m_pipelines[5], l_renderable);
+        CreateDescriptorSet(m_pipelines[5], a_renderable);
         l_cmdBuffers = m_pipelines[5]->GetSecondaryCommandBuffers();
       }
       else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP)) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP))
 			{
-        CreateDescriptorSet(m_pipelines[4], l_renderable);
+        CreateDescriptorSet(m_pipelines[4], a_renderable);
         l_cmdBuffers = m_pipelines[4]->GetSecondaryCommandBuffers();
       }
       else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP)) == (NORMAL_MAP | DIFFUSE_MAP))
 			{
-        CreateDescriptorSet(m_pipelines[3], l_renderable);
+        CreateDescriptorSet(m_pipelines[3], a_renderable);
         l_cmdBuffers = m_pipelines[3]->GetSecondaryCommandBuffers();
       }
       else if ((a_geometryMaterialFlags & (DIFFUSE_MAP)) == (DIFFUSE_MAP))
 			{
-        CreateDescriptorSet(m_pipelines[2], l_renderable);
+        CreateDescriptorSet(m_pipelines[2], a_renderable);
       }
       else if ((a_geometryMaterialFlags & (EMISSION_MAP)) == (EMISSION_MAP))
 			{
-        CreateDescriptorSet(m_pipelines[1], l_renderable);
+        CreateDescriptorSet(m_pipelines[1], a_renderable);
         l_cmdBuffers = m_pipelines[1]->GetSecondaryCommandBuffers();
       }
       else if ((a_geometryMaterialFlags & (SKYBOX)) == (SKYBOX))
 			{
-        CreateDescriptorSet(m_pipelines[7], l_renderable);
+        CreateDescriptorSet(m_pipelines[7], a_renderable);
         l_cmdBuffers = m_pipelines[7]->GetSecondaryCommandBuffers();
       }
       else 
 			{
-        CreateDescriptorSet(m_pipelines[0], l_renderable);
+        CreateDescriptorSet(m_pipelines[0], a_renderable);
         l_cmdBuffers = m_pipelines[0]->GetSecondaryCommandBuffers();
       }
       
-      
-      if( l_cmdBuffers.size() > 0 )
+      VulkanRenderable* l_renderable = reinterpret_cast<VulkanRenderable*>( a_renderable->GetExtra() );
+      if( l_cmdBuffers.size() > 0 && l_renderable)
         l_cmdBuffers[0]->AddMesh(l_renderable);
       
       
@@ -374,23 +381,23 @@ bool RenderControl::VKDeferredShadingPass::AddRenderable(RenderControl::IRendera
 
 void RenderControl::VKDeferredShadingPass::AddLight(RenderControl::IRenderable* a_light, const RenderControl::LightTypeFlags& a_lightType)
 {
-  VulkanRenderable* l_renderable = (VulkanRenderable*)(a_light);
+  VulkanRenderable* l_renderable =reinterpret_cast<VulkanRenderable*>( a_light->GetExtra() );
   
   switch (a_lightType)
 		{
 		case LightTypeFlags::POINT_LIGHT:
     {
-      CreateDescriptorSet(m_pipelines[8], l_renderable);
+      CreateDescriptorSet(m_pipelines[8], a_light);
     }
 		break;
 		case LightTypeFlags::SPOT_LIGHT:
 		{
-      CreateDescriptorSet(m_pipelines[8], l_renderable);
+      CreateDescriptorSet(m_pipelines[8], a_light);
     }
 		break;
 		case LightTypeFlags::DIRECTIONAL_LIGHT:
 		{
-      CreateDescriptorSet(m_pipelines[9], l_renderable);
+      CreateDescriptorSet(m_pipelines[9], a_light);
     }
 			break;
 		}
@@ -561,6 +568,7 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   // geometry sub pass
   for( unsigned int i = 0; i < 8; ++i )
   {
+    l_subpasses[i].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     l_subpasses[i].inputAttachmentCount = 0;
     l_subpasses[i].colorAttachmentCount = l_colourAttachmentRefs.size();
     l_subpasses[i].pColorAttachments = l_colourAttachmentRefs.data();
@@ -569,6 +577,7 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   // light subpass
   for( unsigned int i= 8; i < 10; ++i)
   {
+    l_subpasses[i].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     l_subpasses[i].inputAttachmentCount = l_lightInputAttachmentRefs.size();
     l_subpasses[i].pInputAttachments = l_lightInputAttachmentRefs.data();
     l_subpasses[i].colorAttachmentCount = 1;
@@ -765,7 +774,7 @@ void RenderControl::VKDeferredShadingPass::CreateCommandBuffers()
 }
 
 
-void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, VulkanRenderable* a_renderable)
+void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, IRenderable* a_renderable)
 {
   VkDescriptorSetLayout l_layout = a_pipeline->GetDescriptorSetLayout();
   VkDescriptorSetAllocateInfo allocInfo = {};
@@ -786,7 +795,7 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
     l_uboMemBuffer[0] = m_memory->CreateUniformBuffer( l_uboSizes[0] );
   if( l_uboSizes.size() > 1 )
     l_uboMemBuffer[1] = m_memory->CreateUniformBuffer( l_uboSizes[1] );
-  a_renderable->Init(l_descSet, l_uboMemBuffer[0], l_uboMemBuffer[1] );
+  reinterpret_cast<VulkanRenderable*>( a_renderable->GetExtra() )->Init(l_descSet, l_uboMemBuffer[0], l_uboMemBuffer[1] );
   
   
   std::vector< VkWriteDescriptorSet > l_descriptorSetWrites;
@@ -842,33 +851,30 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
     }
     else if( l_bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER )
     {
-      std::shared_ptr<VKATexture> l_texture = a_renderable->GetVKTexture(l_imagesIndex);
-      
-      VkDescriptorImageInfo l_imageInfo = {};
+      SceneControl::TexturedSceneNode* l_texturedSceneNode = reinterpret_cast<SceneControl::TexturedSceneNode*>(a_renderable);
+      std::shared_ptr<ITexture> l_texture = l_texturedSceneNode->GetTexture(l_imagesIndex);
       if( l_texture )
       {
-        l_imageInfo.sampler = l_texture->GetSampler()->m_sampler; // VkSampler                      
-        l_imageInfo.imageView = l_texture->GetImage()->m_imageView;  // VkImageView
-        l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
-      }
-      else
-        continue;
+        VKTexture* l_tempTexture = reinterpret_cast<VKTexture*>(l_texture.get());
+        VkDescriptorImageInfo l_imageInfo = {};
         
+        l_imageInfo.sampler = l_tempTexture->GetSampler()->m_sampler; // VkSampler                      
+        l_imageInfo.imageView = l_tempTexture->GetImage()->m_imageView;  // VkImageView
+        l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
+        
+        VkWriteDescriptorSet descriptorWrite = {};
+        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet = l_descSet;
+        descriptorWrite.dstBinding = l_bindings[i].binding;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pBufferInfo = nullptr;
+        descriptorWrite.pImageInfo = &l_imageInfo;
 
-      VkWriteDescriptorSet descriptorWrite = {};
-      descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      descriptorWrite.dstSet = l_descSet;
-      descriptorWrite.dstBinding = l_bindings[i].binding;
-      descriptorWrite.dstArrayElement = 0;
-      descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      descriptorWrite.descriptorCount = 1;
-      descriptorWrite.pBufferInfo = nullptr;
-      descriptorWrite.pImageInfo = &l_imageInfo;
-      
-      l_descriptorSetWrites.push_back(descriptorWrite);
-      l_imagesIndex++;
-    
-      
+        l_descriptorSetWrites.push_back(descriptorWrite);
+        l_imagesIndex++;
+      }  
     }
     else if( l_bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT )
     {

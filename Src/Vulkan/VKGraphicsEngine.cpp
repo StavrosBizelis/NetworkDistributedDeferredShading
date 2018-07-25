@@ -21,7 +21,8 @@ VKGraphicsEngine::VKGraphicsEngine(const glm::vec2& a_resolution, const glm::vec
   {
     
     std::vector<const char*> l_requiredInstanceExtensions = 
-    {"VK_KHR_win32_surface", "VK_KHR_surface"};
+    {"VK_KHR_win32_surface", "VK_KHR_surface" };
+    
     
     m_driver = std::make_unique<VulkanDriver>(l_requiredInstanceExtensions);
     
@@ -45,6 +46,7 @@ void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
   
   // Init vulkan driver
   try{ 
+  
     m_driver->Init(m_resolutionPart);
   }
   catch(std::runtime_error& e)
@@ -70,7 +72,10 @@ void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
                                                              m_driver->GetLogicalDeviceManager()->GetGraphicsQueue(),m_driver->GetLogicalDeviceManager()->GetPresentQueue(), m_driver->GetLogicalDeviceManager()->GetQueueFamilyIndices(),
                                                              m_resolution, m_sceneManager, m_shapeFactory, m_textureFactory, a_subparts);
     IFDBG( std::cout << "m_compositionPass Created \n"; );
-    // m_compositionPass->Init();
+
+    m_compositionPass->Init();
+    
+    IFDBG( std::cout << "m_compositionPass Initialized \n"; );
     // IFDBG( std::cout << "m_compositionPass Initialized \n"; );
     // m_compositionPass->SetSceenOutputAttachment(0);
     // m_renderPassPipeline->PushBack(m_compositionPass);
@@ -98,7 +103,7 @@ void VKGraphicsEngine::Update(const double& a_deltaTime)
     // update scene objects
     m_sceneManager->UpdateScene(a_deltaTime);
   
-    // update vulkan Renderables uniform buffer
+    // // update vulkan Renderables uniform buffer
     char* l_mappedBuffer = nullptr;
     std::shared_ptr< VulkanMemory > l_memory = m_driver->GetLogicalDeviceManager()->GetMemoryManager();
     
@@ -109,6 +114,7 @@ void VKGraphicsEngine::Update(const double& a_deltaTime)
     {
       (*l_iter)->VulkanUpdate((char*)l_data);
     }
+    
     // map global data too
     if(m_compositionPass) static_cast<RenderControl::VKCompositionPass*>(m_compositionPass)->VulkanUpdate((char*)l_data);
     else if(m_deferredShadingPass) static_cast<RenderControl::VKDeferredShadingPass*>(m_deferredShadingPass)->VulkanUpdate((char*)l_data);
@@ -116,17 +122,13 @@ void VKGraphicsEngine::Update(const double& a_deltaTime)
     l_memory->GetMemoryPool(3)->UnMapMemory();
     l_registry->clear();
     
-    
-  // // // // // render pass -> re-record if needed -> render 
-  // // // // // {}
-  
-  // submit queues
   }
+    
+  // // submit queues
   if(m_compositionPass)
     m_compositionPass->Render();
   else if(m_deferredShadingPass)
     m_deferredShadingPass->Render();
-  
   
 }
 

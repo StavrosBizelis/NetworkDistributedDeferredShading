@@ -7,6 +7,9 @@
 #include "Vulkan/RenderControl/VKCompositionPass.h"
 #include <iostream>
 #include "Vulkan/RenderControl/Pipelines/VKCompositionPipeline.h"
+#include "Vulkan/Textures/VKTexture.h"
+#include "Common/SceneControl/TexturedSceneNode.h"
+#include "Vulkan/SceneControl/VKMeshSceneNode.h"
 
 #include "Common/Core/MyUtilities.h"
 #include "Vulkan/Core/VulkanUtilities.h"
@@ -21,7 +24,7 @@ RenderControl::VKCompositionPass::VKCompositionPass(const std::shared_ptr<Vulkan
                                                     const glm::vec2 &a_resolution, SceneControl::SceneManager *a_scnManager, IShapeFactory *a_shapeFactory, 
                                                     ITextureFactory* a_textFactory, const unsigned int &a_subparts)
   :ACompositionPass(a_resolution, a_scnManager, a_shapeFactory,a_textFactory, a_subparts),
-    m_logicalDevice(a_device), m_physicalDevice(a_physicalDevice), m_memory(a_memory), m_graphicsQueue(a_graphicsQueue), m_presentQueue(a_presentQueue), m_indices(a_indices)
+    m_logicalDevice(a_device), m_physicalDevice(a_physicalDevice), m_memory(a_memory), m_graphicsQueue(a_graphicsQueue), m_presentQueue(a_presentQueue), m_indices(a_indices), m_currentFrame(0)
 {
 
 }
@@ -62,7 +65,11 @@ RenderControl::VKCompositionPass::SetMaterialManager(MaterialControl::IMaterialM
 
 bool RenderControl::VKCompositionPass::Init()
 {
-  
+  vkAcquireNextImageKHR = (PFN_vkAcquireNextImageKHR) vkGetDeviceProcAddr(m_logicalDevice->GetDevice(), "vkAcquireNextImageKHR");
+  vkQueuePresentKHR = (PFN_vkQueuePresentKHR) vkGetDeviceProcAddr(m_logicalDevice->GetDevice(), "vkQueuePresentKHR");
+  if( !vkAcquireNextImageKHR || !vkQueuePresentKHR)
+    throw std::runtime_error("VKCompositionPass::Init - failed to load presentation functions!");
+
   CreateCommandPool();
   CreateSemaphores();
   CreateRenderPass();
@@ -75,54 +82,85 @@ bool RenderControl::VKCompositionPass::Init()
 
   m_uboMemBuffer = m_memory->CreateUniformBuffer( sizeof(VertexViewProjMatrices) );
   
+  std::cout << "m_subpartRects.size() " << m_subpartRects.size() << std::endl;
+  // add the rectancles to the appropriate pipelines
+  for( unsigned int i = 0; i < m_subpartRects.size(); ++i)
+  {    
+    CreateDescriptorSet(m_pipelines[0], m_subpartRects[i]);
+    std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > l_cmdBuffers;
+    l_cmdBuffers = m_pipelines[0]->GetSecondaryCommandBuffers();
+    
+    l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_subpartRects[i]->GetExtra() )  );
+  }
+  
   return true;
 }
 
 void RenderControl::VKCompositionPass::Render()
 {
-  // glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo);
-  // glDrawBuffer(GL_COLOR_ATTACHMENT0 );
-  // glViewport(0, 0, (GLsizei)m_resolution.x, (GLsizei)m_resolution.y);
+  uint32_t l_imageIndex;
+  VkResult result = vkAcquireNextImageKHR(m_logicalDevice->GetDevice(), m_logicalDevice->GetSwapChain(), std::numeric_limits<uint64_t>::max(), m_imageAvailableSemaphore[m_currentFrame], VK_NULL_HANDLE, &l_imageIndex);
+  if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+       std::cout << "VKCompositionPass::Render() - requires reinitialization\n";
+      // ReInit();
+      // return;
+  }
+  else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+    throw std::runtime_error("VKCompositionPass::Render() - failed to acquire swap chain image!");
+  }
 
-  // glutil::MatrixStack l_matrixStack;
-  // l_matrixStack.SetIdentity();
   
-  // glDisable(GL_DEPTH_TEST);
+  VkSubmitInfo submitInfo = {};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+  VkSemaphore waitSemaphores[] = { m_imageAvailableSemaphore[m_currentFrame] };
+  VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = waitSemaphores;
+  submitInfo.pWaitDstStageMask = waitStages;
+
+
+  m_primaryCmdBuffer->Update();
   
-  // m_material->UseProgram();
-  // m_material->SetUniform("matrices.projMatrix", m_camera->GetOrthographicProjectionMatrix() );
+  submitInfo.commandBufferCount = 1;
+  VkCommandBuffer l_cmdBuffer[] = { m_primaryCmdBuffer->GetNextCommandBufferHandle() };
+  submitInfo.pCommandBuffers = l_cmdBuffer;
+
+  VkSemaphore signalSemaphores[] = { m_renderFinishedSemaphore[m_currentFrame] };
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = signalSemaphores;
+
+  if (vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
+    throw std::runtime_error("VKCompositionPass::Render() - failed to submit draw command buffer!");
+
+  VkPresentInfoKHR presentInfo = {};
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = signalSemaphores;
+
+  VkSwapchainKHR swapChains[] = {m_logicalDevice->GetSwapChain()};
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = swapChains;
+
+  presentInfo.pImageIndices = &l_imageIndex;
+
+  result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
+  {
+      //ReInit();
+    std::cout << "VKCompositionPass::Render() - requires reinitialization\n";
+  } 
+  else if (result != VK_SUCCESS) 
+    throw std::runtime_error("VKCompositionPass::Render() - failed to present swap chain image!");
   
-  // for( unsigned int i =0; i < m_subpartRects.size(); ++i)
-    // m_subpartRects[i]->Render(l_matrixStack);
   
-  // glEnable(GL_DEPTH_TEST);
+  // vkQueueWaitIdle(m_presentQueue);
+  m_currentFrame = (m_currentFrame + 1) % m_maxFramesInFlight;
 }
 
-void RenderControl::VKCompositionPass::OutputOnScreen()
-{
-  // unsigned int l_actualAttachment = GL_COLOR_ATTACHMENT0;
-  // unsigned int l_actualBit = GL_COLOR_BUFFER_BIT;
-
-
-  // /* We are going to blit into the window (default framebuffer)                     */
-  // glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-  // glDrawBuffer(GL_BACK);              /* Use backbuffer as color dst.         */
-  // //glClearColor(0.f, 0.f, 0.f, 0.0f);
-  // //glClearDepth(1.0f);
-  // //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-  // /* Read from your FBO */
-  // glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo);
-  // glReadBuffer(l_actualAttachment); /* Use Color Attachment n as color src. */
-
-                    // /* Copy the color and depth buffer from your FBO to the default framebuffer       */
-  // glBlitFramebuffer(0, 0, (GLint)m_resolution.x, (GLint)m_resolution.y,
-    // 0, 0, (GLint)m_resolution.x, (GLint)m_resolution.y,
-    // l_actualBit, GL_LINEAR);
-  // // return to default 
-  // glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-}
+void RenderControl::VKCompositionPass::OutputOnScreen(){}
 
 
 void RenderControl::VKCompositionPass::Clear()
@@ -139,10 +177,9 @@ if( m_descriptorPool )
 
 void RenderControl::VKCompositionPass::VulkanUpdate( char* a_mappedBuffer )
 {
-  
-  m_primaryCmdBuffer->Update();
-  
   // copy global camera matrices and screen resolution for lights fragments shaders
+  m_globalsUbo.projMatrix = *m_camera->GetOrthographicProjectionMatrix();
+  m_globalsUbo.viewMatrix = m_camera->GetViewMatrix();
   memcpy(a_mappedBuffer+m_uboMemBuffer->GetMemoryOffset(), &m_globalsUbo, sizeof(VertexViewProjMatrices) );
 }
 
@@ -162,90 +199,74 @@ void RenderControl::VKCompositionPass::CreateSemaphores()
 {
   VkSemaphoreCreateInfo semaphoreInfo = {};
   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-  if (vkCreateSemaphore(m_logicalDevice->GetDevice(), &semaphoreInfo, nullptr, &m_imageAvailableSemaphore) != VK_SUCCESS ||
-      vkCreateSemaphore(m_logicalDevice->GetDevice(), &semaphoreInfo, nullptr, &m_renderFinishedSemaphore) != VK_SUCCESS) 
+  m_imageAvailableSemaphore.resize(m_maxFramesInFlight);
+  m_renderFinishedSemaphore.resize(m_maxFramesInFlight);
+  for( unsigned int i = 0; i < m_maxFramesInFlight; ++i)
   {
-    throw std::runtime_error("failed to create semaphores!");
+    vkCreateSemaphore(m_logicalDevice->GetDevice(), &semaphoreInfo, nullptr, &m_imageAvailableSemaphore[i]);
+    vkCreateSemaphore(m_logicalDevice->GetDevice(), &semaphoreInfo, nullptr, &m_renderFinishedSemaphore[i]);
   }
+  
 }
 
 void RenderControl::VKCompositionPass::CreateRenderPass()
 {
-  // init attachments
-  // create the attachments image
-  m_swapChainImages = m_logicalDevice->GetSwapChainImages();
-  m_swapChainImageViews = m_logicalDevice->GetSwapChainImageViews();
-  if( m_swapChainImages.size() != m_swapChainImageViews.size() )
-      throw std::runtime_error("swap chain images and image views not of the same size");
+  VkAttachmentDescription colorAttachment = {};
+  colorAttachment.format = m_logicalDevice->GetSwapChainImageFormat();
+  colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+  VkAttachmentReference colorAttachmentRef = {};
+  colorAttachmentRef.attachment = 0;
+  colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  VkSubpassDescription subpass = {};
+  subpass.inputAttachmentCount = 0;
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments = &colorAttachmentRef;
 
   
-  // create attachments
-  std::vector< VkAttachmentDescription > l_attachments(m_swapChainImages.size());
-  for( unsigned int i = 0; i < m_swapChainImages.size(); ++i)
-  {
-    l_attachments[i].format = m_logicalDevice->GetSwapChainImageFormat();
-    l_attachments[i].samples = VK_SAMPLE_COUNT_1_BIT;
-    l_attachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    l_attachments[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    l_attachments[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    l_attachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    
-    l_attachments[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    l_attachments[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // dont care since they are not going to be used for anything else
+  VkSubpassDependency l_dependency1;
+  l_dependency1.srcSubpass = VK_SUBPASS_EXTERNAL;
+  l_dependency1.dstSubpass = 0;
+  l_dependency1.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+  l_dependency1.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  l_dependency1.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  l_dependency1.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  l_dependency1.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+  
+  VkSubpassDependency l_dependency2;
+  l_dependency2.srcSubpass = 0;
+  l_dependency2.dstSubpass = VK_SUBPASS_EXTERNAL;
+  l_dependency2.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  l_dependency2.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+  l_dependency2.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  l_dependency2.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  l_dependency2.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+  
+  std::vector< VkSubpassDependency> l_dependencies = {l_dependency1, l_dependency2};
+  
+  
+  VkRenderPassCreateInfo renderPassInfo = {};
+  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+  renderPassInfo.attachmentCount = 1;
+  renderPassInfo.pAttachments = &colorAttachment;
+  renderPassInfo.subpassCount = 1;
+  renderPassInfo.pSubpasses = &subpass;
+  renderPassInfo.dependencyCount = l_dependencies.size();
+  renderPassInfo.pDependencies = l_dependencies.data();
+  
+  
+  if (vkCreateRenderPass(m_logicalDevice->GetDevice(), &renderPassInfo, nullptr, &m_renderPass) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create render pass!");
   }
-
-  // create attachment references 
-  // geometry sub pass references
-  std::vector <VkAttachmentReference> l_colourAttachmentRefs(1);
-  for( unsigned int i = 0; i < l_colourAttachmentRefs.size(); ++i)
-  {
-    l_colourAttachmentRefs[i].attachment = i;
-    l_colourAttachmentRefs[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  }
-
-  
-  // create subpasses
-  VkSubpassDescription l_subpass;
-  l_subpass.inputAttachmentCount = 0;
-  l_subpass.colorAttachmentCount = l_colourAttachmentRefs.size();
-  l_subpass.pColorAttachments = l_colourAttachmentRefs.data();
-  l_subpass.pDepthStencilAttachment = (VkAttachmentReference*)VK_ATTACHMENT_UNUSED;
-
-
-  std::vector< VkSubpassDependency> l_dependencies(2);
-  
-  
-  l_dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-  l_dependencies[0].dstSubpass = 0;
-  l_dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-  l_dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  l_dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-  l_dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  l_dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-  
-  l_dependencies[1].srcSubpass = 0;
-  l_dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-  l_dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  l_dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-  l_dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  l_dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-  l_dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-  
-
-  
-  VkRenderPassCreateInfo l_renderPassInfo = {};
-  l_renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  l_renderPassInfo.attachmentCount = l_attachments.size();
-  l_renderPassInfo.pAttachments = l_attachments.data();
-  l_renderPassInfo.subpassCount = 1;
-  l_renderPassInfo.pSubpasses = &l_subpass;
-  l_renderPassInfo.dependencyCount = l_dependencies.size();
-  l_renderPassInfo.pDependencies = l_dependencies.data();
-  
-  if (vkCreateRenderPass(m_logicalDevice->GetDevice(), &l_renderPassInfo, nullptr, &m_renderPass) != VK_SUCCESS) 
-    throw std::runtime_error("VKCompositionPass::Init() - failed to create render pass!");
 }
 
 void RenderControl::VKCompositionPass::CreateFramebuffer()
@@ -263,7 +284,7 @@ void RenderControl::VKCompositionPass::CreateFramebuffer()
     framebufferInfo.layers = 1;
 
     if (vkCreateFramebuffer(m_logicalDevice->GetDevice(), &framebufferInfo, nullptr, &m_frameBuffer ) != VK_SUCCESS)
-      throw std::runtime_error("VKCompositionPass::Init() - failed to create framebuffer!");
+      throw std::runtime_error("VKCompositionPass::CreateFramebuffer() - failed to create framebuffer!");
 }
 
 void RenderControl::VKCompositionPass::CreatePipelines()
@@ -322,7 +343,7 @@ void RenderControl::VKCompositionPass::CreateCommandBuffers()
     m_primaryCmdBuffer->AddPipeline(l_pipeline);
 }
 
-void RenderControl::VKCompositionPass::CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, VulkanRenderable* a_renderable)
+void RenderControl::VKCompositionPass::CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, IRenderable* a_renderable)
 {
   VkDescriptorSetLayout l_layout = a_pipeline->GetDescriptorSetLayout();
   VkDescriptorSetAllocateInfo allocInfo = {};
@@ -343,8 +364,8 @@ void RenderControl::VKCompositionPass::CreateDescriptorSet(const std::shared_ptr
     l_uboMemBuffer[0] = m_memory->CreateUniformBuffer( l_uboSizes[0] );
   if( l_uboSizes.size() > 1 )
     l_uboMemBuffer[1] = m_memory->CreateUniformBuffer( l_uboSizes[1] );
-  a_renderable->Init(l_descSet, l_uboMemBuffer[0], l_uboMemBuffer[1] );
   
+  reinterpret_cast<VulkanRenderable*>( a_renderable->GetExtra() )->Init(l_descSet, l_uboMemBuffer[0], l_uboMemBuffer[1] );
   
   std::vector< VkWriteDescriptorSet > l_descriptorSetWrites;
   // get appropriate size of ubo from pipeline - 
@@ -393,31 +414,30 @@ void RenderControl::VKCompositionPass::CreateDescriptorSet(const std::shared_ptr
     }
     else if( l_bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER )
     {
-      std::shared_ptr<VKATexture> l_texture = a_renderable->GetVKTexture(l_imagesIndex);
-      
-      VkDescriptorImageInfo l_imageInfo = {};
+      SceneControl::TexturedSceneNode* l_texturedSceneNode = reinterpret_cast<SceneControl::TexturedSceneNode*>(a_renderable);
+      std::shared_ptr<ITexture> l_texture = l_texturedSceneNode->GetTexture(l_imagesIndex);
       if( l_texture )
       {
-        l_imageInfo.sampler = l_texture->GetSampler()->m_sampler; // VkSampler                      
-        l_imageInfo.imageView = l_texture->GetImage()->m_imageView;  // VkImageView
-        l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
-      }
-      else
-        continue;
+        VKTexture* l_tempTexture = reinterpret_cast<VKTexture*>(l_texture.get());
+        VkDescriptorImageInfo l_imageInfo = {};
         
+        l_imageInfo.sampler = l_tempTexture->GetSampler()->m_sampler; // VkSampler                      
+        l_imageInfo.imageView = l_tempTexture->GetImage()->m_imageView;  // VkImageView
+        l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
+        
+        VkWriteDescriptorSet descriptorWrite = {};
+        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet = l_descSet;
+        descriptorWrite.dstBinding = l_bindings[i].binding;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pBufferInfo = nullptr;
+        descriptorWrite.pImageInfo = &l_imageInfo;
 
-      VkWriteDescriptorSet descriptorWrite = {};
-      descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      descriptorWrite.dstSet = l_descSet;
-      descriptorWrite.dstBinding = l_bindings[i].binding;
-      descriptorWrite.dstArrayElement = 0;
-      descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      descriptorWrite.descriptorCount = 1;
-      descriptorWrite.pBufferInfo = nullptr;
-      descriptorWrite.pImageInfo = &l_imageInfo;
-      
-      l_descriptorSetWrites.push_back(descriptorWrite);
-      l_imagesIndex++;
+        l_descriptorSetWrites.push_back(descriptorWrite);
+        l_imagesIndex++;
+      }
     }
     
   }

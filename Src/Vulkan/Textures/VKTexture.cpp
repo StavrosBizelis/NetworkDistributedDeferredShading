@@ -5,7 +5,7 @@
  *  DESCR: 
  ***********************************************************************/
 #include "Vulkan/Textures/VKTexture.h"
-
+#include <iostream>
 /***********************************************************************
  *  Method: VKTexture::VKTexture
  *  Params: 
@@ -36,6 +36,7 @@ VKTexture::~VKTexture()
 void
 VKTexture::CreateFromData(char *data, int width, int height, int bpp, bool generateMipMaps)
 {
+  
   UpdateData(data, width, height, bpp, generateMipMaps);
   
   m_sampler= std::make_shared<VulkanSampler>( m_memory->GetLogicalDevice() );
@@ -69,6 +70,7 @@ VKTexture::UpdateData(char *data, int width, int height, int bpp, bool generateM
   {
     if( m_image )
       m_image->Free();
+    std::cout << "BPP " << bpp <<"\n"; 
     m_image = m_memory->CreateMaterialTexture(data, width, height, format);
   }
   

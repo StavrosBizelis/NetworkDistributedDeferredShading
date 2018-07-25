@@ -11,7 +11,7 @@
  *  Params: 
  * Effects: 
  */
-VKSphere::VKSphere(const std::shared_ptr<VulkanMemory>& a_memory) : ASphere(), m_memory(a_memory), m_vkVertices(nullptr), m_vkIndices(nullptr)
+VKSphere::VKSphere(const std::shared_ptr<VulkanMemory>& a_memory) : ASphere(), m_memory(a_memory), m_vulkanShape(nullptr)
 {
 }
 
@@ -51,10 +51,8 @@ VKSphere::Render()
 void
 VKSphere::Release()
 {
-  if( m_vkVertices )
-    m_vkVertices->Free();
-  if( m_vkIndices )
-    m_vkIndices->Free();
+  if( m_vulkanShape )
+    delete m_vulkanShape;
 }
 
 
@@ -70,9 +68,10 @@ VKSphere::Create()
   ASphere::Create();
 
   // upload data to the gpu
-  m_vkVertices = m_memory->CreateVertexBuffer( (char*)m_vertices.data(), m_vertices.size() * sizeof(Vertex) );
-  m_vkIndices = m_memory->CreateIndexBuffer( (char*)m_indices.data(), m_indices.size() * sizeof(unsigned int) );
+  std::shared_ptr<VulkanMemoryChunk> l_vkVertices = m_memory->CreateVertexBuffer( (char*)m_vertices.data(), m_vertices.size() * sizeof(Vertex) );
+  std::shared_ptr<VulkanMemoryChunk> l_vkIndices = m_memory->CreateIndexBuffer( (char*)m_indices.data(), m_indices.size() * sizeof(unsigned int) );
   
+  m_vulkanShape = new VKShape(m_memory, {l_vkVertices}, {l_vkIndices}, {m_indices.size()});
 
 	// VKsizei stride = 2 * sizeof(glm::vec3) + sizeof(glm::vec2);
 

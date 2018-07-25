@@ -11,7 +11,7 @@
  *  Params: 
  * Effects: 
  */
-VKCube::VKCube(const std::shared_ptr<VulkanMemory>& a_memory) :ACube(), m_memory(a_memory), m_vkVertices(nullptr), m_vkIndices(nullptr)
+VKCube::VKCube(const std::shared_ptr<VulkanMemory>& a_memory) :ACube(), m_memory(a_memory), m_vulkanShape(nullptr)
 {
 }
 
@@ -55,10 +55,8 @@ VKCube::Render()
 void
 VKCube::Release()
 {
-  if( m_vkVertices )
-    m_vkVertices->Free();
-  if( m_vkIndices )
-    m_vkIndices->Free();
+  if( m_vulkanShape )
+    delete m_vulkanShape;
 }
 
 
@@ -81,11 +79,11 @@ VKCube::Create()
                                          12,13,14, 14,13,15, 
                                          16,17,18, 18,17,19, 
                                          20,21,22, 22,21,23 };
-  m_indicesCount = l_indices.size();
   // upload data to the gpu
-  m_vkVertices = m_memory->CreateVertexBuffer( (char*)m_vertices.data(), m_vertices.size() * sizeof(Vertex) );
-  m_vkIndices = m_memory->CreateIndexBuffer( (char*)l_indices.data(), l_indices.size() * sizeof(unsigned int) );
+  std::shared_ptr<VulkanMemoryChunk> l_vkVertices = m_memory->CreateVertexBuffer( (char*)m_vertices.data(), m_vertices.size() * sizeof(Vertex) );
+  std::shared_ptr<VulkanMemoryChunk> l_vkIndices = m_memory->CreateIndexBuffer( (char*)l_indices.data(), l_indices.size() * sizeof(unsigned int) );
   
+  m_vulkanShape = new VKShape(m_memory, {l_vkVertices}, {l_vkIndices}, {l_indices.size()});
   
   // // Set the vertex attribute locations
 	// VKsizei stride = 2 * sizeof(glm::vec3) + sizeof(glm::vec2);

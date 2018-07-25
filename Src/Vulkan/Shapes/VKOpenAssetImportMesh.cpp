@@ -9,10 +9,11 @@
 
 
 #include <windows.h>
-VKOpenAssetImportMesh::MeshEntry::MeshEntry(std::shared_ptr<VulkanMemory> a_memory) : m_memory(a_memory), m_vkVertices(nullptr), m_vkIndices(nullptr)
+VKOpenAssetImportMesh::MeshEntry::MeshEntry(std::shared_ptr<VulkanMemory> a_memory) : m_memory(a_memory)
 {   
-    NumIndices  = 0;
-    MaterialIndex = INVALID_MATERIAL;
+  
+  NumIndices  = 0;
+  MaterialIndex = INVALID_MATERIAL;
 };
 
 VKOpenAssetImportMesh::MeshEntry::~MeshEntry()
@@ -22,12 +23,7 @@ VKOpenAssetImportMesh::MeshEntry::~MeshEntry()
 
     // // // // // // // // // if (ibo != INVALID_OVK_VALUE)
         // // // // // // // // // VKDeleteBuffers(1, &ibo);
-      
-  if( m_vkVertices )
-    m_vkVertices->Free();
-  if( m_vkIndices )
-    m_vkIndices->Free();
-      
+    
 }
 
 void VKOpenAssetImportMesh::MeshEntry::Init(const std::vector<Vertex>& Vertices,
@@ -52,7 +48,7 @@ void VKOpenAssetImportMesh::MeshEntry::Init(const std::vector<Vertex>& Vertices,
 
 
 
-VKOpenAssetImportMesh::VKOpenAssetImportMesh( const std::shared_ptr<VulkanMemory>& a_memory ) : AOpenAssetImportMesh(), m_memory(a_memory){}
+VKOpenAssetImportMesh::VKOpenAssetImportMesh( const std::shared_ptr<VulkanMemory>& a_memory ) : AOpenAssetImportMesh(), m_memory(a_memory), m_vulkanShape( nullptr ){}
 
 /*
  *  Method: VKOpenAssetImportMesh::Load
@@ -159,6 +155,9 @@ VKOpenAssetImportMesh::Release()
     // // // // // // // // // // // // // // // // VKDeleteVertexArrays(1, &m_vao);
     // // // // // // // // // // // // // // // // m_vao = 0;
   // // // // // // // // // // // // // // // // }
+  if( m_vulkanShape )
+    delete m_vulkanShape;
+  
 }
 
 bool VKOpenAssetImportMesh::InitFromScene(const aiScene* pScene, const std::string& Filename)
@@ -175,6 +174,18 @@ bool VKOpenAssetImportMesh::InitFromScene(const aiScene* pScene, const std::stri
     const aiMesh* paiMesh = pScene->mMeshes[i];
     InitMesh(i, paiMesh);
   }
+  // init shape
+  
+  std::vector<std::shared_ptr<VulkanMemoryChunk> > l_vkVertices;
+  std::vector<std::shared_ptr<VulkanMemoryChunk> > l_vkIndices;
+  std::vector<unsigned int> l_indicesCount;
+  for (unsigned int i = 0 ; i < m_Entries.size() ; i++)
+  {
+    l_vkVertices.push_back(m_Entries[i].m_vkVertices);
+    l_vkIndices.push_back(m_Entries[i].m_vkIndices);
+    l_indicesCount.push_back(m_Entries[i].NumIndices);
+  }
+  m_vulkanShape = new VKShape(m_memory, l_vkVertices, l_vkIndices, l_indicesCount);
 
   return InitMaterials(pScene, Filename);
 }
@@ -243,7 +254,7 @@ bool VKOpenAssetImportMesh::InitMaterials(const aiScene* pScene, const std::stri
         if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) 
         {
           std::string FullPath = Dir + "\\" + Path.data;
-          m_Textures[i] = std::make_shared<GLTexture>();
+          m_Textures[i] = std::make_shared<VKTexture>(m_memory);
           if (!m_Textures[i]->Load(FullPath, true)) {
             MessageBox(NULL, FullPath.c_str(), "Error loading mesh texture", MB_ICONHAND);
             // delete m_Textures[i];
@@ -262,7 +273,7 @@ bool VKOpenAssetImportMesh::InitMaterials(const aiScene* pScene, const std::stri
         aiColor3D color (0.f,0.f,0.f);
         pMaterial->Get(AI_MATKEY_COLOR_DIFFUSE,color);
 
-        m_Textures[i] = std::make_shared<GLTexture>();
+        m_Textures[i] = std::make_shared<VKTexture>(m_memory);
         char data[3];
         data[0] = (char) (color[2]*255);
         data[1] = (char) (color[1]*255);

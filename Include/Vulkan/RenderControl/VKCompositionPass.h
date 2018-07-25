@@ -7,7 +7,7 @@
 #include <Vulkan/Core/VulkanSwapChainDetails.h>
 #include "Vulkan/RenderControl/UniformBufferObjects.h"
 #include "Vulkan/RenderControl/Pipelines/VKPipeline.h"
-#include "Vulkan/RenderControl/VulkanRenderable.h"
+
 #include "Vulkan/RenderControl/Pipelines/VulkanPrimaryCommandBuffer.h"
 namespace RenderControl
 {
@@ -45,8 +45,11 @@ namespace RenderControl
     VkFramebuffer m_frameBuffer;
     VkCommandPool m_commandPool;
     // semaphores for the rendering process
-    VkSemaphore m_imageAvailableSemaphore;
-    VkSemaphore m_renderFinishedSemaphore;
+    std::vector<VkSemaphore> m_imageAvailableSemaphore;
+    std::vector<VkSemaphore> m_renderFinishedSemaphore;
+    const unsigned int m_maxFramesInFlight = 2;
+    unsigned int m_currentFrame;
+    
     
     // VulkanFramebuffer m_frameBuffer;
     std::shared_ptr<VulkanPrimaryCommandBuffer> m_primaryCmdBuffer;
@@ -59,13 +62,16 @@ namespace RenderControl
     void CreateDescriptorPool();
     void CreateCommandBuffers();
     
-    void CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, VulkanRenderable* a_renderable); // descriptor sets will be created and allocated on the fly as objects are introduced to the VKDeferredShadingPass
+    void CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, IRenderable* a_renderable); // descriptor sets will be created and allocated on the fly as objects are introduced to the VKDeferredShadingPass
 
     
     std::vector< std::shared_ptr<VKPipeline> > m_pipelines;
     VkDescriptorPool m_descriptorPool;
     
     void Clear();
+    
+    PFN_vkAcquireNextImageKHR vkAcquireNextImageKHR;
+    PFN_vkQueuePresentKHR vkQueuePresentKHR;
     
 	public:
 		VKCompositionPass(const std::shared_ptr<VulkanLogicalDeviceManager>& a_device, const VkPhysicalDevice& a_physicalDevice, const std::shared_ptr<VulkanMemory>& a_memory,

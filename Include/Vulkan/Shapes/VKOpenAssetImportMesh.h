@@ -24,14 +24,14 @@
 
 #include "Common/Shapes/AOpenAssetImportMesh.h"
 #include "Vulkan/Shapes/VKShape.h"
-#include "OpenGL/Textures/GLTexture.h"
+#include "Vulkan/Textures/VKTexture.h"
 #include "Vulkan/Core/VulkanMemory.h"
 
 
 
-class VKOpenAssetImportMesh : public AOpenAssetImportMesh, public VKShape
+class VKOpenAssetImportMesh : public AOpenAssetImportMesh
 {
-public:
+  public:
   VKOpenAssetImportMesh( const std::shared_ptr<VulkanMemory>& a_memory );
   ~VKOpenAssetImportMesh(){ Clear(); }  
   virtual bool Load(const std::string& Filename);
@@ -39,23 +39,21 @@ public:
 
 	virtual std::shared_ptr<ITexture> GetTexture();
 
-  virtual unsigned int GetMeshesCount(){ return m_Entries.size();}
-  virtual std::shared_ptr<VulkanMemoryChunk> GetVertices(const unsigned int& a_index){ if( a_index >= m_Entries.size()) return nullptr; return m_Entries[a_index].m_vkVertices; }
-  virtual std::shared_ptr<VulkanMemoryChunk> GetIndices(const unsigned int& a_index){ if( a_index >= m_Entries.size()) return nullptr; return m_Entries[a_index].m_vkIndices; }
-  virtual unsigned int GetIndicesCount(const unsigned int& a_index){ if( a_index >= m_Entries.size()) return 0; return m_Entries[a_index].NumIndices; }
-
   
   virtual void Create();
   virtual void Render();
 	virtual void Release();
   void Clear();
   
+  virtual void* GetExtra() {return reinterpret_cast<void*>(m_vulkanShape);}
+  
+  
 private:
   std::shared_ptr<VulkanMemory> m_memory;
+  VKShape* m_vulkanShape;
   bool InitFromScene(const aiScene* pScene, const std::string& Filename);
   void InitMesh(unsigned int Index, const aiMesh* paiMesh);
   bool InitMaterials(const aiScene* pScene, const std::string& Filename);
-
   
 
 #define INVALID_MATERIAL 0xFFFFFFFF
@@ -79,7 +77,7 @@ private:
   };
 
   std::vector<MeshEntry> m_Entries;
-  std::vector<std::shared_ptr<GLTexture> > m_Textures;
+  std::vector<std::shared_ptr<VKTexture> > m_Textures;
   unsigned int m_vao;
 };
 
