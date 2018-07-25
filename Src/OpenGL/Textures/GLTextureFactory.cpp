@@ -6,7 +6,7 @@
 std::shared_ptr<ITexture> GLTextureFactory::GetTexture()
 {
   std::shared_ptr<GLTexture> l_text = std::make_shared<GLTexture>();
-  l_text->Load("../Assets/EmptyTexture.jpg", true);
+  l_text->Load("../Assets/EmptyTexture.png", true);
   return l_text;
 }
 

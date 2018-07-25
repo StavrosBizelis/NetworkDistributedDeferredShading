@@ -54,6 +54,8 @@ public:
   virtual void SetResolution(const glm::vec2& a_dim) 
   { 
     m_resolution = a_dim;
+    if(GetCompositionPass())
+      GetCompositionPass()->GetCamera()->SetDimentsions(a_dim);
     if(GetDeferredRenderPass())
       GetDeferredRenderPass()->GetCamera()->SetDimentsions(a_dim);
   }
