@@ -33,7 +33,7 @@ VKCompositionPipeline::Init()
   vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
   
   vertexInputInfo.vertexBindingDescriptionCount = 1;
-  vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(VKShapeFactory::GetAttributeDescriptions().size() );
+  vertexInputInfo.vertexAttributeDescriptionCount = VKShapeFactory::GetAttributeDescriptions().size();
   vertexInputInfo.pVertexBindingDescriptions = &l_bindingDesc;
   vertexInputInfo.pVertexAttributeDescriptions = VKShapeFactory::GetAttributeDescriptions().data();
   

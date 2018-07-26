@@ -33,10 +33,9 @@ public:
   static VkVertexInputBindingDescription GetBindingDescription() 
   {
     VkVertexInputBindingDescription l_bindingDescription = {};
-    VkVertexInputBindingDescription bindingDescription = {};
-    bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof( Vertex );
-    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    l_bindingDescription.binding = 0;
+    l_bindingDescription.stride = sizeof( Vertex );
+    l_bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
     return l_bindingDescription;
   }
   

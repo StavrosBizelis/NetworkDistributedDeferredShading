@@ -66,11 +66,11 @@ VKRect::Create()
 {
   ARect::Create();
   
-  m_vertices.clear();
-  m_vertices.push_back( Vertex( glm::vec3(0, 0, 1),glm::vec2(0, 0), glm::vec3(.0f,.0f,1.0f), glm::vec3(0))  );
-  m_vertices.push_back( Vertex( glm::vec3(0, 1, 0),glm::vec2(1, 0), glm::vec3(.0f,.0f,1.0f), glm::vec3(0))  );
-  m_vertices.push_back( Vertex( glm::vec3(1, 0, 0),glm::vec2(0, 1), glm::vec3(.0f,.0f,1.0f), glm::vec3(0))  );
-  m_vertices.push_back( Vertex( glm::vec3(1, 1, 0),glm::vec2(1,1), glm::vec3(.0f,.0f,1.0f), glm::vec3(0))  );
+  // m_vertices.clear();
+  // m_vertices.push_back( Vertex( glm::vec3(0, 1, 1),glm::vec2(0, 0), glm::vec3(.0f,.0f,1.0f), glm::vec3(0))  );
+  // m_vertices.push_back( Vertex( glm::vec3(0, 0, 1),glm::vec2(1, 0), glm::vec3(.0f,.0f,1.0f), glm::vec3(0))  );
+  // m_vertices.push_back( Vertex( glm::vec3(1, 0, 0),glm::vec2(0, 1), glm::vec3(.0f,.0f,1.0f), glm::vec3(0))  );
+  // m_vertices.push_back( Vertex( glm::vec3(1, 1, 0),glm::vec2(1,1), glm::vec3(.0f,.0f,1.0f), glm::vec3(0))  );
   
   
   // upload data to the gpu

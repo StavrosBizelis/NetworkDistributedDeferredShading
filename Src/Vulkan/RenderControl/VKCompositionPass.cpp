@@ -305,9 +305,10 @@ void RenderControl::VKCompositionPass::CreateFramebuffer()
 
 void RenderControl::VKCompositionPass::CreatePipelines()
 {
+
   // geometry shader shaders
-  VkShaderModule l_vertex = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\testShader.vert.spv"), m_logicalDevice->GetDevice());
-  VkShaderModule l_frag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\testShader.frag.spv"), m_logicalDevice->GetDevice());
+  VkShaderModule l_vertex = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\HUDImage.vert.spv"), m_logicalDevice->GetDevice());
+  VkShaderModule l_frag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\HUDImage.frag.spv"), m_logicalDevice->GetDevice());
   
   m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(1);
   // simple geometry 
@@ -325,7 +326,7 @@ void RenderControl::VKCompositionPass::CreatePipelines()
     l_secondaryCmdBufferTmp = std::make_shared<VulkanSecondaryCommandBuffer>(m_logicalDevice->GetDevice(), m_commandPool, m_pipelines[i]->GetPipelineLayout(), m_renderPass, i);
     l_secondaryCmdBufferTmp->Init();
     m_pipelines[i]->AddSecondaryBuffer(l_secondaryCmdBufferTmp);
-  }  
+  }
 }
 
 void RenderControl::VKCompositionPass::CreateDescriptorPool()
@@ -455,7 +456,11 @@ void RenderControl::VKCompositionPass::CreateDescriptorSet(const std::shared_ptr
     descriptorWrite3.descriptorCount = 1;
     descriptorWrite3.pBufferInfo = nullptr;
     descriptorWrite3.pImageInfo = &l_imageInfo;
-
+    std::cout << "ADD TEXTURE TO DESCRIPTOR SET\n" << l_bindings[2].binding;
+    std::cout << " ADD TEXTURE TO DESCRIPTOR SET\n";
+    std::cout << "ADD TEXTURE TO DESCRIPTOR SET\n";
+    std::cout << "ADD TEXTURE TO DESCRIPTOR SET\n";
+    std::cout << "ADD TEXTURE TO DESCRIPTOR SET\n";
     l_descriptorSetWrites.push_back(descriptorWrite3);
   }
  
