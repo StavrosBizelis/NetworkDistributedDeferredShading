@@ -1059,20 +1059,27 @@ void VulkanMemory::CopyBufferToImage(std::shared_ptr< VulkanMemoryChunk > a_srcB
   unsigned int l_counter = a_dstImage->m_imageViewType == VK_IMAGE_VIEW_TYPE_CUBE ? 6 : 1;
   size_t l_buffOffset = a_srcBuffer->GetBufferOffset();
   size_t l_singleFaceSize = SizeOfPixel(a_dstImage->m_format)*a_dstImage->m_width*a_dstImage->m_height;
+  
   VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
   
   for( unsigned int l_face = 0; l_face < l_counter; ++l_face)
   {
     VkBufferImageCopy region = {};
     region.bufferOffset = l_buffOffset;
-    region.bufferRowLength = a_dstImage->m_width * SizeOfPixel(a_dstImage->m_format);
-    region.bufferImageHeight = a_dstImage->m_height / l_counter;
-
+    
+    // zeros mean tighly packed - which they are
+    // commented out
+    // region.bufferImageHeight = a_dstImage->m_height / l_counter;
+    // region.bufferRowLength = a_dstImage->m_width * SizeOfPixel(a_dstImage->m_format);
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+        
     region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     region.imageSubresource.mipLevel = 0;
     region.imageSubresource.baseArrayLayer = l_face;
     region.imageSubresource.layerCount = 1;
 
+    
     region.imageOffset = {0, 0, 0};
     region.imageExtent = {
         (uint32_t)a_dstImage->m_width,
@@ -1085,13 +1092,14 @@ void VulkanMemory::CopyBufferToImage(std::shared_ptr< VulkanMemoryChunk > a_srcB
   }
   TransitionImageLayout(commandBuffer, a_dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
+
   vkCmdCopyBufferToImage(
     commandBuffer,
     a_srcBuffer->m_buffer->m_buffer,
     a_dstImage->m_image,
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     l_bufferCopyRegions.size(),
-    &l_bufferCopyRegions[0]
+    l_bufferCopyRegions.data()
   );
   
   EndSingleTimeCommands(commandBuffer);
@@ -1197,6 +1205,7 @@ std::shared_ptr<VulkanImageMemoryChunk> VulkanMemory::CreateMaterialTexture(char
     CreateImageView(l_imageMemory);
     return l_imageMemory;
   }
+  l_imageMemory->Free();
   return nullptr;
 }
 
@@ -1213,11 +1222,18 @@ bool VulkanMemory::UpdateTextureData(std::shared_ptr<VulkanImageMemoryChunk> a_m
     throw std::runtime_error("VulkanMemory::UpdateTextureData - Staging Memory Pool could not allocate memory");
   
   // copy data to staging buffer
+  
   void* data;
   vkMapMemory(m_logicalDevice, l_stagingMemory->m_memorySpace, l_stagingMemory->GetMemoryOffset(), l_stagingMemory->m_size, 0, &data);
       memcpy(data, a_data, (size_t)( SizeOfPixel(a_format)*a_width*a_height) );
+      // char* l_curr = (char*)data;
+      // for( unsigned int i = 0; i < 4; ++i)
+      // {
+        // std::cout << "UPLODADED pixels" << +*(char*)l_curr << " "<< +*(char*)(l_curr +1)<< " " << +*(char*)(l_curr+2)<< " " << +*(char*)(l_curr+3) << "\n";
+        // l_curr += (4);
+      // }  
   vkUnmapMemory(m_logicalDevice, l_stagingMemory->m_memorySpace);
-  
+
   
   // copy buffer to image
   CopyBufferToImage(l_stagingMemory, a_memoryChunk);

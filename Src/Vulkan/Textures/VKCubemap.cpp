@@ -12,7 +12,10 @@
  * Effects: 
  ***********************************************************************/
 VKCubemap::VKCubemap(std::shared_ptr<VulkanMemory> a_memory)
-  : m_memory(a_memory){}
+  : m_memory(a_memory) 
+  {
+    m_vkTextureData = new VKATexture(m_memory, nullptr,nullptr);
+  }
 
 
 /***********************************************************************
@@ -46,9 +49,9 @@ VKCubemap::Create(std::string sPositiveX, std::string sNegativeX, std::string sP
   
   
   //  create a new cubmap - we are not updating with new data - just create it
-  m_image = m_memory->CreateCubemap(pbImagePosX, pbImageNegX, pbImagePosY, pbImageNegY, pbImagePosZ, pbImageNegZ, iWidth, iHeight, VK_FORMAT_B8G8R8A8_UINT);
+  m_vkTextureData->m_image = m_memory->CreateCubemap(pbImagePosX, pbImageNegX, pbImagePosY, pbImageNegY, pbImagePosZ, pbImageNegZ, iWidth, iHeight, VK_FORMAT_B8G8R8A8_UINT);
   
-  m_sampler= std::make_shared<VulkanSampler>(m_memory->GetLogicalDevice() );
+  m_vkTextureData->m_sampler = std::make_shared<VulkanSampler>(m_memory->GetLogicalDevice() );
 
 	// if(generateMipMaps)glGenerateMipmap(GL_TEXTURE_2D);
 }
@@ -81,8 +84,8 @@ VKCubemap::Bind(int textureUnit) const
 void
 VKCubemap::SetSamplerObjectParameter(const unsigned int &parameter, const unsigned int &value)
 {
-  if(m_sampler)
-    m_sampler->SetSamplerObjectParameter((VulkanSamplerOption)parameter, value);
+  if(m_vkTextureData->m_sampler)
+    m_vkTextureData->m_sampler->SetSamplerObjectParameter((VulkanSamplerOption)parameter, value);
 }
 
 
@@ -95,8 +98,8 @@ VKCubemap::SetSamplerObjectParameter(const unsigned int &parameter, const unsign
 void
 VKCubemap::SetSamplerObjectParameterf(const unsigned int &parameter, float value)
 {
-  if(m_sampler)
-    m_sampler->SetSamplerObjectParameter((VulkanSamplerOption)parameter, value);
+  if(m_vkTextureData->m_sampler)
+    m_vkTextureData->m_sampler->SetSamplerObjectParameter((VulkanSamplerOption)parameter, value);
 }
 
 
@@ -109,8 +112,8 @@ VKCubemap::SetSamplerObjectParameterf(const unsigned int &parameter, float value
 void
 VKCubemap::Release()
 {
-  if(m_image)
-    m_image->Free();
+  if( m_vkTextureData )
+    delete m_vkTextureData;
 }
 
 

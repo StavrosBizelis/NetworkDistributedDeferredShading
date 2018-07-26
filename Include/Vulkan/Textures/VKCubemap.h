@@ -6,12 +6,12 @@
 #include "Vulkan/Core/VulkanMemory.h"
 #include <memory>
 // Class that provides a texture for texture mapping
-class VKCubemap : public ACubemap, public VKATexture
+class VKCubemap : public ACubemap
 {
   
   std::shared_ptr<VulkanMemory> m_memory;
-  std::shared_ptr<VulkanImageMemoryChunk> m_image;
-  std::shared_ptr<VulkanSampler> m_sampler;
+  
+  VKATexture* m_vkTextureData;
 public:
   
   VKCubemap(std::shared_ptr<VulkanMemory> a_memory);
@@ -26,6 +26,5 @@ public:
   
   virtual void Release();
   
-  virtual std::shared_ptr<VulkanImageMemoryChunk> GetImage(){return m_image;}
-  virtual std::shared_ptr<VulkanSampler> GetSampler(){return m_sampler;}
+  virtual void* GetExtra(){return m_vkTextureData;}
 };

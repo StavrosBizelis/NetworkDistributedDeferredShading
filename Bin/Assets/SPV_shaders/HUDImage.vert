@@ -31,10 +31,7 @@ void main()
   
   gl_Position.y = -gl_Position.y;
   gl_Position.z = (gl_Position.z + gl_Position.w) / 2.0;
-  
-	// Transform the point
-	// gl_Position = matrices.projMatrix * matrices.modelViewMatrix * vec4(inPosition, 1.0);
 
-	// Pass through the texture coord
+  
 	vTexCoord = inCoord;
 }

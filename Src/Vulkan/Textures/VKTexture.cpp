@@ -12,7 +12,10 @@
  * Effects: 
  ***********************************************************************/
 VKTexture::VKTexture(std::shared_ptr<VulkanMemory> a_memory)
-  : m_memory(a_memory){}
+  : m_memory(a_memory)
+  {
+    m_vkTextureData = new VKATexture(m_memory, nullptr,nullptr);
+  }
 
 
 /***********************************************************************
@@ -22,8 +25,8 @@ VKTexture::VKTexture(std::shared_ptr<VulkanMemory> a_memory)
  ***********************************************************************/
 VKTexture::~VKTexture()
 {
-  if(m_image)
-    m_image->Free();
+  if( m_vkTextureData )
+    delete m_vkTextureData;
 }
 
 
@@ -39,7 +42,7 @@ VKTexture::CreateFromData(char *data, int width, int height, int bpp, bool gener
   
   UpdateData(data, width, height, bpp, generateMipMaps);
   
-  m_sampler= std::make_shared<VulkanSampler>( m_memory->GetLogicalDevice() );
+  m_vkTextureData->m_sampler = std::make_shared<VulkanSampler>( m_memory->GetLogicalDevice() );
   
 	m_path = "";
 	m_width = width;
@@ -61,17 +64,18 @@ VKTexture::UpdateData(char *data, int width, int height, int bpp, bool generateM
   if( !m_memory )
     return;
   VkFormat  format;
-  if(bpp == 32)format = VK_FORMAT_B8G8R8A8_UINT;
-	if(bpp == 24)format = VK_FORMAT_B8G8R8_UINT;
-	if(bpp == 8)format = VK_FORMAT_R8_UINT;
+  if(bpp == 32)format = VK_FORMAT_B8G8R8A8_UNORM;
+	if(bpp == 24)format = VK_FORMAT_B8G8R8_UNORM;
+	if(bpp == 8)format = VK_FORMAT_R8_UNORM;
   
   // if for some reason its impossible to update the texture - create a new image
-  if( !m_memory->UpdateTextureData(m_image, data, width, height, format) )
+  if( !m_memory->UpdateTextureData(m_vkTextureData->m_image, data, width, height, format) )
   {
-    if( m_image )
-      m_image->Free();
-    std::cout << "BPP " << bpp <<"\n"; 
-    m_image = m_memory->CreateMaterialTexture(data, width, height, format);
+    
+    if( m_vkTextureData->m_image )
+      m_vkTextureData->m_image->Free();
+    
+    m_vkTextureData->m_image = m_memory->CreateMaterialTexture(data, width, height, format);
   }
   
 
@@ -105,8 +109,8 @@ VKTexture::Bind(int textureUnit) const
 void
 VKTexture::SetSamplerObjectParameter(const unsigned int &parameter, const unsigned int &value)
 {
-  if(m_sampler)
-    m_sampler->SetSamplerObjectParameter((VulkanSamplerOption)parameter, value);
+  if(m_vkTextureData->m_sampler)
+    m_vkTextureData->m_sampler->SetSamplerObjectParameter((VulkanSamplerOption)parameter, value);
 }
 
 
@@ -119,8 +123,8 @@ VKTexture::SetSamplerObjectParameter(const unsigned int &parameter, const unsign
 void
 VKTexture::SetSamplerObjectParameterf(const unsigned int &parameter, float value)
 {
-  if(m_sampler)
-    m_sampler->SetSamplerObjectParameter((VulkanSamplerOption)parameter, value);
+  if(m_vkTextureData->m_sampler)
+    m_vkTextureData->m_sampler->SetSamplerObjectParameter((VulkanSamplerOption)parameter, value);
 }
 
 

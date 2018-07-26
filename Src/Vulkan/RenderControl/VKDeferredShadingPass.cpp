@@ -861,24 +861,28 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
       std::shared_ptr<ITexture> l_texture = l_texturedSceneNode->GetTexture(l_imagesIndex);
       if( l_texture )
       {
-        VKTexture* l_tempTexture = reinterpret_cast<VKTexture*>(l_texture.get());
-        VkDescriptorImageInfo l_imageInfo = {};
-        
-        l_imageInfo.sampler = l_tempTexture->GetSampler()->m_sampler; // VkSampler                      
-        l_imageInfo.imageView = l_tempTexture->GetImage()->m_imageView;  // VkImageView
-        l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
-        
-        VkWriteDescriptorSet descriptorWrite = {};
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet = l_descSet;
-        descriptorWrite.dstBinding = l_bindings[i].binding;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = nullptr;
-        descriptorWrite.pImageInfo = &l_imageInfo;
+        VKATexture* l_tempTexture = reinterpret_cast<VKATexture*>( l_texture->GetExtra() );
+        if( l_tempTexture )
+        {
+          
+          VkDescriptorImageInfo l_imageInfo = {};
+          
+          l_imageInfo.sampler = l_tempTexture->GetSampler()->m_sampler; // VkSampler                      
+          l_imageInfo.imageView = l_tempTexture->GetImage()->m_imageView;  // VkImageView
+          l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
+          
+          VkWriteDescriptorSet descriptorWrite = {};
+          descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+          descriptorWrite.dstSet = l_descSet;
+          descriptorWrite.dstBinding = l_bindings[i].binding;
+          descriptorWrite.dstArrayElement = 0;
+          descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+          descriptorWrite.descriptorCount = 1;
+          descriptorWrite.pBufferInfo = nullptr;
+          descriptorWrite.pImageInfo = &l_imageInfo;
 
-        l_descriptorSetWrites.push_back(descriptorWrite);
+          l_descriptorSetWrites.push_back(descriptorWrite);
+        }
         l_imagesIndex++;
       }  
     }

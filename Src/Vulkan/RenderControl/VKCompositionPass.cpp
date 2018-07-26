@@ -344,7 +344,7 @@ void RenderControl::VKCompositionPass::CreateDescriptorPool()
   VkDescriptorPoolCreateInfo l_poolInfo = {};
   l_poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   l_poolInfo.poolSizeCount = l_poolSizes.size();
-  l_poolInfo.pPoolSizes = &l_poolSizes[0];
+  l_poolInfo.pPoolSizes = l_poolSizes.data();
   l_poolInfo.maxSets = 128;
 
   if (vkCreateDescriptorPool(m_logicalDevice->GetDevice(), &l_poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS) {
@@ -434,34 +434,30 @@ void RenderControl::VKCompositionPass::CreateDescriptorSet(const std::shared_ptr
   std::vector< VkWriteDescriptorSet > l_descriptorSetWrites = {descriptorWrite, descriptorWrite2 };
   
 
-  SceneControl::TexturedSceneNode* l_texturedSceneNode = reinterpret_cast<SceneControl::TexturedSceneNode*>(a_renderable);
+  SceneControl::TexturedSceneNode* l_texturedSceneNode = dynamic_cast<SceneControl::TexturedSceneNode*>(a_renderable);
   std::shared_ptr<ITexture> l_texture = l_texturedSceneNode->GetTexture(0);
   
   VkDescriptorImageInfo l_imageInfo = {};
   VkWriteDescriptorSet descriptorWrite3 = {};
   if( l_texture )
   {
-    VKTexture* l_tempTexture = reinterpret_cast<VKTexture*>(l_texture.get());
-    
-    l_imageInfo.sampler = l_tempTexture->GetSampler()->m_sampler; // VkSampler                      
-    l_imageInfo.imageView = l_tempTexture->GetImage()->m_imageView;  // VkImageView
-    l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
-    
-    
-    descriptorWrite3.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite3.dstSet = l_descSet;
-    descriptorWrite3.dstBinding = l_bindings[2].binding;
-    descriptorWrite3.dstArrayElement = 0;
-    descriptorWrite3.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptorWrite3.descriptorCount = 1;
-    descriptorWrite3.pBufferInfo = nullptr;
-    descriptorWrite3.pImageInfo = &l_imageInfo;
-    std::cout << "ADD TEXTURE TO DESCRIPTOR SET\n" << l_bindings[2].binding;
-    std::cout << " ADD TEXTURE TO DESCRIPTOR SET\n";
-    std::cout << "ADD TEXTURE TO DESCRIPTOR SET\n";
-    std::cout << "ADD TEXTURE TO DESCRIPTOR SET\n";
-    std::cout << "ADD TEXTURE TO DESCRIPTOR SET\n";
-    l_descriptorSetWrites.push_back(descriptorWrite3);
+    VKATexture* l_tempTexture = reinterpret_cast<VKATexture*>( l_texture->GetExtra() );
+    if( l_tempTexture )
+    {      
+      l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
+      l_imageInfo.sampler = l_tempTexture->GetSampler()->m_sampler; // VkSampler                      
+      l_imageInfo.imageView = l_tempTexture->GetImage()->m_imageView;  // VkImageView
+      
+      
+      descriptorWrite3.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      descriptorWrite3.dstSet = l_descSet;
+      descriptorWrite3.dstBinding = l_bindings[2].binding;
+      descriptorWrite3.dstArrayElement = 0;
+      descriptorWrite3.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      descriptorWrite3.descriptorCount = 1;
+      descriptorWrite3.pImageInfo = &l_imageInfo;
+      l_descriptorSetWrites.push_back(descriptorWrite3);
+    }
   }
  
   
