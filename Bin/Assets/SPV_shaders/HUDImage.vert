@@ -22,11 +22,16 @@ layout (location = 1) in vec2 inCoord;
 
 layout (location = 0) out vec2 vTexCoord;
 
+
 void main()
 {
   
   mat4 l_modelViewMat = globalsMats.viewMatrix * objectMats.modelMatrix;
   gl_Position = globalsMats.projMatrix * l_modelViewMat * vec4(inPosition, 1.0f);
+  
+  gl_Position.y = -gl_Position.y;
+  gl_Position.z = (gl_Position.z + gl_Position.w) / 2.0;
+  
 	// Transform the point
 	// gl_Position = matrices.projMatrix * matrices.modelViewMatrix * vec4(inPosition, 1.0);
 

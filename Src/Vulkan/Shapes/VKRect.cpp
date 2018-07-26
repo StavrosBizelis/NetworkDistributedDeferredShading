@@ -37,20 +37,7 @@ void
 VKRect::Render()
 {
   
-  // // render light mesh for stencil pass
-	// // bind the vao and vbo in the beginning  because we will draw these vertices twice 
-	// VKBindVertexArray(m_vao);
-	// VKEnableVertexAttribArray(0);
-	// VKEnableVertexAttribArray(1);
-	// m_vbo.Bind();
 
-	// // do the light pass
-	// // render light mesh for light pass
-  // int l_numTrianVKes = 2;
-	// VKDrawElements(VK_TRIANVKES, l_numTrianVKes * 3, VK_UNSIGNED_INT, 0);
-
-	// VKDisableVertexAttribArray(0);
-	// VKDisableVertexAttribArray(1);
 }
 
 
@@ -78,6 +65,12 @@ void
 VKRect::Create()
 {
   ARect::Create();
+  
+  m_vertices.clear();
+  m_vertices.push_back( Vertex( glm::vec3(-1, -1, 0),glm::vec2(0, 0), glm::vec3(.0f,.0f,1.0f), glm::vec3(0))  );
+  m_vertices.push_back( Vertex( glm::vec3(1, -1, 0),glm::vec2(1, 0), glm::vec3(.0f,.0f,1.0f), glm::vec3(0))  );
+  m_vertices.push_back( Vertex( glm::vec3(-1, 1, 0),glm::vec2(0, 1), glm::vec3(.0f,.0f,1.0f), glm::vec3(0))  );
+  m_vertices.push_back( Vertex( glm::vec3(1, 1, 0),glm::vec2(1,1), glm::vec3(.0f,.0f,1.0f), glm::vec3(0))  );
   
   
   // upload data to the gpu

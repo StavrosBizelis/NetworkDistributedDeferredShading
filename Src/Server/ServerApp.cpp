@@ -242,7 +242,7 @@ ServerApp::Update()
         std::shared_ptr<ATexture> l_text = std::dynamic_pointer_cast< ATexture > ( l_rects[l_index]->GetTexture(0) );
         if( l_text )
         {
-          l_text->UpdateData(m_textureData, l_resolution.x, l_resolution.y, 24, false);
+          // l_text->UpdateData(m_textureData, l_resolution.x, l_resolution.y, 24, false);
         }
       }
     }
@@ -265,7 +265,8 @@ ServerApp::Update()
   }
   
   // Swap buffers to show the rendered image
-	SwapBuffers(m_gameWindow.Hdc());
+  if( m_implTech == ImplTech::OPENGL)
+    SwapBuffers(m_gameWindow.Hdc());
 }
 
 

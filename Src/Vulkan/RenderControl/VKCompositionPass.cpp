@@ -86,6 +86,7 @@ bool RenderControl::VKCompositionPass::Init()
   // add the rectancles to the appropriate pipelines
   for( unsigned int i = 0; i < m_subpartRects.size(); ++i)
   {    
+    std::cout << "RECORD RECT" << reinterpret_cast<VKShape*>( reinterpret_cast<VulkanRenderable*>( m_subpartRects[i]->GetExtra() )->GetShape()->GetExtra() ) << "\n";
     CreateDescriptorSet(m_pipelines[0], m_subpartRects[i]);
     std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > l_cmdBuffers;
     l_cmdBuffers = m_pipelines[0]->GetSecondaryCommandBuffers();
@@ -179,7 +180,8 @@ void RenderControl::VKCompositionPass::VulkanUpdate( char* a_mappedBuffer )
 {
   // copy global camera matrices and screen resolution for lights fragments shaders
   m_globalsUbo.projMatrix = *m_camera->GetOrthographicProjectionMatrix();
-  m_globalsUbo.viewMatrix = m_camera->GetViewMatrix();
+  m_globalsUbo.viewMatrix = glm::mat4(); // always identity matrix
+  
   memcpy(a_mappedBuffer+m_uboMemBuffer->GetMemoryOffset(), &m_globalsUbo, sizeof(VertexViewProjMatrices) );
 }
 
@@ -372,7 +374,7 @@ void RenderControl::VKCompositionPass::CreateDescriptorSet(const std::shared_ptr
   
   reinterpret_cast<VulkanRenderable*>( a_renderable->GetExtra() )->Init(l_descSet, l_uboMemBuffer[0], l_uboMemBuffer[1] );
   
-  std::vector< VkWriteDescriptorSet > l_descriptorSetWrites;
+  
   // get appropriate size of ubo from pipeline - 
   // and also need to know if this pipeline requires any type of global data and what type that is ( ex. VertexSingleMat4, FragDirLightGlobalVars )
   // also need to know what kind of samplers does this pipeline requires and what type( input attachments or combined image samplers)
@@ -381,71 +383,73 @@ void RenderControl::VKCompositionPass::CreateDescriptorSet(const std::shared_ptr
   unsigned int l_inputAttachmentsIndex = 0;
   std::vector<SceneGlobalDataType> l_globals = a_pipeline->GetGlobalDataTypes();
   unsigned int l_globalsToGo = a_pipeline->GetGlobalDataTypes().size();
-  // descriptor layout bindings are always global first, then object bindings
+  
   std::vector<VkDescriptorSetLayoutBinding> l_bindings = a_pipeline->GetDescriptorSetLayoutBindings();
-  for( unsigned int i =0; i < l_bindings.size(); ++i)
-  {
-    if( l_bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER )
-    {
-      // first handle global uniform buffers then the object ones
-      VkDescriptorBufferInfo l_bufferInfo = {};
-      if( l_globalsToGo == 0)
-      {
-        l_bufferInfo.buffer = l_uboMemBuffer[l_uboIndex]->m_buffer->m_buffer;
-        l_bufferInfo.offset = l_uboMemBuffer[l_uboIndex]->GetBufferOffset();
-        l_bufferInfo.range = l_uboMemBuffer[l_uboIndex]->m_size;
-        ++l_uboIndex;
-      }
-      else
-      {
-        --l_globalsToGo;
-        if( l_globals[l_globalsToGo] == GLOBAL_PROJ_VIEW_MATRIX )
-        {
-          l_bufferInfo.buffer = m_uboMemBuffer->m_buffer->m_buffer;
-          l_bufferInfo.offset = m_uboMemBuffer->GetBufferOffset();
-          l_bufferInfo.range = m_uboMemBuffer->m_size;
-        }
-      }
-      VkWriteDescriptorSet descriptorWrite = {};
-      descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      descriptorWrite.dstSet = l_descSet;
-      descriptorWrite.dstBinding = l_bindings[i].binding;
-      descriptorWrite.dstArrayElement = 0;
-      descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-      descriptorWrite.descriptorCount = 1;
-      descriptorWrite.pBufferInfo = &l_bufferInfo;
-      
-      l_descriptorSetWrites.push_back(descriptorWrite);
-    }
-    else if( l_bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER )
-    {
-      SceneControl::TexturedSceneNode* l_texturedSceneNode = reinterpret_cast<SceneControl::TexturedSceneNode*>(a_renderable);
-      std::shared_ptr<ITexture> l_texture = l_texturedSceneNode->GetTexture(l_imagesIndex);
-      if( l_texture )
-      {
-        VKTexture* l_tempTexture = reinterpret_cast<VKTexture*>(l_texture.get());
-        VkDescriptorImageInfo l_imageInfo = {};
-        
-        l_imageInfo.sampler = l_tempTexture->GetSampler()->m_sampler; // VkSampler                      
-        l_imageInfo.imageView = l_tempTexture->GetImage()->m_imageView;  // VkImageView
-        l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
-        
-        VkWriteDescriptorSet descriptorWrite = {};
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet = l_descSet;
-        descriptorWrite.dstBinding = l_bindings[i].binding;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = nullptr;
-        descriptorWrite.pImageInfo = &l_imageInfo;
+  
+  // first the global 
+  VkDescriptorBufferInfo l_bufferInfo = {};
+  l_bufferInfo.buffer = m_uboMemBuffer->m_buffer->m_buffer;
+  l_bufferInfo.offset = m_uboMemBuffer->GetBufferOffset();
+  l_bufferInfo.range = m_uboMemBuffer->m_size;
+  
+  
+  VkWriteDescriptorSet descriptorWrite = {};
+  descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite.dstSet = l_descSet;
+  descriptorWrite.dstBinding = l_bindings[0].binding;
+  descriptorWrite.dstArrayElement = 0;
+  descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite.descriptorCount = 1;
+  descriptorWrite.pBufferInfo = &l_bufferInfo;
+  
+  
 
-        l_descriptorSetWrites.push_back(descriptorWrite);
-        l_imagesIndex++;
-      }
-    }
+  
+  VkDescriptorBufferInfo l_bufferInfo2 = {};
+  l_bufferInfo2.buffer = l_uboMemBuffer[0]->m_buffer->m_buffer;
+  l_bufferInfo2.offset = l_uboMemBuffer[0]->GetBufferOffset();
+  l_bufferInfo2.range = l_uboMemBuffer[0]->m_size;
+  
+  
+  VkWriteDescriptorSet descriptorWrite2 = {};
+  descriptorWrite2.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite2.dstSet = l_descSet;
+  descriptorWrite2.dstBinding = l_bindings[1].binding;
+  descriptorWrite2.dstArrayElement = 0;
+  descriptorWrite2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite2.descriptorCount = 1;
+  descriptorWrite2.pBufferInfo = &l_bufferInfo2;
+  
+  
+  std::vector< VkWriteDescriptorSet > l_descriptorSetWrites = {descriptorWrite, descriptorWrite2 };
+  
+
+  SceneControl::TexturedSceneNode* l_texturedSceneNode = reinterpret_cast<SceneControl::TexturedSceneNode*>(a_renderable);
+  std::shared_ptr<ITexture> l_texture = l_texturedSceneNode->GetTexture(0);
+  
+  VkDescriptorImageInfo l_imageInfo = {};
+  VkWriteDescriptorSet descriptorWrite3 = {};
+  if( l_texture )
+  {
+    VKTexture* l_tempTexture = reinterpret_cast<VKTexture*>(l_texture.get());
     
+    l_imageInfo.sampler = l_tempTexture->GetSampler()->m_sampler; // VkSampler                      
+    l_imageInfo.imageView = l_tempTexture->GetImage()->m_imageView;  // VkImageView
+    l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
+    
+    
+    descriptorWrite3.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite3.dstSet = l_descSet;
+    descriptorWrite3.dstBinding = l_bindings[2].binding;
+    descriptorWrite3.dstArrayElement = 0;
+    descriptorWrite3.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorWrite3.descriptorCount = 1;
+    descriptorWrite3.pBufferInfo = nullptr;
+    descriptorWrite3.pImageInfo = &l_imageInfo;
+
+    l_descriptorSetWrites.push_back(descriptorWrite3);
   }
+ 
   
   vkUpdateDescriptorSets(m_logicalDevice->GetDevice(), l_descriptorSetWrites.size(), l_descriptorSetWrites.data(), 0, nullptr);
 }

@@ -106,6 +106,7 @@ void RenderControl::GLCompositionPass::Render()
   m_material->UseProgram();
   m_material->SetUniform("matrices.projMatrix", m_camera->GetOrthographicProjectionMatrix() );
   
+  
   for( unsigned int i =0; i < m_subpartRects.size(); ++i)
     m_subpartRects[i]->Render(l_matrixStack);
   

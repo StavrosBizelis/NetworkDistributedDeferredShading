@@ -65,7 +65,6 @@
     // actual recording happening here
     for (std::set< VulkanRenderable* >::iterator it=m_objectsToDraw.begin(); it!=m_objectsToDraw.end(); ++it)
     {
-
       // render each object's meshes
       VKShape* l_shape = reinterpret_cast<VKShape*>( (*it)->GetShape()->GetExtra() );
       if( l_shape )
@@ -73,6 +72,7 @@
         unsigned int l_meshes = l_shape->GetMeshesCount();
         for( unsigned int i = 0; i < l_meshes; ++i)
         {
+
           VkBuffer l_vertBuff = l_shape->GetVertices(i)->m_buffer->m_buffer;
           VkDeviceSize l_vertBuffOffset = l_shape->GetVertices(i)->GetBufferOffset();
           VkBuffer l_indexBuff = l_shape->GetIndices(i)->m_buffer->m_buffer;
