@@ -9,7 +9,8 @@ struct Vertex
   glm::vec3 m_normal;
   glm::vec3 m_tangent;
 
-  Vertex() {}
+  Vertex() :m_pos(1),m_tex(0), m_normal(0), m_tangent(0) {}
+  
   Vertex(const glm::vec3& pos, const glm::vec2& tex, const glm::vec3& normal, const glm::vec3& tan)
   {
     m_pos    = pos;

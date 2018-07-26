@@ -42,7 +42,7 @@ namespace RenderControl
     VkQueue m_presentQueue;
     QueueFamilyIndices m_indices;
 
-    VkFramebuffer m_frameBuffer;
+    std::vector<VkFramebuffer> m_frameBuffers;
     VkCommandPool m_commandPool;
     // semaphores for the rendering process
     std::vector<VkSemaphore> m_imageAvailableSemaphore;
@@ -82,7 +82,7 @@ namespace RenderControl
     
     inline virtual void SetMaterialManager(MaterialControl::IMaterialManager* a_materialManager);
 		
-    virtual unsigned int GetFBO(){return (unsigned int)m_frameBuffer; }
+    virtual unsigned int GetFBO(){return (unsigned int)(&m_frameBuffers); }
     
 		virtual bool Init() override;
 		virtual void Render() override;

@@ -169,8 +169,9 @@ void RenderControl::VKCompositionPass::Clear()
 if( m_descriptorPool )
     vkDestroyDescriptorPool(m_logicalDevice->GetDevice(), m_descriptorPool, nullptr);
   
-  if(m_frameBuffer)
-    vkDestroyFramebuffer(m_logicalDevice->GetDevice(), m_frameBuffer, nullptr);
+  for( unsigned int i = 0; i <m_frameBuffers.size(); ++i)
+    if(m_frameBuffers[i])
+      vkDestroyFramebuffer(m_logicalDevice->GetDevice(), m_frameBuffers[i], nullptr);
   
   if(m_renderPass)
     vkDestroyRenderPass(m_logicalDevice->GetDevice(), m_renderPass, nullptr);
@@ -213,8 +214,6 @@ void RenderControl::VKCompositionPass::CreateSemaphores()
 
 void RenderControl::VKCompositionPass::CreateRenderPass()
 {
-  std::shared_ptr<VulkanImageMemoryChunk> l_depthAttachmentMemory = m_memory->CreateStencilDepthAttachmentTexture(m_resolution.x, m_resolution.y );
-  
   VkAttachmentDescription colorAttachment = {};
   colorAttachment.format = m_logicalDevice->GetSwapChainImageFormat();
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -259,7 +258,7 @@ void RenderControl::VKCompositionPass::CreateRenderPass()
   
   std::vector< VkSubpassDependency> l_dependencies = {l_dependency1, l_dependency2};
   
-  std::array<VkAttachmentDescription, 2> attachments = {colorAttachment};
+  std::vector<VkAttachmentDescription> attachments = {colorAttachment};
   VkRenderPassCreateInfo renderPassInfo = {};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   renderPassInfo.attachmentCount = attachments.size();
@@ -278,27 +277,37 @@ void RenderControl::VKCompositionPass::CreateRenderPass()
 void RenderControl::VKCompositionPass::CreateFramebuffer()
 {
   
-    // create frame buffer
-    m_swapChainImageViews = m_logicalDevice->GetSwapChainImageViews();
-    
+  // create frame buffer
+  m_frameBuffers.resize(m_logicalDevice->GetSwapChainImageViews().size());
+  m_swapChainImageViews = m_logicalDevice->GetSwapChainImageViews();
+
+  size_t l_count = m_swapChainImageViews.size();
+  for (size_t i = 0; i < l_count; i++) 
+  {
+    VkImageView attachments[] = {
+        m_swapChainImageViews[i]
+    };
+
     VkFramebufferCreateInfo framebufferInfo = {};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebufferInfo.renderPass = m_renderPass;
-    framebufferInfo.attachmentCount = m_swapChainImageViews.size();
-    framebufferInfo.pAttachments = m_swapChainImageViews.data();
+    framebufferInfo.attachmentCount = 1;
+    framebufferInfo.pAttachments = attachments;
     framebufferInfo.width = m_resolution.x;
     framebufferInfo.height = m_resolution.y;
     framebufferInfo.layers = 1;
 
-    if (vkCreateFramebuffer(m_logicalDevice->GetDevice(), &framebufferInfo, nullptr, &m_frameBuffer ) != VK_SUCCESS)
-      throw std::runtime_error("VKCompositionPass::CreateFramebuffer() - failed to create framebuffer!");
+    if (vkCreateFramebuffer(m_logicalDevice->GetDevice(), &framebufferInfo, nullptr, &m_frameBuffers[i]) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create framebuffer!");
+    }
+  }
 }
 
 void RenderControl::VKCompositionPass::CreatePipelines()
 {
   // geometry shader shaders
-  VkShaderModule l_vertex = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\HUDImage.vert.spv"), m_logicalDevice->GetDevice());
-  VkShaderModule l_frag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\HUDImage.frag.spv"), m_logicalDevice->GetDevice());
+  VkShaderModule l_vertex = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\testShader.vert.spv"), m_logicalDevice->GetDevice());
+  VkShaderModule l_frag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\testShader.frag.spv"), m_logicalDevice->GetDevice());
   
   m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(1);
   // simple geometry 
@@ -344,7 +353,7 @@ void RenderControl::VKCompositionPass::CreateDescriptorPool()
 
 void RenderControl::VKCompositionPass::CreateCommandBuffers()
 {
-  m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, {m_frameBuffer}, m_renderPass, m_resolution) );
+  m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, m_frameBuffers, m_renderPass, m_resolution) );
   m_primaryCmdBuffer->Init();
   for( auto l_pipeline : m_pipelines )
     m_primaryCmdBuffer->AddPipeline(l_pipeline);

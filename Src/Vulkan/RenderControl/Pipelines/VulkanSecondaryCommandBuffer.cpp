@@ -82,7 +82,7 @@
           VkDescriptorSet* l_descSet = (*it)->GetDesciptorSet();
           
           vkCmdBindVertexBuffers(m_secondaryCmdBuffer, 0, 1, &l_vertBuff, &l_vertBuffOffset );
-          vkCmdBindIndexBuffer(m_secondaryCmdBuffer, l_indexBuff, l_indexBuffOffset, VK_INDEX_TYPE_UINT16);
+          vkCmdBindIndexBuffer(m_secondaryCmdBuffer, l_indexBuff, l_indexBuffOffset, VK_INDEX_TYPE_UINT32 );
           
           
           vkCmdBindDescriptorSets(m_secondaryCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, l_descSet, 0, nullptr);

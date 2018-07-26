@@ -34,7 +34,6 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
     m_descriptorPool(NULL)
 {
   m_renderPass = NULL;
-  m_frameBuffer = NULL;
   // m_pbos[0] = 0;
   // m_pbos[1] = 0;
   m_outputTextures.resize(5, 0);
@@ -287,8 +286,9 @@ void RenderControl::VKDeferredShadingPass::Clear()
   if( m_descriptorPool )
     vkDestroyDescriptorPool(m_logicalDevice->GetDevice(), m_descriptorPool, nullptr);
   
-  if(m_frameBuffer)
-    vkDestroyFramebuffer(m_logicalDevice->GetDevice(), m_frameBuffer, nullptr);
+  for( unsigned int i = 0; i <m_frameBuffers.size(); ++i)
+    if(m_frameBuffers[i])
+      vkDestroyFramebuffer(m_logicalDevice->GetDevice(), m_frameBuffers[i], nullptr);
   
   if(m_renderPass)
     vkDestroyRenderPass(m_logicalDevice->GetDevice(), m_renderPass, nullptr);
@@ -509,17 +509,6 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
     std::cout<< "EXCEPTION: " << e.what();
   }
 
-
-  // VkAttachmentDescription colorAttachment = {};
-  // colorAttachment.format = m_logicalDevice->GetSwapChainImageFormat();
-  // colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-  // colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  // colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  // colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  // colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  // colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  // colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-  
   std::vector< VkAttachmentDescription > l_attachments( m_attachmentImages.size() );
   // create attachments
   for( unsigned int i = 0; i < l_attachments.size(); ++i)
@@ -624,32 +613,37 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   l_renderPassInfo.dependencyCount = l_dependencies.size();
   l_renderPassInfo.pDependencies = l_dependencies.data();
   
-  // if (vkCreateRenderPass(m_logicalDevice->GetDevice(), &renderPassInfo, nullptr, &m_renderPass) != VK_SUCCESS) {
-      // throw std::runtime_error("failed to create render pass!");
-  // }
   if (vkCreateRenderPass(m_logicalDevice->GetDevice(), &l_renderPassInfo, nullptr, &m_renderPass) != VK_SUCCESS) 
     throw std::runtime_error("VKDeferredShadingPass::Init() - failed to create render pass!");
-
+  
 }
 
 void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
 {
-    // create frame buffer
-    std::vector<VkImageView> l_attachmentsImageViews;
-    for(unsigned int i = 0; i < m_attachmentImages.size(); ++i)    
-      l_attachmentsImageViews.push_back(m_attachmentImages[i]->m_imageView);
-    
+  // create frame buffer
+  m_frameBuffers.resize(m_logicalDevice->GetSwapChainImageViews().size());
+  m_swapChainImageViews = m_logicalDevice->GetSwapChainImageViews();
+
+  size_t l_count = m_swapChainImageViews.size();
+  for (size_t i = 0; i < l_count; i++) 
+  {
+    VkImageView attachments[] = {
+        m_swapChainImageViews[i]
+    };
+
     VkFramebufferCreateInfo framebufferInfo = {};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebufferInfo.renderPass = m_renderPass;
-    framebufferInfo.attachmentCount = l_attachmentsImageViews.size();
-    framebufferInfo.pAttachments = l_attachmentsImageViews.data();
-    framebufferInfo.width = m_resolutionPart.x;
-    framebufferInfo.height = m_resolutionPart.y;
+    framebufferInfo.attachmentCount = 1;
+    framebufferInfo.pAttachments = attachments;
+    framebufferInfo.width = m_resolution.x;
+    framebufferInfo.height = m_resolution.y;
     framebufferInfo.layers = 1;
 
-    if (vkCreateFramebuffer(m_logicalDevice->GetDevice(), &framebufferInfo, nullptr, &m_frameBuffer ) != VK_SUCCESS)
-      throw std::runtime_error("VKDeferredShadingPass::Init() - failed to create framebuffer!");
+    if (vkCreateFramebuffer(m_logicalDevice->GetDevice(), &framebufferInfo, nullptr, &m_frameBuffers[i]) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create framebuffer!");
+    }
+  }
 }
 
 void RenderControl::VKDeferredShadingPass::CreatePipelines()
@@ -778,7 +772,7 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
 void RenderControl::VKDeferredShadingPass::CreateCommandBuffers()
 {
   
-  m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, {m_frameBuffer}, m_renderPass, m_resolutionPart) );
+  m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, m_frameBuffers, m_renderPass, m_resolutionPart) );
   m_primaryCmdBuffer->Init();
   for( auto l_pipeline : m_pipelines )
     m_primaryCmdBuffer->AddPipeline(l_pipeline);

@@ -1096,7 +1096,7 @@ void VulkanMemory::CopyBufferToImage(std::shared_ptr< VulkanMemoryChunk > a_srcB
   
   EndSingleTimeCommands(commandBuffer);
 }
-
+#include "Common/Shapes/IMesh.h"
 std::shared_ptr<VulkanMemoryChunk> VulkanMemory::CreateVertexBuffer(char* a_vertexDataArray, const int& a_sizeInBytes)
 {
   // allocate memory with appropriate buffers
@@ -1111,11 +1111,33 @@ std::shared_ptr<VulkanMemoryChunk> VulkanMemory::CreateVertexBuffer(char* a_vert
   void* data;
   vkMapMemory(m_logicalDevice, l_stagingMemory->m_memorySpace, l_stagingMemory->m_offset, l_stagingMemory->m_size, 0, &data);
       memcpy(data, a_vertexDataArray, (size_t) l_stagingMemory->m_size);
+
+      
   vkUnmapMemory(m_logicalDevice, l_stagingMemory->m_memorySpace);
 
   
   // copy staging buffer to index buffer memory
   CopyBuffer(l_stagingMemory, l_vertexBuffMemory);
+  
+  
+  // // // // commented out - used only to make sure that the vertex buffer is filled properly
+  // // // // std::shared_ptr< VulkanMemoryChunk> l_stagingMemory2 = m_memoryPools[0]->AllocateMemory(a_sizeInBytes);
+  // // // // CopyBuffer(l_vertexBuffMemory, l_stagingMemory2);
+
+  // // // // vkMapMemory(m_logicalDevice, l_stagingMemory2->m_memorySpace, l_stagingMemory2->m_offset, l_stagingMemory2->m_size, 0, &data);
+    // // // // char* l_curr = (char*)data;
+    // // // // for( unsigned int i = 0; i < 4; ++i)
+    // // // // {
+      // // // // std::cout << "UPLODADED VERTICES" << *(float*)l_curr << " "<< *(float*)(l_curr + 4)<< " "<< *(float*)(l_curr+8) << "\n";
+      // // // // l_curr += sizeof(Vertex);
+    // // // // }  
+  // // // // vkUnmapMemory(m_logicalDevice, l_stagingMemory2->m_memorySpace);
+  // // // // m_memoryPools[0]->DeallocateMemory(l_stagingMemory2);
+
+
+
+
+
   // free staging memory chunk
   m_memoryPools[0]->DeallocateMemory(l_stagingMemory);
   // return l_indexBuffMemory

@@ -32,6 +32,9 @@ namespace RenderControl
     VkPhysicalDevice m_physicalDevice;
     VkRenderPass m_renderPass;
     VkFormat m_swapChainImageFormat;
+    std::vector<VkImage> m_swapChainImages;
+    std::vector<VkImageView> m_swapChainImageViews;
+    
     
     std::shared_ptr<VulkanMemory> m_memory;
 
@@ -44,7 +47,7 @@ namespace RenderControl
     VkQueue m_presentQueue;
     QueueFamilyIndices m_indices;
 
-    VkFramebuffer m_frameBuffer;
+    std::vector<VkFramebuffer> m_frameBuffers;
     VkCommandPool m_commandPool;
     // semaphores for the rendering process
     VkSemaphore m_imageAvailableSemaphore;
@@ -80,7 +83,7 @@ namespace RenderControl
 		virtual void Render() override;
 		virtual void OutputOnScreen() override;
     
-    virtual unsigned int GetFBO(){return (unsigned int)m_frameBuffer; }
+    virtual unsigned int GetFBO(){return (unsigned int)(&m_frameBuffers); }
     
     virtual void UpdateViewportSettings(const glm::vec2& a_resolution, const glm::vec4& a_viewportSettings);
 

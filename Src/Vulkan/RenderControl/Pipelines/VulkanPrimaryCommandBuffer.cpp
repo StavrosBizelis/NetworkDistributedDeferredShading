@@ -75,7 +75,7 @@ VulkanPrimaryCommandBuffer::VulkanPrimaryCommandBuffer(const VkDevice& a_logical
   : m_logicalDevice(a_logicalDevice), m_cmdPool(a_cmdPool), m_swapChainFramebuffers(a_swapChainFramebuffers), m_renderPass(a_renderPass), m_resolution(a_resolution), 
     m_clearValues({}), m_index(0), m_dirty(true)
 {
-  m_clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+  m_clearValues[0].color = {1.0f, 0.0f, 0.0f, 0.0f};
   m_clearValues[1].depthStencil = {1.0f, 0};
 }
                             

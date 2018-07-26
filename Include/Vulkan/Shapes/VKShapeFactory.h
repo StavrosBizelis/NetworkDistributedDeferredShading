@@ -35,7 +35,7 @@ public:
     VkVertexInputBindingDescription l_bindingDescription = {};
     VkVertexInputBindingDescription bindingDescription = {};
     bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(Vertex);
+    bindingDescription.stride = sizeof( Vertex );
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
     return l_bindingDescription;
   }
@@ -48,22 +48,22 @@ public:
     l_attributeDescriptions[0].binding = 0;
     l_attributeDescriptions[0].location = 0;
     l_attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-    l_attributeDescriptions[0].offset = offsetof(Vertex, m_pos);
+    l_attributeDescriptions[0].offset = offsetof(struct Vertex, m_pos);
     // texture coordinates
     l_attributeDescriptions[1].binding = 0;
     l_attributeDescriptions[1].location = 1;
     l_attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
-    l_attributeDescriptions[1].offset = offsetof(Vertex, m_tex);
+    l_attributeDescriptions[1].offset = offsetof(struct Vertex, m_tex);
     // normals
     l_attributeDescriptions[2].binding = 0;
     l_attributeDescriptions[2].location = 2;
     l_attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-    l_attributeDescriptions[2].offset = offsetof(Vertex, m_normal);  
+    l_attributeDescriptions[2].offset = offsetof(struct Vertex, m_normal);  
     // tangents
     l_attributeDescriptions[3].binding = 0;
-    l_attributeDescriptions[3].location = 2;
+    l_attributeDescriptions[3].location = 3;
     l_attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-    l_attributeDescriptions[3].offset = offsetof(Vertex, m_tangent);
+    l_attributeDescriptions[3].offset = offsetof(struct Vertex, m_tangent);
     
     return l_attributeDescriptions;
   }
