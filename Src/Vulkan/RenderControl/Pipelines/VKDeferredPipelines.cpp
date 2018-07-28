@@ -132,7 +132,6 @@ VKGeometryPassPipeline::Init()
 
   pipelineLayoutInfo.pushConstantRangeCount = 0;
   
-  std::cout << "RIGHT BEFORE LAOUT CREATION\n";
   if (vkCreatePipelineLayout(m_logicalDevice->GetDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS)
     throw std::runtime_error("VKSimpleGeometryPassPipeline::Init() - failed to create pipeline layout!");
   
@@ -154,15 +153,11 @@ VKGeometryPassPipeline::Init()
   
  
   
-  std::cout << "RIGHT BEFORE PIPELINE CREATION\n" << m_logicalDevice->GetDevice();
   if (vkCreateGraphicsPipelines(m_logicalDevice->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_graphicsPipeline )  != VK_SUCCESS)
   {
     throw std::runtime_error("VKSimpleGeometryPassPipeline::Init() - failed to create graphics pipeline!");
   }
   
-
-  
-  std::cout << "RIGHT AFTER PIPELINE CREATION\n";
 }
 
 

@@ -46,13 +46,6 @@ void VulkanMeshRenderable::VulkanUpdate(char* a_mappedUBO)
 {
   if( m_uniformBuffer )
   {
-    // std::cout << "VULKAN UPDATE UNIFORM BUFFER \n";
-    // for( int i =0; i < 4; ++i)
-    // {
-      // for( int j =0; j < 4; ++j)
-        // std::cout<< m_lastAbsoluteTrans[i][j] << " ";
-      // std::cout<< "\n";    
-    // }
     // map the model matrix
     memcpy(a_mappedUBO+m_uniformBuffer->GetMemoryOffset(), &m_lastAbsoluteTrans, sizeof(VertexObjectMatrices));
   }

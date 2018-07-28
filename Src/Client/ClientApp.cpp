@@ -239,9 +239,9 @@ ClientApp::Initialise()
   l_msg->CreateEngineReadyMsg();
   m_client->PushMsg(l_msg);
   
-  IFDBG( std::cout << "send: " << (*l_msg) << std::endl << std::endl; );
-  
   m_camera = m_graphics->GetSceneManager()->AddCameraSceneNode(m_graphics->GetDeferredRenderPass()->GetCamera(), SceneControl::STATIC_CAMERA);
+  
+  IFDBG( std::cout << "send: " << (*l_msg) << std::endl << std::endl; );
   
 }
 
@@ -299,7 +299,7 @@ ClientApp::Update()
       // objects to transform
       for( std::vector<Network::ObjTransformInfo>::iterator l_objsToTrans = m_outObjsToTransform.begin(); l_objsToTrans != m_outObjsToTransform.end(); ++l_objsToTrans)
         TransformObject(*l_objsToTrans, false);
-      // change texture
+      // // change texture
       for( std::vector<Network::TextureChangeInfo>::iterator l_textChange = m_outTextureChange.begin(); l_textChange != m_outTextureChange.end(); ++l_textChange)
         TextureChange(*l_textChange);
       
@@ -324,6 +324,7 @@ ClientApp::Update()
   {
 
     m_graphics->Update(1);
+  
     // IFDBG( std::cout << "Render Update" << std::endl; );
     
     // CLIENTS SEND BACK THE RENDERED TEXTURES
@@ -489,7 +490,8 @@ void ClientApp::TextureChange(const Network::TextureChangeInfo& a_info)
     if( a_info.m_cubeText)
     {
       l_node->SetTexture(a_info.m_textureLayer, m_graphics->GetTextureFactory()->GetCubemap(a_info.m_path[0], a_info.m_path[1], a_info.m_path[2], a_info.m_path[3], a_info.m_path[4], a_info.m_path[5]) );
-    }else
+    }
+    else
       l_node->SetTexture(a_info.m_textureLayer, m_graphics->GetTextureFactory()->GetTexture(a_info.m_path[0]) );
   }
 }

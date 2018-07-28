@@ -27,6 +27,8 @@ namespace RenderControl
     
     std::vector< std::shared_ptr<VulkanImageMemoryChunk> > m_attachmentImages;
     
+    
+    
     // VULKAN VARS
     std::shared_ptr<VulkanLogicalDeviceManager> m_logicalDevice;
     VkPhysicalDevice m_physicalDevice;
@@ -50,8 +52,11 @@ namespace RenderControl
     std::vector<VkFramebuffer> m_frameBuffers;
     VkCommandPool m_commandPool;
     // semaphores for the rendering process
-    VkSemaphore m_imageAvailableSemaphore;
-    VkSemaphore m_renderFinishedSemaphore;
+    std::vector<VkSemaphore> m_imageAvailableSemaphore;
+    std::vector<VkSemaphore> m_renderFinishedSemaphore;
+    const unsigned int m_maxFramesInFlight = 2;
+    unsigned int m_currentFrame;
+    
     
     // VulkanFramebuffer m_frameBuffer;
     std::shared_ptr<VulkanPrimaryCommandBuffer> m_primaryCmdBuffer;

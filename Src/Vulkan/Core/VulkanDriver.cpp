@@ -66,25 +66,20 @@ void VulkanDriver::Init(const glm::vec2& a_windowSize )
   
   m_logicalDeviceMan->Init(m_chosenPhysicalDevice, m_surface, m_physicalDeviceMan.FindQueueFamilies(m_chosenPhysicalDevice, m_surface) , l_features, m_physicalDeviceMan.GetDeviceExtensions());
   // setup memory
-  VkDeviceSize l_stagingMemorySize = 4194304 * 2; // 1024*1024 * 8 = 8mb
-  VkDeviceSize l_vertexMemorySize = 4194304; // 1024*1024 * 4 = 4mb
-  VkDeviceSize l_indexMemorySize = 4194304; // 1024*1024 * 4 = 4mb
-  VkDeviceSize l_uniformBufferMemorySize = 4194304; // 1024*1024 * 4 = 4mb
-  VkDeviceSize l_mixBufferMemorySize = 4194304; // 1024*1024 * 4 = 4mb
-  VkDeviceSize l_shaderImagesSize = 20*4194304; // 1024*1024 * 4 = 4mb
-  VkDeviceSize l_colourAttachmentsSize = 20*4194304; // 1024*1024 * 4 *8 = 24mb
-  VkDeviceSize l_downloadingColourAttachmentsSize = 20*4194304; // 1024*1024 * 4 = 4mb
-  VkDeviceSize l_depthStencilAttachmentsSize = 20*4194304; // 1024*1024 * 4 = 4mb
+  VkDeviceSize l_stagingMemorySize = 1048576 * 200; // 200mb
+  VkDeviceSize l_vertexMemorySize = 1048576 * 4; // 4mb
+  VkDeviceSize l_indexMemorySize = 1048576 * 4; // 4mb
+  VkDeviceSize l_uniformBufferMemorySize = 1048576 * 4; // 4mb
+  VkDeviceSize l_mixBufferMemorySize = 1048576 * 4; // 4mb
+  VkDeviceSize l_shaderImagesSize = 1048576 * 200; // 200mb
+  VkDeviceSize l_colourAttachmentsSize = 1048576 * 80; // 80mb
+  VkDeviceSize l_downloadingColourAttachmentsSize = 1048576 * 80; // 80mb
+  VkDeviceSize l_depthStencilAttachmentsSize = 1048576 * 80; // 80mb
   
-  try
-  {
-    m_logicalDeviceMan->GetMemoryManager()->Init(l_stagingMemorySize, l_vertexMemorySize, l_indexMemorySize, l_uniformBufferMemorySize, l_mixBufferMemorySize, 
-                                                 l_shaderImagesSize, l_colourAttachmentsSize, l_downloadingColourAttachmentsSize, l_depthStencilAttachmentsSize);
-  }
-  catch(std::runtime_error& e)
-  {
-    std::cout << e.what() << std::endl;
-  }
+  
+  m_logicalDeviceMan->GetMemoryManager()->Init(l_stagingMemorySize, l_vertexMemorySize, l_indexMemorySize, l_uniformBufferMemorySize, l_mixBufferMemorySize, 
+                                               l_shaderImagesSize, l_colourAttachmentsSize, l_downloadingColourAttachmentsSize, l_depthStencilAttachmentsSize);
+
   // error in CreateSwapChain
   IFDBG( std::cout << "Initialized memory \n"; );
   m_logicalDeviceMan->CreateSwapChain( l_swapChainDetails );

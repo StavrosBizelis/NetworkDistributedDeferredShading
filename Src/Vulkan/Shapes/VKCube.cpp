@@ -80,6 +80,7 @@ VKCube::Create()
                                          16,17,18, 18,17,19, 
                                          20,21,22, 22,21,23 };
   // upload data to the gpu
+  
   std::shared_ptr<VulkanMemoryChunk> l_vkVertices = m_memory->CreateVertexBuffer( (char*)m_vertices.data(), m_vertices.size() * sizeof(Vertex) );
   std::shared_ptr<VulkanMemoryChunk> l_vkIndices = m_memory->CreateIndexBuffer( (char*)l_indices.data(), l_indices.size() * sizeof(unsigned int) );
   

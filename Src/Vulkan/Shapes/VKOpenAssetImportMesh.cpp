@@ -274,11 +274,12 @@ bool VKOpenAssetImportMesh::InitMaterials(const aiScene* pScene, const std::stri
         pMaterial->Get(AI_MATKEY_COLOR_DIFFUSE,color);
 
         m_Textures[i] = std::make_shared<VKTexture>(m_memory);
-        char data[3];
+        char data[4];
         data[0] = (char) (color[2]*255);
         data[1] = (char) (color[1]*255);
         data[2] = (char) (color[0]*255);
-        m_Textures[i]->CreateFromData(data, 1, 1, 24, false);
+        data[3] = (char)254;
+        m_Textures[i]->CreateFromData(data, 1, 1, 32, false);
 
       }
   }

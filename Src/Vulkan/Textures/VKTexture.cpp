@@ -67,7 +67,8 @@ VKTexture::UpdateData(char *data, int width, int height, int bpp, bool generateM
   if(bpp == 32)format = VK_FORMAT_B8G8R8A8_UNORM;
 	if(bpp == 24)format = VK_FORMAT_B8G8R8_UNORM;
 	if(bpp == 8)format = VK_FORMAT_R8_UNORM;
-  
+
+
   // if for some reason its impossible to update the texture - create a new image
   if( !m_memory->UpdateTextureData(m_vkTextureData->m_image, data, width, height, format) )
   {
@@ -77,7 +78,7 @@ VKTexture::UpdateData(char *data, int width, int height, int bpp, bool generateM
     
     m_vkTextureData->m_image = m_memory->CreateMaterialTexture(data, width, height, format);
   }
-  
+
 
 	// if(generateMipMaps)glGenerateMipmap(GL_TEXTURE_2D);
   

@@ -5,7 +5,7 @@
  *  DESCR: 
  ***********************************************************************/
 #include "Vulkan/Textures/VKCubemap.h"
-
+#include <iostream>
 /***********************************************************************
  *  Method: VKCubemap::VKCubemap
  *  Params: 

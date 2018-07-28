@@ -38,6 +38,7 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
   // m_pbos[1] = 0;
   m_outputTextures.resize(5, 0);
   m_outputSamplers.resize(5, 0);
+  m_currentFrame = 0;
 }
 
 
@@ -85,57 +86,101 @@ bool RenderControl::VKDeferredShadingPass::Init()
 
 void RenderControl::VKDeferredShadingPass::Render()
 {
+
+  uint32_t l_imageIndex;
+  VkResult result = vkAcquireNextImageKHR(m_logicalDevice->GetDevice(), m_logicalDevice->GetSwapChain(), std::numeric_limits<uint64_t>::max(), m_imageAvailableSemaphore[m_currentFrame], VK_NULL_HANDLE, &l_imageIndex);
+  if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+       std::cout << "VKDeferredShadingPass::Render() - requires reinitialization\n";
+      // ReInit();
+      // return;
+  }
+  else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+    throw std::runtime_error("VKDeferredShadingPass::Render() - failed to acquire swap chain image!");
+  }
+
+
   VkSubmitInfo submitInfo = {};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+  VkSemaphore waitSemaphores[] = { m_imageAvailableSemaphore[m_currentFrame] };
+  VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = waitSemaphores;
+  submitInfo.pWaitDstStageMask = waitStages;
+
   
-  // Wait for swap chain presentation to finish
-	submitInfo.waitSemaphoreCount = 1;
-  submitInfo.pWaitSemaphores = &m_renderFinishedSemaphore;
-  // Signal ready with offscreen semaphore
-  submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = &m_renderFinishedSemaphore;
   
+  m_primaryCmdBuffer->Update();
   
-  VkCommandBuffer l_cmdBuffer = m_primaryCmdBuffer->GetNextCommandBufferHandle();
   submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &l_cmdBuffer;
-	if( vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS )
-    throw std::runtime_error("failed to submit draw command buffer!");
+  VkCommandBuffer l_cmdBuffer[] = { m_primaryCmdBuffer->GetNextCommandBufferHandle() };
+  submitInfo.pCommandBuffers = l_cmdBuffer;
+
+  VkSemaphore signalSemaphores[] = { m_renderFinishedSemaphore[m_currentFrame] };
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = signalSemaphores;
+
+
+  if (vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
+    throw std::runtime_error("VKDeferredShadingPass::Render() - failed to submit draw command buffer!");
+
+
+  VkPresentInfoKHR presentInfo = {};
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = signalSemaphores;
+
+  VkSwapchainKHR swapChains[] = {m_logicalDevice->GetSwapChain()};
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = swapChains;
+
+  presentInfo.pImageIndices = &l_imageIndex;
+
+
+  result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
+  {
+      //ReInit();
+    std::cout << "VKDeferredShadingPass::Render() - requires reinitialization\n";
+  } 
+  else if (result != VK_SUCCESS) 
+  {
+    throw std::runtime_error("VKDeferredShadingPass::Render() - failed to present swap chain image!");
+  }  
   
-  // wait for the graphics queue to finish
-  vkQueueWaitIdle(m_graphicsQueue);
+  // vkQueueWaitIdle(m_presentQueue);
+  m_currentFrame = (m_currentFrame + 1) % m_maxFramesInFlight;
   
   
   
+  // VkSubmitInfo submitInfo = {};
+  // submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  
+  // // Wait for swap chain presentation to finish
+	// submitInfo.waitSemaphoreCount = 0;
+  // //submitInfo.pWaitSemaphores = &m_renderFinishedSemaphore;
+  // // Signal ready with offscreen semaphore
+  // submitInfo.signalSemaphoreCount = 0;
+  // //submitInfo.pSignalSemaphores = &m_renderFinishedSemaphore;
+  
+  
+
+  // m_primaryCmdBuffer->Update();
+  // VkCommandBuffer l_cmdBuffer = m_primaryCmdBuffer->GetNextCommandBufferHandle();
+  // submitInfo.commandBufferCount = 1;
+  // submitInfo.pCommandBuffers = &l_cmdBuffer;
+	// if( vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS )
+  // {
+    // throw std::runtime_error("failed to submit draw command buffer!");
+  // }
+  // // wait for the graphics queue to finish
+  // vkQueueWaitIdle(m_graphicsQueue); 
 }
 
 void RenderControl::VKDeferredShadingPass::OutputOnScreen()
-{
-  // unsigned int l_actualAttachment;
-  // unsigned int l_actualBit = GL_COLOR_BUFFER_BIT;
-  // (m_attachmentIndex == 4) ? (l_actualAttachment = GL_DEPTH_STENCIL_ATTACHMENT, l_actualBit = GL_DEPTH_BUFFER_BIT) : l_actualAttachment = GL_COLOR_ATTACHMENT0 + m_attachmentIndex;
-
-
-
-  // /* We are going to blit into the window (default framebuffer)                     */
-  // glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-  // glDrawBuffer(GL_BACK);              /* Use backbuffer as color dst.         */
-  // //glClearColor(0.f, 0.f, 0.f, 0.0f);
-  // //glClearDepth(1.0f);
-  // //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-  // /* Read from your FBO */
-  // glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo);
-  // glReadBuffer(l_actualAttachment); /* Use Color Attachment n as color src. */
-
-                    // /* Copy the color and depth buffer from your FBO to the default framebuffer       */
-  // glBlitFramebuffer(0, 0, (GLint)m_resolution.x, (GLint)m_resolution.y,
-    // 0, 0, (GLint)m_resolution.x, (GLint)m_resolution.y,
-    // l_actualBit, GL_LINEAR);
-  // // return to default 
-  // glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-}
+{}
 
 void RenderControl::VKDeferredShadingPass::UpdateViewportSettings(const glm::vec2& a_resolutionPart, const glm::vec4& a_viewportSettings)
 {
@@ -146,140 +191,10 @@ void RenderControl::VKDeferredShadingPass::UpdateViewportSettings(const glm::vec
 }
 
 void RenderControl::VKDeferredShadingPass::GeometryPass()
-{
-  // glEnable(GL_CULL_FACE);
+{}
 
-
-  // // bind and clear the other attachments
-  // glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-  // GLenum bufs[4];
-  // bufs[0] = GL_COLOR_ATTACHMENT0;	// diffuse
-  // bufs[1] = GL_COLOR_ATTACHMENT1;	// normal
-  // bufs[2] = GL_COLOR_ATTACHMENT2;	// spec
-  // bufs[3] = GL_COLOR_ATTACHMENT3;	// emissive - final	
-  // glDrawBuffers(4, &bufs[0]);
-
-
-
-  // glm::vec2 l_resolution = GetResolution();
-  // glViewport( m_viewPortSetting.x, m_viewPortSetting.y, 
-              // m_viewPortSetting.z, m_viewPortSetting.w);
-
-
-
-  // glClearColor(1, 0, 0, 1);
-  // glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  // glDepthMask(GL_TRUE);
-  // glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  
-  
-
-  // // setup camera matrix
-  // glutil::MatrixStack modelViewMatrixStack;
-  // modelViewMatrixStack.SetIdentity();
-  // modelViewMatrixStack.LookAt(m_camera->GetPosition(), m_camera->GetView(), m_camera->GetUpVector());
-
-
-  // ////////////////////////////////////////////////////////////////////////////////////
-  // // RENDER OBJECTS HERE /////////////////////////////////////////////////////////////
-  // ////////////////////////////////////////////////////////////////////////////////////
-  // typedef std::unordered_map< std::shared_ptr<IShaderProgram>, std::vector<IRenderable*> >::iterator Iter;
-  // typedef std::vector<IRenderable*>::iterator VectorIter;
-  // for (Iter l_iter = m_toRender.begin(); l_iter != m_toRender.end(); ++l_iter)
-  // {
-    // l_iter->first->UseProgram();
-    // l_iter->first->SetUniform("matrices.projMatrix", m_camera->GetPerspectiveProjectionMatrix() );
-    // // used for frustum culling in geometry culling
-    // l_iter->first->SetUniform("UCamFr.UCamPos", m_camera->GetPosition() );
-    // l_iter->first->SetUniform("UCamFr.UFOV", m_camera->GetFov() );
-    // l_iter->first->SetUniform("UCamFr.URatio", m_camera->GetAspectRatio() );
-    // l_iter->first->SetUniform("UCamFr.UNear", m_camera->GetNearClippingPlane() );
-    // l_iter->first->SetUniform("UCamFr.UFar", m_camera->GetFarClippingPlane() );
-    // l_iter->first->SetUniform("UCamFr.UViewDir", m_camera->GetView());
-    // l_iter->first->SetUniform("UCamFr.UUpVec", m_camera->GetUpVector());
-    // FrustumData l_temp = m_camera->GetFrustumData();
-    // l_iter->first->SetUniform("UCamFr.m_x", l_temp.m_x);
-    // l_iter->first->SetUniform("UCamFr.m_y", l_temp.m_y);
-    // l_iter->first->SetUniform("UCamFr.m_z", l_temp.m_z);
-    // l_iter->first->SetUniform("UCamFr.m_tangent", l_temp.m_tangent);
-    // l_iter->first->SetUniform("UCamFr.m_width", l_temp.m_width);
-    // l_iter->first->SetUniform("UCamFr.m_height", l_temp.m_height);
-
-
-
-    // std::vector<IRenderable*>& l_tmp = l_iter->second;
-    // for (VectorIter l_iter2 = l_tmp.begin(); l_iter2 != l_tmp.end(); ++l_iter2)
-      // (*l_iter2)->Render(modelViewMatrixStack);
-      
-  // }
-}
 void RenderControl::VKDeferredShadingPass::LightPass()
-{
-    // // setup camera matrix
-  // glutil::MatrixStack projModelViewMatrixStack;
-  // projModelViewMatrixStack.SetIdentity();
-  // projModelViewMatrixStack.ApplyMatrix(*m_camera->GetPerspectiveProjectionMatrix());
-  // projModelViewMatrixStack.LookAt(m_camera->GetPosition(), m_camera->GetView(), m_camera->GetUpVector());
-  
-
-  // // bind the textures
-  // for (unsigned int i = 0; i < m_outputTextures.size() - 2; ++i)
-  // {
-    // glActiveTexture(GL_TEXTURE0 + i);
-    // glBindTexture(GL_TEXTURE_2D, m_outputTextures[i]);
-    // glBindSampler(i, m_outputSamplers[i]);
-  // }		
-  // // depth
-  // glActiveTexture(GL_TEXTURE0 + 3);
-  // glBindTexture(GL_TEXTURE_2D, m_outputTextures[4]);
-  // glBindSampler(3, m_outputSamplers[4]);
-  
-
-  // glEnable(GL_DEPTH_CLAMP);
-
-  // ////////////////////////////////////////////////////////////////////////////////////
-  // // RENDER OBJECTS HERE /////////////////////////////////////////////////////////////
-  // ////////////////////////////////////////////////////////////////////////////////////
-  
-  // typedef std::set<IRenderable*>::iterator iterator;
-  // for (iterator l_iter = m_lights.begin(); l_iter != m_lights.end(); ++l_iter)
-  // {
-    // std::shared_ptr<IShaderProgram> l_lightMaterial = (*l_iter)->GetMaterial(0);
-    // std::shared_ptr<IShaderProgram> l_nullMaterial = (*l_iter)->GetMaterial(1);
-    // glm::mat4 l_invProjViewMat = glm::inverse(projModelViewMatrixStack.Top() );
-
-    // if (l_lightMaterial)
-    // {
-      // glm::vec2 l_resDiv = glm::vec2(1.0f) / GetResolution();
-      // glm::vec3 l_camPos = m_camera->GetPosition();
-      // l_lightMaterial->SetOnUse("LightPassUse",
-        // [l_resDiv, l_camPos, l_invProjViewMat](IShaderProgram* l_me)
-        // {
-          // l_me->SetUniform("UScreenResDiv", l_resDiv);
-          // l_me->SetUniform("UCamPos", l_camPos);
-          // l_me->SetUniform("UInverseViewProjectionMatrix", l_invProjViewMat);
-        // }
-      // );
-
-
-    // }
-    // if (l_nullMaterial)
-    // {
-      // l_nullMaterial->SetOnUse("LightPassUse",
-        // [l_invProjViewMat](IShaderProgram* l_me)
-        // {
-          // l_me->SetUniform("UInverseViewProjectionMatrix", l_invProjViewMat);
-        // }
-      // );
-
-
-    // }
-
-    
-    // (*l_iter)->Render(projModelViewMatrixStack);
-  // }
-  // glDisable(GL_DEPTH_CLAMP);
-}
+{}
 
 void RenderControl::VKDeferredShadingPass::Clear()
 {
@@ -409,47 +324,25 @@ void RenderControl::VKDeferredShadingPass::AddLight(RenderControl::IRenderable* 
 
 bool RenderControl::VKDeferredShadingPass::PackTexture( Network::NetworkMsgPtr& a_outMsg)
 {
-  // m_pboIndex = !m_pboIndex;
-  // bool l_nextIndex = !m_pboIndex;
-  
-  // glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo);
-  // glReadBuffer(GL_COLOR_ATTACHMENT0 + m_attachmentIndex);
-  
-  
-  // glBindBuffer(GL_PIXEL_PACK_BUFFER, m_pbos[m_pboIndex] );
-  // glReadPixels(0, 0, (GLsizei)m_resolutionPart.x, (GLsizei)m_resolutionPart.y, GL_BGR, GL_UNSIGNED_BYTE, 0);  // returns immediately
-  
-
-  // glBindBuffer(GL_PIXEL_PACK_BUFFER, m_pbos[l_nextIndex]);
-  // char* l_ptr = (char*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
-  
-  // if(l_ptr)
-  // {
-    // // IFDBG( std::cout << "Packed Actual Texture " << std::endl; );
-    // a_outMsg->CreateRenderResultMsg(l_ptr, m_resolutionPart, 0, 8 );
-    // glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-  // }
-  // else
-  // {
-    // IFDBG( std::cout << "Packed pseudo Texture " << std::endl; );
-    // char* l_tmp = new char[3];
-    // l_tmp[0] = 0;
-    // l_tmp[1] = 0;
-    // l_tmp[2] = 0;
-    // a_outMsg->CreateRenderResultMsg(l_tmp, m_resolutionPart );
-    // delete l_tmp;
-  // }
-  // // // back to conventional pixel operation
-  // glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-  
-  // return l_ptr != nullptr;
-  return false;
+  return true;
 }
 
 void RenderControl::VKDeferredShadingPass::VulkanUpdate( char* a_mappedBuffer )
 {
+
+  // m_globalsUbo1.UInverseViewProjectionMatrix
+  // m_globalsUbo1.UCamPos
+  // m_globalsUbo1.UScreenResDiv =
   
-  m_primaryCmdBuffer->Update();
+  // copy global camera matrices and screen resolution for lights fragments shaders
+  m_globalsUbo2.projMatrix = *m_camera->GetPerspectiveProjectionMatrix();
+  
+  glutil::MatrixStack modelViewMatrixStack;
+  modelViewMatrixStack.SetIdentity();
+  modelViewMatrixStack.LookAt(m_camera->GetPosition(), m_camera->GetView(), m_camera->GetUpVector());
+  m_globalsUbo2.viewMatrix = modelViewMatrixStack.Top(); // always identity matrix
+  
+  // m_globalsUbo2.viewMatrix = m_camera->GetViewMatrix(); // always identity matrix
   
   // copy global camera matrices and screen resolution for lights fragments shaders
   memcpy(a_mappedBuffer+m_uboMemBuffers[0]->GetMemoryOffset(), &m_globalsUbo1, sizeof(FragLightGlobalVars) );
@@ -475,20 +368,19 @@ void RenderControl::VKDeferredShadingPass::CreateSemaphores()
 {
   VkSemaphoreCreateInfo semaphoreInfo = {};
   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-  if (vkCreateSemaphore(m_logicalDevice->GetDevice(), &semaphoreInfo, nullptr, &m_imageAvailableSemaphore) != VK_SUCCESS ||
-      vkCreateSemaphore(m_logicalDevice->GetDevice(), &semaphoreInfo, nullptr, &m_renderFinishedSemaphore) != VK_SUCCESS) 
+  m_imageAvailableSemaphore.resize(m_maxFramesInFlight);
+  m_renderFinishedSemaphore.resize(m_maxFramesInFlight);
+  for( unsigned int i = 0; i < m_maxFramesInFlight; ++i)
   {
-    throw std::runtime_error("failed to create semaphores!");
+    vkCreateSemaphore(m_logicalDevice->GetDevice(), &semaphoreInfo, nullptr, &m_imageAvailableSemaphore[i]);
+    vkCreateSemaphore(m_logicalDevice->GetDevice(), &semaphoreInfo, nullptr, &m_renderFinishedSemaphore[i]);
   }
 }
 
 void RenderControl::VKDeferredShadingPass::CreateRenderPass()
 {
   
-
-  
-  //  init attachments
+  // init attachments
   // no swapchain attachments for deferred shading pass
   // create the attachments image
   m_attachmentImages.reserve(5);
@@ -523,12 +415,17 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
     l_attachments[i].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     l_attachments[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-      
     if( i == 4 )  //if it is the depth stencil attachment
     {
       l_attachments[i].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
       l_attachments[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-    }    
+    }
+    
+    if( i == 3 )  // temporary 3rd swapchain attachment
+    {
+      l_attachments[i].format = m_logicalDevice->GetSwapChainImageFormat();
+    }
+    
   }
   
   std::vector<VkSubpassDescription> l_subpasses(10);
@@ -625,19 +522,23 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
   m_swapChainImageViews = m_logicalDevice->GetSwapChainImageViews();
 
   size_t l_count = m_swapChainImageViews.size();
-  for (size_t i = 0; i < l_count; i++) 
+  for (size_t i = 0; i < l_count; ++i) 
   {
     VkImageView attachments[] = {
-        m_swapChainImageViews[i]
+      m_attachmentImages[0]->m_imageView,
+      m_attachmentImages[1]->m_imageView,
+      m_attachmentImages[2]->m_imageView,
+      m_swapChainImageViews[i],
+      m_attachmentImages[4]->m_imageView
     };
 
     VkFramebufferCreateInfo framebufferInfo = {};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebufferInfo.renderPass = m_renderPass;
-    framebufferInfo.attachmentCount = 1;
+    framebufferInfo.attachmentCount = 5;
     framebufferInfo.pAttachments = attachments;
-    framebufferInfo.width = m_resolution.x;
-    framebufferInfo.height = m_resolution.y;
+    framebufferInfo.width = m_resolutionPart.x;
+    framebufferInfo.height = m_resolutionPart.y;
     framebufferInfo.layers = 1;
 
     if (vkCreateFramebuffer(m_logicalDevice->GetDevice(), &framebufferInfo, nullptr, &m_frameBuffers[i]) != VK_SUCCESS) {
@@ -702,10 +603,8 @@ void RenderControl::VKDeferredShadingPass::CreatePipelines()
   
   for( auto l_pipeline : m_pipelines)
   {
-    std::cout << "MY TEST\n";
     l_pipeline->Init();
   }
-    std::cout << "MY TEST2\n";
   // leaving stencil pass and spotlights out for the moment 
   // may implement tiled deferred shading with point lights
   // CreatePipeline(CreatePipelineShaderCreateInfo(l_stencilVert, l_stencilFrag), 3, 1,  );
@@ -771,12 +670,10 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
 
 void RenderControl::VKDeferredShadingPass::CreateCommandBuffers()
 {
-  
   m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, m_frameBuffers, m_renderPass, m_resolutionPart) );
   m_primaryCmdBuffer->Init();
   for( auto l_pipeline : m_pipelines )
     m_primaryCmdBuffer->AddPipeline(l_pipeline);
-  
 }
 
 
@@ -921,7 +818,6 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
   }
   
   vkUpdateDescriptorSets(m_logicalDevice->GetDevice(), l_descriptorSetWrites.size(), l_descriptorSetWrites.data(), 0, nullptr);
-
 }
 
 

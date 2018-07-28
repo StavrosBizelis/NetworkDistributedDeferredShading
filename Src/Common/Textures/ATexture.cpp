@@ -6,6 +6,7 @@
  ***********************************************************************/
 #include "Common/Textures/ATexture.h"
 #include "freeimage/include/FreeImage.h"
+#include <iostream>
 /***********************************************************************
  *  Method: ATexture::ATexture
  *  Params: 
@@ -58,7 +59,6 @@ bool ATexture::Load(std::string path, bool generateMipMaps)
 	if (pData == NULL || FreeImage_GetWidth(dib) == 0 || FreeImage_GetHeight(dib) == 0)
 		return false;
 	
-
 	CreateFromData(pData, FreeImage_GetWidth(dib), FreeImage_GetHeight(dib), FreeImage_GetBPP(dib), generateMipMaps);
 	
 	FreeImage_Unload(dib);

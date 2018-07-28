@@ -48,7 +48,6 @@ void VulkanPrimaryCommandBuffer::RecordCommands()
     
     // end render pass
     vkCmdEndRenderPass(m_cmdBuffers[i] );
-
     if (vkEndCommandBuffer(m_cmdBuffers[i] ) != VK_SUCCESS)
       throw std::runtime_error("VulkanPrimaryCommandBuffer - failed to record primary command buffer!");
   }
@@ -75,7 +74,7 @@ VulkanPrimaryCommandBuffer::VulkanPrimaryCommandBuffer(const VkDevice& a_logical
   : m_logicalDevice(a_logicalDevice), m_cmdPool(a_cmdPool), m_swapChainFramebuffers(a_swapChainFramebuffers), m_renderPass(a_renderPass), m_resolution(a_resolution), 
     m_clearValues({}), m_index(0), m_dirty(true)
 {
-  m_clearValues[0].color = {1.0f, 0.0f, 0.0f, 0.0f};
+  m_clearValues[0].color = {1.0f, 0.0f, 0.0f, 1.0f};
   m_clearValues[1].depthStencil = {1.0f, 0};
 }
                             
@@ -152,7 +151,7 @@ void VulkanPrimaryCommandBuffer::Update()
     ++l_it;
   }
   
-  
+
   if( m_dirty )
   {
     RecordCommands();
