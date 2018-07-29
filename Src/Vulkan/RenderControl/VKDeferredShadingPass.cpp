@@ -32,7 +32,7 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
   
   std::cout<< a_resolution.x << " " << a_resolution.y << " " << a_subparts << std::endl;
   
-  std::shared_ptr<ARect> l_rec = a_shapeFactory->GetRectangle();
+  std::shared_ptr<IMesh> l_rec = a_shapeFactory->GetOpenAssetImportMesh("../Assets/Models/Asteroid/asteroid.obj");
   for( unsigned int i =0; i < a_subparts; ++i)
   {
     std::shared_ptr<ITexture> l_text = a_textFactory->GetTexture();
@@ -41,8 +41,11 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
     m_subpartRects.back()->SetTexture(0,l_text);
   }
   
-  m_subpartRects[0]->SetPos( glm::vec3( m_resolution.x/2, m_resolution.y/2, 0 ) );
-  m_subpartRects[0]->SetScale( glm::vec3( m_resolution.x/2, m_resolution.y/2, 0 ) );
+  // m_subpartRects[0]->SetPos( glm::vec3( m_resolution.x/2, m_resolution.y/2, 0 ) );
+  m_subpartRects[0]->SetPos( glm::vec3( 0, 0, -10 ) );
+  // m_subpartRects[0]->SetScale( glm::vec3( m_resolution.x/2, m_resolution.y/2, 1 ) );
+  m_subpartRects[0]->SetScale( glm::vec3( 2, 2, 1 ) );
+
   
 }
 
@@ -88,6 +91,7 @@ bool RenderControl::VKDeferredShadingPass::Init()
   CreateCommandBuffers();
   
   m_camera->SetOrthographicProjectionMatrix((int)m_resolution.x, (int)m_resolution.y);
+  m_camera->SetPerspectiveProjectionMatrix(45.0f, m_resolution.x / m_resolution.y, 0.5f, 7000.0f);;
 
   m_uboMemBuffer = m_memory->CreateUniformBuffer( sizeof(VertexViewProjMatrices) );
   
@@ -189,7 +193,8 @@ if( m_descriptorPool )
 void RenderControl::VKDeferredShadingPass::VulkanUpdate( char* a_mappedBuffer )
 {
   // copy global camera matrices and screen resolution for lights fragments shaders
-  m_globalsUbo.projMatrix = *m_camera->GetOrthographicProjectionMatrix();
+  // m_globalsUbo.projMatrix = *m_camera->GetOrthographicProjectionMatrix();
+  m_globalsUbo.projMatrix = *m_camera->GetPerspectiveProjectionMatrix();
   m_globalsUbo.viewMatrix = glm::mat4(); // always identity matrix
   
   memcpy(a_mappedBuffer+m_uboMemBuffer->GetMemoryOffset(), &m_globalsUbo, sizeof(VertexViewProjMatrices) );
@@ -316,8 +321,8 @@ void RenderControl::VKDeferredShadingPass::CreatePipelines()
 {
 
   // geometry shader shaders
-  VkShaderModule l_vertex = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\HUDImage.vert.spv"), m_logicalDevice->GetDevice());
-  VkShaderModule l_frag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\HUDImage.frag.spv"), m_logicalDevice->GetDevice());
+  VkShaderModule l_vertex = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\testShader.vert.spv"), m_logicalDevice->GetDevice());
+  VkShaderModule l_frag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\testShader.frag.spv"), m_logicalDevice->GetDevice());
   
   m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(1);
   // simple geometry 

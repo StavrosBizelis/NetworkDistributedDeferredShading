@@ -1,13 +1,12 @@
-#version 450
+#version 450 core
 
+layout (location = 0) in vec2 vTexCoord;
 
-layout(location = 0) in vec3 fragColor;
-
-layout(location = 0) out vec4 outColor;
+layout(location = 0) out vec4 vOutputColour;
 
 layout(binding = 2) uniform sampler2D sampler0;
 
-void main() {
-  outColor = vec4(fragColor, 1.0);
-  // outColor = texture(sampler0, vTexCoord);
+void main()
+{
+	vOutputColour = vec4(texture(sampler0, vTexCoord).xyz,1);
 }
