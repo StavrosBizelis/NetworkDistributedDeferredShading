@@ -14,10 +14,8 @@ layout(location = 3) out vec4 emissiveOut;
 
 void main()
 {
-
-    normalOut = vec4(vec3(0), 1); 
-	  
-    diffuseOut = vec4(vec3(0), 1);
-    specularOut = vec4(vec3(0), 1);
-    emissiveOut = texture(UCubeMap, worldPosition);
+  normalOut = vec4(vec3(0), 1); 	  
+  diffuseOut = vec4(vec3(0), 1);
+  specularOut = vec4(vec3(0), 1);
+  emissiveOut = texture(UCubeMap, worldPosition);
 }

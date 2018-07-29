@@ -1,12 +1,11 @@
 #version 450 core
-
-layout (std140, set = 0, binding = 0) uniform GlobalMatrices 
+layout ( binding = 0) uniform GlobalMatrices 
 {
     mat4 projMatrix;
     mat4 viewMatrix;
 } globalsMats;
 
-layout (std140, set = 0, binding = 1) uniform ObjectMatrices 
+layout ( binding = 1) uniform ObjectMatrices 
 {
     mat4 modelMatrix;
 } objectMats;
@@ -47,6 +46,8 @@ void main()
 	gl_Position = globalsMats.projMatrix * l_modelViewMat * vec4(inPosition, 1.0f);
 	//vo.vModelPosition = ( matrices.modelMatrix * vec4(inPosition, 1.0f) ).xyz;
   
+  gl_Position.y = -gl_Position.y;
+  gl_Position.z = (gl_Position.z + gl_Position.w) / 2.0;
   
   
   vEyeTan = normalize(inverse(transpose(l_modelViewMat) ) * vec4(inTangent,1) ).xyz;

@@ -60,7 +60,7 @@
     beginInfo.pInheritanceInfo = &l_inheritanceInfo;
     
     vkBeginCommandBuffer(m_secondaryCmdBuffer, &beginInfo);
-  
+    std::cout << "Start Recording Secondary command buffer \n";
     vkCmdBindPipeline(m_secondaryCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, a_pipeline );
     // actual recording happening here
     for (std::set< VulkanRenderable* >::iterator it=m_objectsToDraw.begin(); it!=m_objectsToDraw.end(); ++it)
@@ -84,7 +84,7 @@
           vkCmdBindVertexBuffers(m_secondaryCmdBuffer, 0, 1, &l_vertBuff, &l_vertBuffOffset );
           vkCmdBindIndexBuffer(m_secondaryCmdBuffer, l_indexBuff, l_indexBuffOffset, VK_INDEX_TYPE_UINT32 );
           
-          
+          std::cout << "object recorded " << "\n";
           vkCmdBindDescriptorSets(m_secondaryCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, l_descSet, 0, nullptr);
         
           vkCmdDrawIndexed(m_secondaryCmdBuffer, static_cast<uint32_t>(l_indexCount), 1, 0, 0, 0);
@@ -94,7 +94,9 @@
     
     if (vkEndCommandBuffer(m_secondaryCmdBuffer) == VK_SUCCESS)
       m_ready = true;
-    
+    else
+      std::cout << "ERROR recording secondary command buffer\n";
+    std::cout << "End recording secondary command buffer\n";
     return m_ready;
     
   }

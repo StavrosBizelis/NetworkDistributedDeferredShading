@@ -70,12 +70,14 @@ VulkanPrimaryCommandBuffer::VulkanPrimaryCommandBuffer(){}
 VulkanPrimaryCommandBuffer::VulkanPrimaryCommandBuffer(const VkDevice& a_logicalDevice, const VkCommandPool& a_cmdPool,
                                                        const std::vector<VkFramebuffer>& a_swapChainFramebuffers, 
                                                        const VkRenderPass& a_renderPass, 
-                                                       const glm::vec2& a_resolution  )
+                                                       const glm::vec2& a_resolution, const unsigned int& a_attachmentsCount )
   : m_logicalDevice(a_logicalDevice), m_cmdPool(a_cmdPool), m_swapChainFramebuffers(a_swapChainFramebuffers), m_renderPass(a_renderPass), m_resolution(a_resolution), 
-    m_clearValues({}), m_index(0), m_dirty(true)
+    m_clearValues(a_attachmentsCount), m_index(0), m_dirty(true)
 {
-  m_clearValues[0].color = {1.0f, 0.0f, 0.0f, 1.0f};
-  m_clearValues[1].depthStencil = {1.0f, 0};
+  
+  for( unsigned int i = 0; i < a_attachmentsCount - 1; ++i)
+    m_clearValues[i].color = {1.0f, 0.0f, 0.0f, 1.0f};
+  m_clearValues[a_attachmentsCount - 1].depthStencil = {1.0f, 0};
 }
                             
 VulkanPrimaryCommandBuffer::~VulkanPrimaryCommandBuffer() {}
@@ -133,7 +135,7 @@ void VulkanPrimaryCommandBuffer::RemovePipeline(const std::shared_ptr< VKPipelin
     // push it in the temporary queue only if it is not the given pipeline
     if( !(a_pipeline == l_currPipeline) ) 
       l_newPipelines.push_back(l_currPipeline);
-  } 
+  }
   m_pipelines = std::move( l_newPipelines );
   m_dirty = true;
 }
@@ -144,6 +146,7 @@ void VulkanPrimaryCommandBuffer::Update()
   std::deque<std::shared_ptr< VKPipeline > >::iterator l_it = m_pipelines.begin();
   while( l_it != m_pipelines.end() )
   {    
+
     // check for anything changed
     if( (*l_it)->IsDirty(true) )
       m_dirty = true;
@@ -156,7 +159,6 @@ void VulkanPrimaryCommandBuffer::Update()
   {
     RecordCommands();
   }
-  
   m_dirty = false;
 }
 

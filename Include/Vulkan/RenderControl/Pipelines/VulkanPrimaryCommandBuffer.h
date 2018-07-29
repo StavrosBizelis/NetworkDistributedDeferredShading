@@ -28,7 +28,7 @@ struct VulkanPrimaryCommandBuffer
   public:
   std::deque< std::shared_ptr< VKPipeline > > m_pipelines;
   
-  std::array<VkClearValue, 2> m_clearValues;
+  std::vector<VkClearValue> m_clearValues;
   
   // helpers
   void RecordCommands();
@@ -40,7 +40,7 @@ struct VulkanPrimaryCommandBuffer
   VulkanPrimaryCommandBuffer(const VkDevice& a_logicalDevice, const VkCommandPool& a_cmdPool,
                              const std::vector<VkFramebuffer>& a_swapChainFramebuffers, 
                              const VkRenderPass& a_renderPass, 
-                             const glm::vec2& a_resolution  );
+                             const glm::vec2& a_resolution, const unsigned int& a_attachmentsCount = 2 );
   
   ~VulkanPrimaryCommandBuffer();
   

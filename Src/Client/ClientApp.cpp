@@ -290,18 +290,16 @@ ClientApp::Update()
                                            m_outTextureChange, m_outLightsToAdd, m_outLightsToRemove, m_outLightsToTransform);
       // std::cout << (**l_iter) << std::endl;
       SetCamera(m_outCameraSettings[0], m_outCameraSettings[1], m_outCameraSettings[2]);
+      
       // objects to add
       for( std::vector<Network::ObjAddInfo>::iterator l_objsToAdd = m_outObjsToAdd.begin(); l_objsToAdd != m_outObjsToAdd.end(); ++l_objsToAdd)
-        AddObject(*l_objsToAdd);
+        AddObject(*l_objsToAdd, m_outTextureChange);
       // objects to remove
       for( std::vector<uint32_t>::iterator l_objsToRemove = m_outObjsToRemove.begin(); l_objsToRemove != m_outObjsToRemove.end(); ++l_objsToRemove)
         RemoveObject(*l_objsToRemove, false);
       // objects to transform
       for( std::vector<Network::ObjTransformInfo>::iterator l_objsToTrans = m_outObjsToTransform.begin(); l_objsToTrans != m_outObjsToTransform.end(); ++l_objsToTrans)
         TransformObject(*l_objsToTrans, false);
-      // // change texture
-      for( std::vector<Network::TextureChangeInfo>::iterator l_textChange = m_outTextureChange.begin(); l_textChange != m_outTextureChange.end(); ++l_textChange)
-        TextureChange(*l_textChange);
       
       // lights to add
       for( std::vector<Network::ObjAddInfo>::iterator l_lightsToAdd = m_outLightsToAdd.begin(); l_lightsToAdd != m_outLightsToAdd.end(); ++l_lightsToAdd)
@@ -373,10 +371,12 @@ void ClientApp::SetCamera(glm::vec3 a_pos, glm::vec3 a_view, glm::vec3 a_up)
  * Effects: 
  ***********************************************************************/
 void 
-ClientApp::AddObject(const Network::ObjAddInfo& a_info)
+ClientApp::AddObject(const Network::ObjAddInfo& a_info, const std::vector<Network::TextureChangeInfo>& a_textures)
 {
   if( a_info.m_id == 0 )
     return;
+  
+
   
   
   std::shared_ptr<IMesh> l_mesh;
@@ -403,6 +403,11 @@ ClientApp::AddObject(const Network::ObjAddInfo& a_info)
 
     if( l_meshNode->SetID(a_info.m_id))
     {
+      // texture set before adding it to the renderpass 
+      for( std::vector<Network::TextureChangeInfo>::const_iterator l_textChange = a_textures.cbegin(); l_textChange != a_textures.cend(); ++l_textChange)
+        if( l_textChange->m_id == a_info.m_id )
+          TextureChange(*l_textChange);
+      
       m_graphics->GetDeferredRenderPass()->AddRenderable(l_meshNode, (RenderControl::GeometryPassMaterialFlags)(a_info.m_materialFlags));
 
     }

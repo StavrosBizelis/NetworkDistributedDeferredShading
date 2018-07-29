@@ -21,6 +21,11 @@ bool VKPipeline::IsDirty(bool a_clean)
 {
   bool l_tmp = m_dirty;
   m_dirty = a_clean ? false : m_dirty;
+  
+  for( unsigned int i = 0; i < m_commandBuffers.size(); ++i)
+    if(!m_commandBuffers[i]->IsReady() )
+      return true;
+    
   return l_tmp;
 }
 
@@ -36,7 +41,10 @@ std::vector< VkCommandBuffer> VKPipeline::GetSecondaryCommandBuffersHandles()
   for( unsigned int i = 0; i < m_commandBuffers.size(); ++i)
   { 
     if(!m_commandBuffers[i]->IsReady() )
+    {
+      printf("rerecord secondary command buffer\n");
       m_commandBuffers[i]->RecordCommands(m_graphicsPipeline);
+    }
     l_toReturn.push_back( m_commandBuffers[i]->GetCommandBufferHandle() );
   }
   return l_toReturn;

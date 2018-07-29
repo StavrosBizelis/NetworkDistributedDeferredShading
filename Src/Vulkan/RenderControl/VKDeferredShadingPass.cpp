@@ -73,8 +73,8 @@ bool RenderControl::VKDeferredShadingPass::Init()
   // // init camera
   std::shared_ptr<CCamera> l_cam = GetCamera();
 
-  l_cam->SetOrthographicProjectionMatrix((int)m_resolution.x, (int)m_resolution.y);
-  l_cam->SetPerspectiveProjectionMatrix(45.0f, m_resolution.x / m_resolution.y, 0.5f, 7000.0f);
+  m_camera->SetOrthographicProjectionMatrix((int)m_resolution.x, (int)m_resolution.y);
+  m_camera->SetPerspectiveProjectionMatrix(45.0f, m_resolution.x / m_resolution.y, 0.5f, 7000.0f);
 
   // init buffers for global ubos
   m_uboMemBuffers.resize(2);  
@@ -109,7 +109,7 @@ void RenderControl::VKDeferredShadingPass::Render()
   submitInfo.pWaitDstStageMask = waitStages;
 
   
-  
+
   m_primaryCmdBuffer->Update();
   
   submitInfo.commandBufferCount = 1;
@@ -120,10 +120,14 @@ void RenderControl::VKDeferredShadingPass::Render()
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = signalSemaphores;
 
-
-  if (vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
+  std::cout << "FUCK ME1\n" << l_imageIndex;
+  VkResult l_res = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+  if ( l_res != VK_SUCCESS)
+  {
+    std::cout << "FUCK ME2\n" << l_res;
     throw std::runtime_error("VKDeferredShadingPass::Render() - failed to submit draw command buffer!");
-
+  }
+  std::cout << "FUCK ME3\n" << l_res;
 
   VkPresentInfoKHR presentInfo = {};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -148,7 +152,7 @@ void RenderControl::VKDeferredShadingPass::Render()
   else if (result != VK_SUCCESS) 
   {
     throw std::runtime_error("VKDeferredShadingPass::Render() - failed to present swap chain image!");
-  }  
+  }
   
   // vkQueueWaitIdle(m_presentQueue);
   m_currentFrame = (m_currentFrame + 1) % m_maxFramesInFlight;
@@ -176,7 +180,8 @@ void RenderControl::VKDeferredShadingPass::Render()
     // throw std::runtime_error("failed to submit draw command buffer!");
   // }
   // // wait for the graphics queue to finish
-  // vkQueueWaitIdle(m_graphicsQueue); 
+  vkQueueWaitIdle(m_graphicsQueue); 
+  vkQueueWaitIdle(m_presentQueue); 
 }
 
 void RenderControl::VKDeferredShadingPass::OutputOnScreen()
@@ -246,48 +251,50 @@ bool RenderControl::VKDeferredShadingPass::AddRenderable(RenderControl::IRendera
 			// simple color
 			if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP | EMISSION_MAP)) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP | EMISSION_MAP))
       {
-        CreateDescriptorSet(m_pipelines[6], a_renderable);
+        CreateGeometryDescriptorSet(m_pipelines[6], a_renderable);
         l_cmdBuffers = m_pipelines[6]->GetSecondaryCommandBuffers();
       }
 			else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP )) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP))
 			{
-        CreateDescriptorSet(m_pipelines[5], a_renderable);
+        CreateGeometryDescriptorSet(m_pipelines[5], a_renderable);
         l_cmdBuffers = m_pipelines[5]->GetSecondaryCommandBuffers();
       }
       else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP)) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP))
 			{
-        CreateDescriptorSet(m_pipelines[4], a_renderable);
+        CreateGeometryDescriptorSet(m_pipelines[4], a_renderable);
         l_cmdBuffers = m_pipelines[4]->GetSecondaryCommandBuffers();
       }
       else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP)) == (NORMAL_MAP | DIFFUSE_MAP))
 			{
-        CreateDescriptorSet(m_pipelines[3], a_renderable);
+        CreateGeometryDescriptorSet(m_pipelines[3], a_renderable);
         l_cmdBuffers = m_pipelines[3]->GetSecondaryCommandBuffers();
       }
       else if ((a_geometryMaterialFlags & (DIFFUSE_MAP)) == (DIFFUSE_MAP))
 			{
-        CreateDescriptorSet(m_pipelines[2], a_renderable);
+        CreateGeometryDescriptorSet(m_pipelines[2], a_renderable);
       }
       else if ((a_geometryMaterialFlags & (EMISSION_MAP)) == (EMISSION_MAP))
 			{
-        CreateDescriptorSet(m_pipelines[1], a_renderable);
+        CreateGeometryDescriptorSet(m_pipelines[1], a_renderable);
         l_cmdBuffers = m_pipelines[1]->GetSecondaryCommandBuffers();
       }
       else if ((a_geometryMaterialFlags & (SKYBOX)) == (SKYBOX))
 			{
-        CreateDescriptorSet(m_pipelines[7], a_renderable);
+        CreateGeometryDescriptorSet(m_pipelines[7], a_renderable);
         l_cmdBuffers = m_pipelines[7]->GetSecondaryCommandBuffers();
       }
       else 
 			{
-        CreateDescriptorSet(m_pipelines[0], a_renderable);
+        CreateGeometryDescriptorSet(m_pipelines[0], a_renderable);
         l_cmdBuffers = m_pipelines[0]->GetSecondaryCommandBuffers();
       }
       
       VulkanRenderable* l_renderable = reinterpret_cast<VulkanRenderable*>( a_renderable->GetExtra() );
       if( l_cmdBuffers.size() > 0 && l_renderable)
+      {
+        std::cout << "renderable is added to secondary command buffer \n\n\n";
         l_cmdBuffers[0]->AddMesh(l_renderable);
-      
+      }
       
 			// a_renderable->SetMaterial(l_selectedMat);
 			// m_toRender[l_selectedMat].push_back(a_renderable);
@@ -550,8 +557,8 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
 void RenderControl::VKDeferredShadingPass::CreatePipelines()
 {
   // geometry shader shaders
-  VkShaderModule l_geomVert = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\HUDImage.vert.spv"), m_logicalDevice->GetDevice());
-  VkShaderModule l_geomFrag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\HUDImage.frag.spv"), m_logicalDevice->GetDevice());
+  VkShaderModule l_geomVert = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryShader.vert.spv"), m_logicalDevice->GetDevice());
+  VkShaderModule l_geomFrag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryShader.frag.spv"), m_logicalDevice->GetDevice());
   VkShaderModule l_geomEmissiveFrag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryEmissiveShader.frag.spv"), m_logicalDevice->GetDevice());
   VkShaderModule l_geomColourFrag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryColourShader.frag.spv"), m_logicalDevice->GetDevice());
   VkShaderModule l_geomColourNormalFrag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryColourNormalShader.frag.spv"), m_logicalDevice->GetDevice());
@@ -670,7 +677,7 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
 
 void RenderControl::VKDeferredShadingPass::CreateCommandBuffers()
 {
-  m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, m_frameBuffers, m_renderPass, m_resolutionPart) );
+  m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, m_frameBuffers, m_renderPass, m_resolutionPart, 5) );
   m_primaryCmdBuffer->Init();
   for( auto l_pipeline : m_pipelines )
     m_primaryCmdBuffer->AddPipeline(l_pipeline);
@@ -712,6 +719,11 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
   unsigned int l_globalsToGo = a_pipeline->GetGlobalDataTypes().size();
   // descriptor layout bindings are always global first, then object bindings
   std::vector<VkDescriptorSetLayoutBinding> l_bindings = a_pipeline->GetDescriptorSetLayoutBindings();
+  
+  // temporary containers for VkDescriptorBufferInfo and VkDescriptorImageInfo
+  std::vector<VkDescriptorBufferInfo> m_tmpbufferInfo;
+  std::vector<VkDescriptorImageInfo> m_tmpImageInfo;
+  
   for( unsigned int i =0; i < l_bindings.size(); ++i)
   {
     if( l_bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER )
@@ -741,6 +753,9 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
           l_bufferInfo.range = m_uboMemBuffers[0]->m_size;
         }
       }
+      
+      m_tmpbufferInfo.push_back(l_bufferInfo);
+      
       VkWriteDescriptorSet descriptorWrite = {};
       descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
       descriptorWrite.dstSet = l_descSet;
@@ -748,7 +763,7 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
       descriptorWrite.dstArrayElement = 0;
       descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
       descriptorWrite.descriptorCount = 1;
-      descriptorWrite.pBufferInfo = &l_bufferInfo;
+      descriptorWrite.pBufferInfo = &m_tmpbufferInfo.back();
       
       l_descriptorSetWrites.push_back(descriptorWrite);
     }
@@ -768,6 +783,8 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
           l_imageInfo.imageView = l_tempTexture->GetImage()->m_imageView;  // VkImageView
           l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
           
+          m_tmpImageInfo.push_back(l_imageInfo);
+          
           VkWriteDescriptorSet descriptorWrite = {};
           descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
           descriptorWrite.dstSet = l_descSet;
@@ -776,7 +793,7 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
           descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
           descriptorWrite.descriptorCount = 1;
           descriptorWrite.pBufferInfo = nullptr;
-          descriptorWrite.pImageInfo = &l_imageInfo;
+          descriptorWrite.pImageInfo = &m_tmpImageInfo.back();
 
           l_descriptorSetWrites.push_back(descriptorWrite);
         }
@@ -797,6 +814,8 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
       l_imageInfo.imageView = m_attachmentImages[l_inputAttachmentsIndex]->m_imageView;  // VkImageView
       l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
       
+      m_tmpImageInfo.push_back(l_imageInfo);
+      
       VkWriteDescriptorSet descriptorWrite = {};
       descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
       descriptorWrite.dstSet = l_descSet;
@@ -805,7 +824,7 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
       descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
       descriptorWrite.descriptorCount = 1;
       descriptorWrite.pBufferInfo = nullptr;
-      descriptorWrite.pImageInfo = &l_imageInfo;
+      descriptorWrite.pImageInfo = &m_tmpImageInfo.back();
       
       l_descriptorSetWrites.push_back(descriptorWrite);
       
@@ -816,8 +835,130 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
         
     }
   }
+  vkUpdateDescriptorSets(m_logicalDevice->GetDevice(), l_descriptorSetWrites.size(), l_descriptorSetWrites.data(), 0, nullptr);
+
+}
+
+
+
+void RenderControl::VKDeferredShadingPass::CreateGeometryDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, IRenderable* a_renderable)
+{
+  VkDescriptorSetLayout l_layout = a_pipeline->GetDescriptorSetLayout();
+  VkDescriptorSetAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocInfo.descriptorPool = m_descriptorPool;
+  allocInfo.descriptorSetCount = 1;
+  allocInfo.pSetLayouts = &l_layout;
+
+  VkDescriptorSet l_descSet;
+  if (vkAllocateDescriptorSets(m_logicalDevice->GetDevice(), &allocInfo, &l_descSet ) != VK_SUCCESS) {
+    throw std::runtime_error("VKDeferredShadingPass::CreateGeometryDescriptorSet() - failed to allocate descriptor sets!");
+  }
+  
+  // personal ubos here
+  std::vector<size_t> l_uboSizes = a_pipeline->GetObjUboSizes();
+  std::vector< std::shared_ptr<VulkanMemoryChunk> > l_uboMemBuffer = {nullptr,nullptr};
+  if( l_uboSizes.size() > 0 )
+    l_uboMemBuffer[0] = m_memory->CreateUniformBuffer( l_uboSizes[0] );
+  if( l_uboSizes.size() > 1 )
+    l_uboMemBuffer[1] = m_memory->CreateUniformBuffer( l_uboSizes[1] );
+  reinterpret_cast<VulkanRenderable*>( a_renderable->GetExtra() )->Init(l_descSet, l_uboMemBuffer[0], l_uboMemBuffer[1] );
+  
+  
+
+
+  // descriptor layout bindings are always global first, then object bindings
+  std::vector<VkDescriptorSetLayoutBinding> l_bindings = a_pipeline->GetDescriptorSetLayoutBindings();
+
+  
+  // m_descLayoutBindings = {l_vertexBindingGlobal, l_vertexBindingObject, l_fragBindingObject};
+  // the others are samplers
+  // vertex global 
+  VkDescriptorBufferInfo l_bufferInfo0 = {};
+  l_bufferInfo0.buffer = m_uboMemBuffers[1]->m_buffer->m_buffer;
+  l_bufferInfo0.offset = m_uboMemBuffers[1]->GetBufferOffset();
+  l_bufferInfo0.range = m_uboMemBuffers[1]->m_size;
+  
+  VkWriteDescriptorSet descriptorWrite0 = {};
+  descriptorWrite0.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite0.dstSet = l_descSet;
+  descriptorWrite0.dstBinding = l_bindings[0].binding;
+  descriptorWrite0.dstArrayElement = 0;
+  descriptorWrite0.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite0.descriptorCount = 1;
+  descriptorWrite0.pBufferInfo = &l_bufferInfo0;
+
+  // vertex object data 
+  VkDescriptorBufferInfo l_bufferInfo1 = {};
+  l_bufferInfo1.buffer = l_uboMemBuffer[0]->m_buffer->m_buffer;
+  l_bufferInfo1.offset = l_uboMemBuffer[0]->GetBufferOffset();
+  l_bufferInfo1.range = l_uboMemBuffer[0]->m_size;
+  
+  VkWriteDescriptorSet descriptorWrite1 = {};
+  descriptorWrite1.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite1.dstSet = l_descSet;
+  descriptorWrite1.dstBinding = l_bindings[1].binding;
+  descriptorWrite1.dstArrayElement = 0;
+  descriptorWrite1.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite1.descriptorCount = 1;
+  descriptorWrite1.pBufferInfo = &l_bufferInfo1;
+  
+  // fragment object data 
+  VkDescriptorBufferInfo l_bufferInfo2 = {};
+  l_bufferInfo2.buffer = l_uboMemBuffer[1]->m_buffer->m_buffer;
+  l_bufferInfo2.offset = l_uboMemBuffer[1]->GetBufferOffset();
+  l_bufferInfo2.range = l_uboMemBuffer[1]->m_size;
+  
+  VkWriteDescriptorSet descriptorWrite2 = {};
+  descriptorWrite2.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite2.dstSet = l_descSet;
+  descriptorWrite2.dstBinding = l_bindings[2].binding;
+  descriptorWrite2.dstArrayElement = 0;
+  descriptorWrite2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite2.descriptorCount = 1;
+  descriptorWrite2.pBufferInfo = &l_bufferInfo2;
+  
+  std::vector< VkWriteDescriptorSet > l_descriptorSetWrites = {descriptorWrite1, descriptorWrite2 };
+  std::vector< VkDescriptorImageInfo > l_imageDescriptors( l_bindings.size() - 3 );
+  
+  // then samplers
+  SceneControl::TexturedSceneNode* l_texturedSceneNode = reinterpret_cast<SceneControl::TexturedSceneNode*>(a_renderable);
+  for( int i = 0; i < l_imageDescriptors.size(); ++i)
+  {
+    std::shared_ptr<ITexture> l_texture = l_texturedSceneNode->GetTexture(i);
+    if( l_texture )
+    {
+      
+      VKATexture* l_tempTexture = reinterpret_cast<VKATexture*>( l_texture->GetExtra() );
+      if( l_tempTexture )
+      {
+        l_imageDescriptors[i].sampler = l_tempTexture->GetSampler()->m_sampler; // VkSampler                      
+        l_imageDescriptors[i].imageView = l_tempTexture->GetImage()->m_imageView;  // VkImageView
+        l_imageDescriptors[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
+      }
+    }
+  }
+
+  
+  for( int i = 3; i < l_bindings.size(); ++i)
+  {
+    VkWriteDescriptorSet descriptorWrite = {};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = l_descSet;
+    descriptorWrite.dstBinding = l_bindings[i].binding;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pBufferInfo = nullptr;
+    descriptorWrite.pImageInfo = &l_imageDescriptors[i-3];
+
+    l_descriptorSetWrites.push_back(descriptorWrite);
+  }
+  
   
   vkUpdateDescriptorSets(m_logicalDevice->GetDevice(), l_descriptorSetWrites.size(), l_descriptorSetWrites.data(), 0, nullptr);
+  printf("vkUpdateDescriptorSets - done\n");
+
 }
 
 

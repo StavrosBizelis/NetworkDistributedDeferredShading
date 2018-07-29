@@ -42,7 +42,7 @@ private:
   SceneControl::CameraSceneNode* m_camera;
   // helpers
   void SetCamera(glm::vec3 a_pos, glm::vec3 a_view, glm::vec3 a_up);
-  void AddObject(const Network::ObjAddInfo& a_info);
+  void AddObject(const Network::ObjAddInfo& a_info, const std::vector<Network::TextureChangeInfo>& a_textures);
   void RemoveObject(const uint32_t& a_id, bool a_isLight);
   void TransformObject(const Network::ObjTransformInfo& a_info, bool a_isLight);
   void TextureChange(const Network::TextureChangeInfo& a_info);

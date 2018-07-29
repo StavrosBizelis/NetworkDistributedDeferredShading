@@ -70,6 +70,7 @@ namespace RenderControl
     void CreateCommandBuffers();
     
     void CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, IRenderable* a_renderable); // descriptor sets will be created and allocated on the fly as objects are introduced to the VKDeferredShadingPass
+    void CreateGeometryDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, IRenderable* a_renderable); // descriptor sets will be created and allocated on the fly as objects are introduced to the VKDeferredShadingPass
 
     
     std::vector< std::shared_ptr<VKPipeline> > m_pipelines;

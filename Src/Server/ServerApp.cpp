@@ -442,7 +442,9 @@ ServerApp::InitialiseScene()
   Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
   l_msg->CreateSceneUpdateMsg(
   {glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
-  {l_sky, l_asteroid}, {}, {}, {l_skyText, l_asteroidText}, {}, {}, {});
+  // {l_sky, l_asteroid}, {}, {}, {l_skyText, l_asteroidText}, {}, {}, {});
+  // {l_sky}, {}, {}, {l_skyText}, {}, {}, {});
+  {l_asteroid}, {}, {}, { l_asteroidText}, {}, {}, {});
 
 
   for( std::map<std::shared_ptr<asio::ip::tcp::socket>, unsigned int>::iterator l_iter = m_clients.begin(); l_iter != m_clients.end(); ++l_iter )
