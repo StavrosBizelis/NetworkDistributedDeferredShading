@@ -26,7 +26,7 @@ RenderControl::VKCompositionPass::VKCompositionPass(const std::shared_ptr<Vulkan
   :ACompositionPass(a_resolution, a_scnManager, a_shapeFactory,a_textFactory, a_subparts),
     m_logicalDevice(a_device), m_physicalDevice(a_physicalDevice), m_memory(a_memory), m_graphicsQueue(a_graphicsQueue), m_presentQueue(a_presentQueue), m_indices(a_indices), m_currentFrame(0)
 {
-
+  
 }
 
 

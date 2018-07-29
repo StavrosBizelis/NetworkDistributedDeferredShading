@@ -239,7 +239,7 @@ ClientApp::Initialise()
   l_msg->CreateEngineReadyMsg();
   m_client->PushMsg(l_msg);
   
-  m_camera = m_graphics->GetSceneManager()->AddCameraSceneNode(m_graphics->GetDeferredRenderPass()->GetCamera(), SceneControl::STATIC_CAMERA);
+  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // m_camera = m_graphics->GetSceneManager()->AddCameraSceneNode(m_graphics->GetDeferredRenderPass()->GetCamera(), SceneControl::STATIC_CAMERA);
   
   IFDBG( std::cout << "send: " << (*l_msg) << std::endl << std::endl; );
   
@@ -289,26 +289,26 @@ ClientApp::Update()
       (*l_iter)->DeserializeSceneUpdateMsg(m_outCameraSettings, m_outObjsToAdd, m_outObjsToRemove, m_outObjsToTransform,
                                            m_outTextureChange, m_outLightsToAdd, m_outLightsToRemove, m_outLightsToTransform);
       // std::cout << (**l_iter) << std::endl;
-      SetCamera(m_outCameraSettings[0], m_outCameraSettings[1], m_outCameraSettings[2]);
+      // SetCamera(m_outCameraSettings[0], m_outCameraSettings[1], m_outCameraSettings[2]);
       
-      // objects to add
-      for( std::vector<Network::ObjAddInfo>::iterator l_objsToAdd = m_outObjsToAdd.begin(); l_objsToAdd != m_outObjsToAdd.end(); ++l_objsToAdd)
-        AddObject(*l_objsToAdd, m_outTextureChange);
-      // objects to remove
-      for( std::vector<uint32_t>::iterator l_objsToRemove = m_outObjsToRemove.begin(); l_objsToRemove != m_outObjsToRemove.end(); ++l_objsToRemove)
-        RemoveObject(*l_objsToRemove, false);
-      // objects to transform
-      for( std::vector<Network::ObjTransformInfo>::iterator l_objsToTrans = m_outObjsToTransform.begin(); l_objsToTrans != m_outObjsToTransform.end(); ++l_objsToTrans)
-        TransformObject(*l_objsToTrans, false);
+      // // objects to add
+      // for( std::vector<Network::ObjAddInfo>::iterator l_objsToAdd = m_outObjsToAdd.begin(); l_objsToAdd != m_outObjsToAdd.end(); ++l_objsToAdd)
+        // AddObject(*l_objsToAdd, m_outTextureChange);
+      // // objects to remove
+      // for( std::vector<uint32_t>::iterator l_objsToRemove = m_outObjsToRemove.begin(); l_objsToRemove != m_outObjsToRemove.end(); ++l_objsToRemove)
+        // RemoveObject(*l_objsToRemove, false);
+      // // objects to transform
+      // for( std::vector<Network::ObjTransformInfo>::iterator l_objsToTrans = m_outObjsToTransform.begin(); l_objsToTrans != m_outObjsToTransform.end(); ++l_objsToTrans)
+        // TransformObject(*l_objsToTrans, false);
       
-      // lights to add
-      for( std::vector<Network::ObjAddInfo>::iterator l_lightsToAdd = m_outLightsToAdd.begin(); l_lightsToAdd != m_outLightsToAdd.end(); ++l_lightsToAdd)
-        AddLight(*l_lightsToAdd);
-      // lights to remove
-      for( std::vector<uint32_t>::iterator l_lightsToRemove = m_outLightsToRemove.begin(); l_lightsToRemove != m_outLightsToRemove.end(); ++l_lightsToRemove)
-        RemoveObject(*l_lightsToRemove, true);
-      for( std::vector<Network::ObjTransformInfo>::iterator l_lightsToTrans = m_outLightsToTransform.begin(); l_lightsToTrans != m_outLightsToTransform.end(); ++l_lightsToTrans)
-        TransformObject(*l_lightsToTrans, true);
+      // // lights to add
+      // for( std::vector<Network::ObjAddInfo>::iterator l_lightsToAdd = m_outLightsToAdd.begin(); l_lightsToAdd != m_outLightsToAdd.end(); ++l_lightsToAdd)
+        // AddLight(*l_lightsToAdd);
+      // // lights to remove
+      // for( std::vector<uint32_t>::iterator l_lightsToRemove = m_outLightsToRemove.begin(); l_lightsToRemove != m_outLightsToRemove.end(); ++l_lightsToRemove)
+        // RemoveObject(*l_lightsToRemove, true);
+      // for( std::vector<Network::ObjTransformInfo>::iterator l_lightsToTrans = m_outLightsToTransform.begin(); l_lightsToTrans != m_outLightsToTransform.end(); ++l_lightsToTrans)
+        // TransformObject(*l_lightsToTrans, true);
     }
     
       
@@ -329,11 +329,11 @@ ClientApp::Update()
     
     Network::NetworkMsgPtr l_test = std::make_shared<Network::NetworkMsg>();
     
-    if( m_graphics->GetDeferredRenderPass()->PackTexture(l_test) )
-    {
+    // if( m_graphics->GetDeferredRenderPass()->PackTexture(l_test) )
+    // {
       m_client->PushMsg(l_test);
       m_frameCount++;
-    }
+    // }
   }
   m_hasUpdated[2] = !m_hasUpdated[2];
   // IFDBG( std::cout << "Send Render Result Update" << std::endl; );
@@ -401,7 +401,7 @@ ClientApp::AddObject(const Network::ObjAddInfo& a_info, const std::vector<Networ
   {
     SceneControl::MeshSceneNode* l_meshNode = m_graphics->GetSceneManager()->AddMeshSceneNode( l_mesh );
 
-    if( l_meshNode->SetID(a_info.m_id))
+    if( l_meshNode->SetID(a_info.m_id) )
     {
       // texture set before adding it to the renderpass 
       for( std::vector<Network::TextureChangeInfo>::const_iterator l_textChange = a_textures.cbegin(); l_textChange != a_textures.cend(); ++l_textChange)

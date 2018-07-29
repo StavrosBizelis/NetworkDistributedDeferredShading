@@ -82,15 +82,29 @@ void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
   }
   else
   {
-    std::cout << "before new deferred shading pass\n";
-    m_deferredShadingPass = new RenderControl::VKDeferredShadingPass( m_driver->GetLogicalDeviceManager(), m_driver->GetSelectedPhysicalDevice(), m_driver->GetLogicalDeviceManager()->GetMemoryManager(),
-                                                                      m_driver->GetLogicalDeviceManager()->GetGraphicsQueue(),m_driver->GetLogicalDeviceManager()->GetPresentQueue(), m_driver->GetLogicalDeviceManager()->GetQueueFamilyIndices(),
-                                                                      m_resolution, m_resolutionPart, m_viewPortSettings );
-    std::cout << "before Init() deferred shading pass\n";
+    IFDBG( std::cout << "next: Create m_compositionPass \n"; );
+    
+    m_deferredShadingPass = new RenderControl::VKDeferredShadingPass(m_driver->GetLogicalDeviceManager(), m_driver->GetSelectedPhysicalDevice(), m_driver->GetLogicalDeviceManager()->GetMemoryManager(),
+                                                             m_driver->GetLogicalDeviceManager()->GetGraphicsQueue(),m_driver->GetLogicalDeviceManager()->GetPresentQueue(), m_driver->GetLogicalDeviceManager()->GetQueueFamilyIndices(),
+                                                             m_resolution, m_sceneManager, m_shapeFactory, m_textureFactory, 1);
+    IFDBG( std::cout << "m_compositionPass Created \n"; );
+
     m_deferredShadingPass->Init();
-    std::cout << "after Init() deferred shading pass\n";
-    // m_deferredShadingPass->SetSceenOutputAttachment(3);
-    // m_renderPassPipeline->PushBack(m_deferredShadingPass);    
+    
+    IFDBG( std::cout << "m_compositionPass Initialized \n"; );
+
+    
+    std::cout << "before new deferred shading pass\n";
+    // m_deferredShadingPass = new RenderControl::VKDeferredShadingPass( m_driver->GetLogicalDeviceManager(), m_driver->GetSelectedPhysicalDevice(), m_driver->GetLogicalDeviceManager()->GetMemoryManager(),
+                                                                      // m_driver->GetLogicalDeviceManager()->GetGraphicsQueue(),m_driver->GetLogicalDeviceManager()->GetPresentQueue(), m_driver->GetLogicalDeviceManager()->GetQueueFamilyIndices(),
+                                                                      // m_resolution, m_resolutionPart, m_viewPortSettings,
+                                                                      // m_sceneManager, m_shapeFactory, m_textureFactory  
+                                                                    // );
+    // std::cout << "before Init() deferred shading pass\n";
+    // m_deferredShadingPass->Init();
+    // std::cout << "after Init() deferred shading pass\n";
+    // // m_deferredShadingPass->SetSceenOutputAttachment(3);
+    // // m_renderPassPipeline->PushBack(m_deferredShadingPass);    
   }
   
 
@@ -120,7 +134,6 @@ void VKGraphicsEngine::Update(const double& a_deltaTime)
     
     l_memory->GetMemoryPool(3)->UnMapMemory();
     l_registry->clear();
-    
   }
     
   // // submit queues
