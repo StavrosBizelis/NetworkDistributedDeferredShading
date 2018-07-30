@@ -45,8 +45,7 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
   m_subpartRects[0]->SetPos( glm::vec3( 0, 0, -10 ) );
   // m_subpartRects[0]->SetScale( glm::vec3( m_resolution.x/2, m_resolution.y/2, 1 ) );
   m_subpartRects[0]->SetScale( glm::vec3( 2, 2, 1 ) );
-
-  
+  m_subpartRects[0]->SetEulerAngles( glm::vec3( 0, 0, 0 ) );
 }
 
 
@@ -392,10 +391,13 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
   std::vector<size_t> l_uboSizes = a_pipeline->GetObjUboSizes();
   std::vector< std::shared_ptr<VulkanMemoryChunk> > l_uboMemBuffer = {nullptr,nullptr};
   if( l_uboSizes.size() > 0 )
+  {
     l_uboMemBuffer[0] = m_memory->CreateUniformBuffer( l_uboSizes[0] );
+  }
   if( l_uboSizes.size() > 1 )
+  {
     l_uboMemBuffer[1] = m_memory->CreateUniformBuffer( l_uboSizes[1] );
-  
+  }
   reinterpret_cast<VulkanRenderable*>( a_renderable->GetExtra() )->Init(l_descSet, l_uboMemBuffer[0], l_uboMemBuffer[1] );
   
   
@@ -428,7 +430,7 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
   
   
 
-  
+  // first object data
   VkDescriptorBufferInfo l_bufferInfo2 = {};
   l_bufferInfo2.buffer = l_uboMemBuffer[0]->m_buffer->m_buffer;
   l_bufferInfo2.offset = l_uboMemBuffer[0]->GetBufferOffset();
@@ -445,14 +447,30 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
   descriptorWrite2.pBufferInfo = &l_bufferInfo2;
   
   
-  std::vector< VkWriteDescriptorSet > l_descriptorSetWrites = {descriptorWrite, descriptorWrite2 };
+  // second object data
+  VkDescriptorBufferInfo l_bufferInfo3 = {};
+  l_bufferInfo3.buffer = l_uboMemBuffer[1]->m_buffer->m_buffer;
+  l_bufferInfo3.offset = l_uboMemBuffer[1]->GetBufferOffset();
+  l_bufferInfo3.range = l_uboMemBuffer[1]->m_size;
+  
+  
+  VkWriteDescriptorSet descriptorWrite3 = {};
+  descriptorWrite3.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite3.dstSet = l_descSet;
+  descriptorWrite3.dstBinding = l_bindings[2].binding;
+  descriptorWrite3.dstArrayElement = 0;
+  descriptorWrite3.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite3.descriptorCount = 1;
+  descriptorWrite3.pBufferInfo = &l_bufferInfo3;
+  
+  std::vector< VkWriteDescriptorSet > l_descriptorSetWrites = {descriptorWrite, descriptorWrite2, descriptorWrite3 };
   
 
   SceneControl::TexturedSceneNode* l_texturedSceneNode = dynamic_cast<SceneControl::TexturedSceneNode*>(a_renderable);
   std::shared_ptr<ITexture> l_texture = l_texturedSceneNode->GetTexture(0);
   
   VkDescriptorImageInfo l_imageInfo = {};
-  VkWriteDescriptorSet descriptorWrite3 = {};
+  VkWriteDescriptorSet descriptorWrite4 = {};
   if( l_texture )
   {
     VKATexture* l_tempTexture = reinterpret_cast<VKATexture*>( l_texture->GetExtra() );
@@ -463,14 +481,14 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
       l_imageInfo.imageView = l_tempTexture->GetImage()->m_imageView;  // VkImageView
       
       
-      descriptorWrite3.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      descriptorWrite3.dstSet = l_descSet;
-      descriptorWrite3.dstBinding = l_bindings[2].binding;
-      descriptorWrite3.dstArrayElement = 0;
-      descriptorWrite3.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      descriptorWrite3.descriptorCount = 1;
-      descriptorWrite3.pImageInfo = &l_imageInfo;
-      l_descriptorSetWrites.push_back(descriptorWrite3);
+      descriptorWrite4.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      descriptorWrite4.dstSet = l_descSet;
+      descriptorWrite4.dstBinding = l_bindings[3].binding;
+      descriptorWrite4.dstArrayElement = 0;
+      descriptorWrite4.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      descriptorWrite4.descriptorCount = 1;
+      descriptorWrite4.pImageInfo = &l_imageInfo;
+      l_descriptorSetWrites.push_back(descriptorWrite4);
     }
   }
  

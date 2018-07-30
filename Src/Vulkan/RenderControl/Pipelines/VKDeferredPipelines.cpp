@@ -111,9 +111,11 @@ VKGeometryPassPipeline::Init()
   // create descripor set layout bindinds
   VkDescriptorSetLayoutBinding l_vertexBindingGlobal = GetUniformVertexLayoutBinding(0);
   VkDescriptorSetLayoutBinding l_vertexBindingObject = GetUniformVertexLayoutBinding(1);
-  VkDescriptorSetLayoutBinding l_samplerObject = GetSamplerFragmentLayoutBinding(2);
   
-  m_descLayoutBindings = {l_vertexBindingGlobal, l_vertexBindingObject, l_samplerObject};
+  VkDescriptorSetLayoutBinding l_fragUniform = GetUniformFragmentLayoutBinding(2);
+  VkDescriptorSetLayoutBinding l_samplerObject = GetSamplerFragmentLayoutBinding(3);
+  
+  m_descLayoutBindings = {l_vertexBindingGlobal, l_vertexBindingObject, l_fragUniform, l_samplerObject};
   m_descriptorSetLayout = CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), m_descLayoutBindings );
 
   

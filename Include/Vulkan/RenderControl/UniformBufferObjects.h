@@ -30,10 +30,10 @@ struct FragLightGlobalVars
 
 struct FragMaterialData
 {
-  glm::vec3 UDiffuse;
-  glm::vec3 USpecular;
-  float UHardness;
-  glm::vec3 UEmissive;
+  glm::vec4 UDiffuse;
+  glm::vec4 USpecular;
+  glm::vec4 UHardness;
+  glm::vec4 UEmissive;
 };
 
 
