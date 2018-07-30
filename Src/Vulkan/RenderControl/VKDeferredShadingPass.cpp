@@ -180,7 +180,7 @@ void RenderControl::VKDeferredShadingPass::Render()
   
   
   // write attachment to file
-  unsigned int l_indexToWrite = 1;
+  unsigned int l_indexToWrite = 3;
   std::shared_ptr<VulkanMemoryChunk> l_buf = m_memory->CreateBufferFromImage( m_attachmentImages[l_indexToWrite] );
   FIBITMAP* bitmap = FreeImage_Allocate(m_attachmentImages[l_indexToWrite]->m_width, m_attachmentImages[l_indexToWrite]->m_height, 24);
   RGBQUAD color;
@@ -290,6 +290,30 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   colorAttachment2.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   colorAttachment2.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
   
+  // thid colour attachment
+  m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R8G8B8A8_UNORM ) );
+  VkAttachmentDescription colorAttachment3 = {};
+  colorAttachment3.format = m_attachmentImages.back()->m_format;
+  colorAttachment3.samples = VK_SAMPLE_COUNT_1_BIT;
+  colorAttachment3.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  colorAttachment3.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  colorAttachment3.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  colorAttachment3.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  colorAttachment3.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  colorAttachment3.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+  
+  // fourth colour attachment
+  m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R8G8B8A8_UNORM ) );
+  VkAttachmentDescription colorAttachment4 = {};
+  colorAttachment4.format = m_attachmentImages.back()->m_format;
+  colorAttachment4.samples = VK_SAMPLE_COUNT_1_BIT;
+  colorAttachment4.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  colorAttachment4.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  colorAttachment4.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  colorAttachment4.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  colorAttachment4.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  colorAttachment4.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+  
   // stencil depth attachment
   m_attachmentImages.push_back( m_memory->CreateStencilDepthAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y ) );
   VkAttachmentDescription depthAttachment = {};
@@ -309,12 +333,20 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   VkAttachmentReference colorAttachmentRef2 = {};
   colorAttachmentRef2.attachment = 1;
   colorAttachmentRef2.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  
+  VkAttachmentReference colorAttachmentRef3 = {};
+  colorAttachmentRef3.attachment = 2;
+  colorAttachmentRef3.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  
+  VkAttachmentReference colorAttachmentRef4 = {};
+  colorAttachmentRef4.attachment = 3;
+  colorAttachmentRef4.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
   VkAttachmentReference depthAttachmentRef = {};
-  depthAttachmentRef.attachment = 2;
+  depthAttachmentRef.attachment = 4;
   depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-  std::vector<VkAttachmentReference> l_colourAttachmentRefs = { colorAttachmentRef, colorAttachmentRef2};
+  std::vector<VkAttachmentReference> l_colourAttachmentRefs = { colorAttachmentRef, colorAttachmentRef2, colorAttachmentRef3, colorAttachmentRef4};
   
   VkSubpassDescription subpass = {};
   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -342,7 +374,7 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
 
   
   
-  std::vector<VkAttachmentDescription > attachments = { colorAttachment, colorAttachment2, depthAttachment};
+  std::vector<VkAttachmentDescription > attachments = { colorAttachment, colorAttachment2, colorAttachment3, colorAttachment4, depthAttachment};
   std::vector< VkSubpassDependency > l_dependencies = { dependency, dependency2};
   
   VkRenderPassCreateInfo renderPassInfo = {};
@@ -372,7 +404,9 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
       // m_swapChainImageViews[i],
       m_attachmentImages[0]->m_imageView,
       m_attachmentImages[1]->m_imageView,
-      m_attachmentImages[2]->m_imageView
+      m_attachmentImages[2]->m_imageView,
+      m_attachmentImages[3]->m_imageView,
+      m_attachmentImages[4]->m_imageView
     };
 
     VkFramebufferCreateInfo framebufferInfo = {};
@@ -441,7 +475,7 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
 
 void RenderControl::VKDeferredShadingPass::CreateCommandBuffers()
 {
-  m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, m_frameBuffers, m_renderPass, m_resolution, 3) );
+  m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, m_frameBuffers, m_renderPass, m_resolution, 5) );
   m_primaryCmdBuffer->Init();
   for( auto l_pipeline : m_pipelines )
     m_primaryCmdBuffer->AddPipeline(l_pipeline);
