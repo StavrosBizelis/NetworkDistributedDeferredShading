@@ -354,6 +354,7 @@ class VulkanMemory
   void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
   void CopyBuffer(std::shared_ptr< VulkanMemoryChunk > a_srcBuffer, std::shared_ptr< VulkanMemoryChunk > a_dstBuffer);
   void CopyBufferToImage(std::shared_ptr< VulkanMemoryChunk > a_srcBuffer, std::shared_ptr< VulkanImageMemoryChunk > a_dstImage);
+  void CopyImageToBuffer(std::shared_ptr< VulkanImageMemoryChunk > a_srcImage, std::shared_ptr< VulkanMemoryChunk > a_dstBuffer);
   
   
   /**
@@ -371,6 +372,7 @@ class VulkanMemory
   
   std::shared_ptr<VulkanMemoryChunk> CreateUniformBuffer(const int& a_sizeInBytes);    ///< first is vulkan buffer, second is a_sizeInBytes
   std::shared_ptr<VulkanMemoryChunk> CreateDynamicUniformBuffer(const int& a_sizeInBytes);    ///< first is vulkan buffer, second is a_sizeInBytes
+  std::shared_ptr<VulkanMemoryChunk> CreateBufferFromImage( std::shared_ptr<VulkanImageMemoryChunk> a_image);
   
   /// Create texture for use in shaders
   std::shared_ptr<VulkanImageMemoryChunk> CreateMaterialTexture(char* a_data, const uint32_t& a_width, const uint32_t& a_height, VkFormat a_format );
@@ -386,6 +388,8 @@ class VulkanMemory
   /// @TODO IMPLEMENT
   /// @brief do not need "data" - just allocate and create VkImage and VkImageView for it
   std::shared_ptr<VulkanImageMemoryChunk> CreateStencilDepthAttachmentTexture(const uint32_t& a_width, const uint32_t& a_height );
+
+
   
   
   void CreateImageView(std::shared_ptr<VulkanImageMemoryChunk> a_memoryChunk, VkImageAspectFlags a_aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT);

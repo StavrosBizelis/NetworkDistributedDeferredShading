@@ -1104,7 +1104,41 @@ void VulkanMemory::CopyBufferToImage(std::shared_ptr< VulkanMemoryChunk > a_srcB
   
   EndSingleTimeCommands(commandBuffer);
 }
-#include "Common/Shapes/IMesh.h"
+
+void VulkanMemory::CopyImageToBuffer(std::shared_ptr< VulkanImageMemoryChunk > a_srcImage, std::shared_ptr< VulkanMemoryChunk > a_dstBuffer)
+{
+  
+  VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+  
+  VkBufferImageCopy region = {};
+  region.bufferOffset = a_dstBuffer->GetBufferOffset();
+  // zeros mean tighly packed - which they are
+  region.bufferRowLength = 0; 
+  region.bufferImageHeight = 0;
+  
+  region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  region.imageSubresource.mipLevel = 0;
+  region.imageSubresource.baseArrayLayer = 0;
+  region.imageSubresource.layerCount = 1;
+    
+  region.imageOffset = {0,0,0};
+  region.imageExtent ={ (uint32_t)a_srcImage->m_width, (uint32_t)a_srcImage->m_height, 1 };
+  
+  
+  TransitionImageLayout(commandBuffer, a_srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+  
+  vkCmdCopyImageToBuffer(
+    commandBuffer,
+    a_srcImage->m_image,
+    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+    a_dstBuffer->m_buffer->m_buffer,
+    1,
+    &region);
+    
+  EndSingleTimeCommands(commandBuffer);
+}
+
+
 std::shared_ptr<VulkanMemoryChunk> VulkanMemory::CreateVertexBuffer(char* a_vertexDataArray, const int& a_sizeInBytes)
 {
   // allocate memory with appropriate buffers
@@ -1315,6 +1349,32 @@ std::shared_ptr<VulkanImageMemoryChunk> VulkanMemory::CreateStencilDepthAttachme
   
 }
 
+
+std::shared_ptr<VulkanMemoryChunk> VulkanMemory::CreateBufferFromImage( std::shared_ptr<VulkanImageMemoryChunk> a_image)
+{
+  
+  
+  // allocate memory with appropriate buffers
+  std::shared_ptr< VulkanMemoryChunk> l_stagingMemory = m_memoryPools[0]->AllocateMemory( a_image->m_size );
+  // check if actually allocated
+  if( !l_stagingMemory )
+    throw std::runtime_error("VulkanMemory::CreateIndexBuffer - Staging Memory Pool could not allocate memory");
+  
+  CopyImageToBuffer(a_image, l_stagingMemory);
+  
+  
+  
+  // copy data to staging buffer
+  // void* data;
+  // vkMapMemory(m_logicalDevice, l_stagingMemory->m_memorySpace, l_stagingMemory->GetMemoryOffset(), l_stagingMemory->m_size, 0, &data);
+      // memcpy(data, a_indexDataArray, (size_t)a_sizeInBytes);
+  // vkUnmapMemory(m_logicalDevice, l_stagingMemory->m_memorySpace);
+  
+  // return l_indexBuffMemory
+  return l_stagingMemory;
+}
+
+
 void VulkanMemory::CreateImageView(std::shared_ptr<VulkanImageMemoryChunk> a_memoryChunk, VkImageAspectFlags aspectFlags)
 {
   VkImageViewCreateInfo viewInfo = {};
@@ -1360,7 +1420,7 @@ void VulkanMemory::TransitionImageLayout(VkCommandBuffer a_cmdBuffer, std::share
   barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.image = a_imageMemChunk->m_image;
 
-  if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) 
+  if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL || a_imageMemChunk->m_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL ) 
   {
     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
@@ -1421,6 +1481,22 @@ void VulkanMemory::TransitionImageLayout(VkCommandBuffer a_cmdBuffer, std::share
     
     sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
     destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+  } 
+  else if (a_imageMemChunk->m_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) 
+  {
+    barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT  | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    
+    sourceStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+  } 
+  else if (a_imageMemChunk->m_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) 
+  {
+    barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    
+    sourceStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
   } 
   else 
   {

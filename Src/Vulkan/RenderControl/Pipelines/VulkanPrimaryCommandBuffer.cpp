@@ -76,10 +76,10 @@ VulkanPrimaryCommandBuffer::VulkanPrimaryCommandBuffer(const VkDevice& a_logical
   : m_logicalDevice(a_logicalDevice), m_cmdPool(a_cmdPool), m_swapChainFramebuffers(a_swapChainFramebuffers), m_renderPass(a_renderPass), m_resolution(a_resolution), 
     m_clearValues(a_attachmentsCount), m_index(0), m_dirty(true)
 {
-  
-  for( unsigned int i = 0; i < a_attachmentsCount - 1; ++i)
-    m_clearValues[i].color = {1.0f, 0.0f, 0.0f, 1.0f};
-  m_clearValues[a_attachmentsCount - 1].depthStencil = {1.0f, 0};
+  m_clearValues[0].color = {1.0f, 0.0f, 1.0f, 1.0f};
+  for( unsigned int i = 1; i < a_attachmentsCount - 1; ++i)
+    m_clearValues[i].color = {0.0f, 1.0f, 0.0f, 1.0f};
+  m_clearValues[a_attachmentsCount - 1].depthStencil = {1.0f, 1};
 }
                             
 VulkanPrimaryCommandBuffer::~VulkanPrimaryCommandBuffer() {}
