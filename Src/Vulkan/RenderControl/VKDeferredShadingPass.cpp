@@ -121,7 +121,6 @@ void RenderControl::VKDeferredShadingPass::Render()
   else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
     throw std::runtime_error("VKDeferredShadingPass::Render() - failed to acquire swap chain image!");
   }
-
   
   VkSubmitInfo submitInfo = {};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -143,9 +142,13 @@ void RenderControl::VKDeferredShadingPass::Render()
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = signalSemaphores;
 
-  if (vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
+  VkResult l_res = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+  if ( l_res != VK_SUCCESS)
+  {  
+    std::cout << "Test fail " << l_res << std::endl;
     throw std::runtime_error("VKDeferredShadingPass::Render() - failed to submit draw command buffer!");
-
+  }
+  
   VkPresentInfoKHR presentInfo = {};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
@@ -227,6 +230,8 @@ void RenderControl::VKDeferredShadingPass::CreateSemaphores()
 
 void RenderControl::VKDeferredShadingPass::CreateRenderPass()
 {
+
+    // first colour attachment
   VkAttachmentDescription colorAttachment = {};
   colorAttachment.format = m_logicalDevice->GetSwapChainImageFormat();
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -237,59 +242,57 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
   
-  
+  // stencil depth attachment
+  m_attachmentImages.push_back( m_memory->CreateStencilDepthAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y ) );
+  VkAttachmentDescription depthAttachment = {};
+  depthAttachment.format = m_attachmentImages.back()->m_format;
+  depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
   VkAttachmentReference colorAttachmentRef = {};
   colorAttachmentRef.attachment = 0;
   colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-  
+  VkAttachmentReference depthAttachmentRef = {};
+  depthAttachmentRef.attachment = 1;
+  depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
   VkSubpassDescription subpass = {};
-  subpass.inputAttachmentCount = 0;
   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   subpass.colorAttachmentCount = 1;
   subpass.pColorAttachments = &colorAttachmentRef;
+  subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
-  
-  VkSubpassDependency l_dependency1;
-  l_dependency1.srcSubpass = VK_SUBPASS_EXTERNAL;
-  l_dependency1.dstSubpass = 0;
-  l_dependency1.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-  l_dependency1.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  l_dependency1.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-  l_dependency1.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  l_dependency1.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-  
-  VkSubpassDependency l_dependency2;
-  l_dependency2.srcSubpass = 0;
-  l_dependency2.dstSubpass = VK_SUBPASS_EXTERNAL;
-  l_dependency2.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  l_dependency2.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-  l_dependency2.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  l_dependency2.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-  l_dependency2.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+  VkSubpassDependency dependency = {};
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependency.dstSubpass = 0;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = 0;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-  
-  std::vector< VkSubpassDependency> l_dependencies = {l_dependency1, l_dependency2};
-  
-  std::vector<VkAttachmentDescription> attachments = {colorAttachment};
+  std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
   VkRenderPassCreateInfo renderPassInfo = {};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  renderPassInfo.attachmentCount = attachments.size();
+  renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
   renderPassInfo.pAttachments = attachments.data();
   renderPassInfo.subpassCount = 1;
   renderPassInfo.pSubpasses = &subpass;
-  renderPassInfo.dependencyCount = l_dependencies.size();
-  renderPassInfo.pDependencies = l_dependencies.data();
-  
-  
+  renderPassInfo.dependencyCount = 1;
+  renderPassInfo.pDependencies = &dependency;
+
   if (vkCreateRenderPass(m_logicalDevice->GetDevice(), &renderPassInfo, nullptr, &m_renderPass) != VK_SUCCESS) {
       throw std::runtime_error("failed to create render pass!");
   }
 }
 
 void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
-{
-  
+{ 
   // create frame buffer
   m_frameBuffers.resize(m_logicalDevice->GetSwapChainImageViews().size());
   m_swapChainImageViews = m_logicalDevice->GetSwapChainImageViews();
@@ -297,15 +300,16 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
   size_t l_count = m_swapChainImageViews.size();
   for (size_t i = 0; i < l_count; i++) 
   {
-    VkImageView attachments[] = {
-        m_swapChainImageViews[i]
+    std::vector<VkImageView> attachments = {
+      m_swapChainImageViews[i],
+      m_attachmentImages[0]->m_imageView
     };
 
     VkFramebufferCreateInfo framebufferInfo = {};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebufferInfo.renderPass = m_renderPass;
-    framebufferInfo.attachmentCount = 1;
-    framebufferInfo.pAttachments = attachments;
+    framebufferInfo.attachmentCount = attachments.size();
+    framebufferInfo.pAttachments = attachments.data();
     framebufferInfo.width = m_resolution.x;
     framebufferInfo.height = m_resolution.y;
     framebufferInfo.layers = 1;
@@ -367,7 +371,7 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
 
 void RenderControl::VKDeferredShadingPass::CreateCommandBuffers()
 {
-  m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, m_frameBuffers, m_renderPass, m_resolution) );
+  m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, m_frameBuffers, m_renderPass, m_resolution, 2) );
   m_primaryCmdBuffer->Init();
   for( auto l_pipeline : m_pipelines )
     m_primaryCmdBuffer->AddPipeline(l_pipeline);

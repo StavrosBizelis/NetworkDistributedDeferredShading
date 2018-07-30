@@ -32,7 +32,7 @@ namespace RenderControl
     std::shared_ptr<IShaderProgram> m_material;
     
     // VULKAN VARS
-    // std::vector< std::shared_ptr<VulkanImageMemoryChunk> > m_attachmentImages;
+    std::vector< std::shared_ptr<VulkanImageMemoryChunk> > m_attachmentImages;
     // swapchain images and image views
     std::vector<VkImage> m_swapChainImages;
     std::vector<VkImageView> m_swapChainImageViews;

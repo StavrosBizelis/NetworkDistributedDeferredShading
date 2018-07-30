@@ -320,9 +320,14 @@ ClientApp::Update()
   // CLIENTS RENDER LIGHTS
   if( m_hasUpdated[ !m_hasUpdated[2] ] )
   {
-
-    m_graphics->Update(1);
-  
+    try
+    {
+      m_graphics->Update(1);
+    }
+    catch (std::runtime_error& e)
+    {
+      std::cout << e.what();
+    }
     // IFDBG( std::cout << "Render Update" << std::endl; );
     
     // CLIENTS SEND BACK THE RENDERED TEXTURES

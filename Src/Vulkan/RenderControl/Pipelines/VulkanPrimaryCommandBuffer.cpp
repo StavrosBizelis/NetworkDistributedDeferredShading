@@ -23,8 +23,8 @@ void VulkanPrimaryCommandBuffer::RecordCommands()
     renderPassInfo.clearValueCount = static_cast<uint32_t>(m_clearValues.size());
     renderPassInfo.pClearValues = m_clearValues.data();
     //begin render pass
-    vkCmdBeginRenderPass(m_cmdBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
 
+    vkCmdBeginRenderPass(m_cmdBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
     
     // actual recording happening here
     std::deque<std::shared_ptr< VKPipeline > > l_newPipelines;
@@ -56,7 +56,9 @@ void VulkanPrimaryCommandBuffer::RecordCommands()
 void VulkanPrimaryCommandBuffer::RecordPipeline(VkCommandBuffer a_cmdBuffer, const std::shared_ptr< VKPipeline >& a_pipeline)
 {
     // record pipelines(each pipeline is responsible to provide a recorded secondary command buffer that binds the pipeline to the renderpass)
+    
     std::vector< VkCommandBuffer> l_secondaryCmdBuffs = a_pipeline->GetSecondaryCommandBuffersHandles();
+    
     if( !l_secondaryCmdBuffs.empty() )
     {
       // executing the recorded commands from the secondary command buffers
