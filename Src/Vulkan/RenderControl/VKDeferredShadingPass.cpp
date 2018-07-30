@@ -44,13 +44,23 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
     m_subpartRects.back()->SetTexture(2,l_text);
     m_subpartRects.back()->SetTexture(3,l_text);
     m_subpartRects.back()->SetTexture(4,l_text);
+    
+    m_subpartRects.push_back( m_scnManager->AddMeshSceneNode(l_rec) );
+    m_subpartRects.back()->SetTexture(0,l_text);
+    m_subpartRects.back()->SetTexture(1,l_text2);
+    m_subpartRects.back()->SetTexture(2,l_text);
+    m_subpartRects.back()->SetTexture(3,l_text);
+    m_subpartRects.back()->SetTexture(4,l_text);
+    
   }
   
-  // m_subpartRects[0]->SetPos( glm::vec3( m_resolution.x/2, m_resolution.y/2, 0 ) );
-  m_subpartRects[0]->SetPos( glm::vec3( 0, 0, -10 ) );
-  // m_subpartRects[0]->SetScale( glm::vec3( m_resolution.x/2, m_resolution.y/2, 1 ) );
+  m_subpartRects[0]->SetPos( glm::vec3( -3, 0, -10 ) );
   m_subpartRects[0]->SetScale( glm::vec3( 2, 2, 1 ) );
   m_subpartRects[0]->SetEulerAngles( glm::vec3( 0, 0, 0 ) );
+  
+  m_subpartRects[1]->SetPos( glm::vec3( 0, 0, -10 ) );
+  m_subpartRects[1]->SetScale( glm::vec3( 2, 2, 1 ) );
+  m_subpartRects[1]->SetEulerAngles( glm::vec3( 0, 0, 0 ) );
 }
 
 
@@ -100,16 +110,18 @@ bool RenderControl::VKDeferredShadingPass::Init()
   m_uboMemBuffer = m_memory->CreateUniformBuffer( sizeof(VertexViewProjMatrices) );
   
   std::cout << "m_subpartRects.size() " << m_subpartRects.size() << std::endl;
+  std::cout << "m_pipelines.size() " << m_pipelines.size() << std::endl;
   // add the rectancles to the appropriate pipelines
-  for( unsigned int i = 0; i < m_subpartRects.size(); ++i)
-  {    
-    std::cout << "RECORD RECT" << reinterpret_cast<VKShape*>( reinterpret_cast<VulkanRenderable*>( m_subpartRects[i]->GetExtra() )->GetShape()->GetExtra() ) << "\n";
-    CreateDescriptorSet(m_pipelines[0], m_subpartRects[i]);
-    std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > l_cmdBuffers;
-    l_cmdBuffers = m_pipelines[0]->GetSecondaryCommandBuffers();
-    
-    l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_subpartRects[i]->GetExtra() )  );
-  }
+  
+  std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > l_cmdBuffers;
+  
+  CreateDescriptorSet(m_pipelines[0], m_subpartRects[0]);
+  l_cmdBuffers = m_pipelines[0]->GetSecondaryCommandBuffers();
+  l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_subpartRects[0]->GetExtra() )  );
+  
+  CreateDescriptorSet(m_pipelines[1], m_subpartRects[1]);
+  l_cmdBuffers = m_pipelines[1]->GetSecondaryCommandBuffers();
+  l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_subpartRects[1]->GetExtra() )  );
   
   return true;
 }
@@ -358,36 +370,49 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   subpass.colorAttachmentCount = static_cast<uint32_t>( l_colourAttachmentRefs.size() );
   subpass.pColorAttachments = l_colourAttachmentRefs.data();
   subpass.pDepthStencilAttachment = &depthAttachmentRef;
+  
+  VkSubpassDescription subpass2 = {};
+  subpass2.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpass2.colorAttachmentCount = static_cast<uint32_t>( l_colourAttachmentRefs.size() );
+  subpass2.pColorAttachments = l_colourAttachmentRefs.data();
+  subpass2.pDepthStencilAttachment = &depthAttachmentRef;
+  
+  std::vector< VkSubpassDescription > l_subpasses = { subpass, subpass2};
+  std::vector< VkSubpassDependency > l_dependencies = {};
 
-  VkSubpassDependency dependency = {};
-  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-  dependency.dstSubpass = 0;
-  dependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+  for(unsigned int i = 0; i < l_subpasses.size(); ++i)
+  {
+    VkSubpassDependency dependency = {};
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-  VkSubpassDependency dependency2 = {};
-  dependency2.srcSubpass = 0;
-  dependency2.dstSubpass = VK_SUBPASS_EXTERNAL;
-  dependency2.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependency2.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-  dependency2.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  dependency2.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-  dependency2.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
+    VkSubpassDependency dependency2 = {};
+    dependency2.srcSubpass = 0;
+    dependency2.dstSubpass = VK_SUBPASS_EXTERNAL;
+    dependency2.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency2.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    dependency2.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependency2.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+    dependency2.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+    
+    l_dependencies.push_back(dependency);
+    l_dependencies.push_back(dependency2);
+  }
   
   
   std::vector<VkAttachmentDescription > attachments = { colorAttachment, colorAttachment2, colorAttachment3, colorAttachment4, depthAttachment};
-  std::vector< VkSubpassDependency > l_dependencies = { dependency, dependency2};
   
   VkRenderPassCreateInfo renderPassInfo = {};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
   renderPassInfo.pAttachments = attachments.data();
-  renderPassInfo.subpassCount = 1;
-  renderPassInfo.pSubpasses = &subpass;
+  renderPassInfo.subpassCount = l_subpasses.size();
+  renderPassInfo.pSubpasses = l_subpasses.data();
   renderPassInfo.dependencyCount = l_dependencies.size();
   renderPassInfo.pDependencies = l_dependencies.data();
 
@@ -431,16 +456,16 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
 
 void RenderControl::VKDeferredShadingPass::CreatePipelines()
 {
-  m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(1);
+  m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(2);
 
-  // geometry shader shaders
-  // CreateSingleGeometryPassPipeline(0, 0, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryShader.frag.spv");
-  // CreateSingleGeometryPassPipeline(0, 1, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryEmissiveShader.frag.spv");
+  // geometry pass shaders
+  CreateSingleGeometryPassPipeline(0, 0, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryShader.frag.spv");
+  CreateSingleGeometryPassPipeline(1, 1, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryEmissiveShader.frag.spv");
   // CreateSingleGeometryPassPipeline(0, 1, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourShader.frag.spv");
   // CreateSingleGeometryPassPipeline(0, 2, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalShader.frag.spv");
   // CreateSingleGeometryPassPipeline(0, 3, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecShader.frag.spv");
   // CreateSingleGeometryPassPipeline(0, 4, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessShader.frag.spv");
-  CreateSingleGeometryPassPipeline(0, 5, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessEmissiveShader.frag.spv");
+  // CreateSingleGeometryPassPipeline(0, 5, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessEmissiveShader.frag.spv");
   
 }
 
@@ -500,6 +525,7 @@ void RenderControl::VKDeferredShadingPass::CreateCommandBuffers()
 
 void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, IRenderable* a_renderable)
 {
+    std::cout << "Prioiiiiiits\n";
   VkDescriptorSetLayout l_layout = a_pipeline->GetDescriptorSetLayout();
   VkDescriptorSetAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -508,6 +534,7 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
   allocInfo.pSetLayouts = &l_layout;
 
   VkDescriptorSet l_descSet;
+    std::cout << "Prioiiiiiits2\n";
   if (vkAllocateDescriptorSets(m_logicalDevice->GetDevice(), &allocInfo, &l_descSet ) != VK_SUCCESS) {
     throw std::runtime_error("VKDeferredShadingPass::CreateDescriptorSet() - failed to allocate descriptor sets!");
   }
@@ -524,7 +551,6 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
     l_uboMemBuffer[1] = m_memory->CreateUniformBuffer( l_uboSizes[1] );
   }
   reinterpret_cast<VulkanRenderable*>( a_renderable->GetExtra() )->Init(l_descSet, l_uboMemBuffer[0], l_uboMemBuffer[1] );
-  
   
   // get appropriate size of ubo from pipeline - 
   // and also need to know if this pipeline requires any type of global data and what type that is ( ex. VertexSingleMat4, FragDirLightGlobalVars )
@@ -620,6 +646,6 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
       }
     }
   }
-  
+
   vkUpdateDescriptorSets(m_logicalDevice->GetDevice(), l_descriptorSetWrites.size(), l_descriptorSetWrites.data(), 0, nullptr);
 }
