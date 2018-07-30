@@ -115,8 +115,8 @@ bool RenderControl::VKDeferredShadingPass::Init()
   
   std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > l_cmdBuffers;
   
-  CreateDescriptorSet(m_pipelines[0], m_subpartRects[0]);
-  l_cmdBuffers = m_pipelines[0]->GetSecondaryCommandBuffers();
+  CreateDescriptorSet(m_pipelines[6], m_subpartRects[0]);
+  l_cmdBuffers = m_pipelines[6]->GetSecondaryCommandBuffers();
   l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_subpartRects[0]->GetExtra() )  );
   
   CreateDescriptorSet(m_pipelines[1], m_subpartRects[1]);
@@ -371,13 +371,8 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   subpass.pColorAttachments = l_colourAttachmentRefs.data();
   subpass.pDepthStencilAttachment = &depthAttachmentRef;
   
-  VkSubpassDescription subpass2 = {};
-  subpass2.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subpass2.colorAttachmentCount = static_cast<uint32_t>( l_colourAttachmentRefs.size() );
-  subpass2.pColorAttachments = l_colourAttachmentRefs.data();
-  subpass2.pDepthStencilAttachment = &depthAttachmentRef;
   
-  std::vector< VkSubpassDescription > l_subpasses = { subpass, subpass2};
+  std::vector< VkSubpassDescription > l_subpasses = { subpass, subpass, subpass, subpass, subpass, subpass, subpass};
   std::vector< VkSubpassDependency > l_dependencies = {};
 
   for(unsigned int i = 0; i < l_subpasses.size(); ++i)
@@ -456,16 +451,16 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
 
 void RenderControl::VKDeferredShadingPass::CreatePipelines()
 {
-  m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(2);
+  m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(7);
 
   // geometry pass shaders
   CreateSingleGeometryPassPipeline(0, 0, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryShader.frag.spv");
   CreateSingleGeometryPassPipeline(1, 1, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryEmissiveShader.frag.spv");
-  // CreateSingleGeometryPassPipeline(0, 1, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourShader.frag.spv");
-  // CreateSingleGeometryPassPipeline(0, 2, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalShader.frag.spv");
-  // CreateSingleGeometryPassPipeline(0, 3, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecShader.frag.spv");
-  // CreateSingleGeometryPassPipeline(0, 4, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessShader.frag.spv");
-  // CreateSingleGeometryPassPipeline(0, 5, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessEmissiveShader.frag.spv");
+  CreateSingleGeometryPassPipeline(2, 1, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourShader.frag.spv");
+  CreateSingleGeometryPassPipeline(3, 2, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalShader.frag.spv");
+  CreateSingleGeometryPassPipeline(4, 3, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecShader.frag.spv");
+  CreateSingleGeometryPassPipeline(5, 4, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessShader.frag.spv");
+  CreateSingleGeometryPassPipeline(6, 5, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessEmissiveShader.frag.spv");
   
 }
 
