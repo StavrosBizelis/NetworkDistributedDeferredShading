@@ -69,6 +69,7 @@ namespace RenderControl
     void CreateRenderPass();
     void CreateFramebuffer();
     void CreatePipelines();
+    void CreateSingleGeometryPassPipeline(const unsigned int& a_index, const unsigned int& a_inputSamplers, const std::string& a_vertPath, const std::string& a_fragPath);
     void CreateDescriptorPool();
     void CreateCommandBuffers();
     

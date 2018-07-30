@@ -115,9 +115,11 @@ VKGeometryPassPipeline::Init()
   VkDescriptorSetLayoutBinding l_vertexBindingObject = GetUniformVertexLayoutBinding(1);
   
   VkDescriptorSetLayoutBinding l_fragUniform = GetUniformFragmentLayoutBinding(2);
-  VkDescriptorSetLayoutBinding l_samplerObject = GetSamplerFragmentLayoutBinding(3);
+  m_descLayoutBindings = {l_vertexBindingGlobal, l_vertexBindingObject, l_fragUniform};
   
-  m_descLayoutBindings = {l_vertexBindingGlobal, l_vertexBindingObject, l_fragUniform, l_samplerObject};
+  for( unsigned int i = 0; i < m_inSamplersCount; ++i)
+    m_descLayoutBindings.push_back( GetSamplerFragmentLayoutBinding(3+i) );
+  
   m_descriptorSetLayout = CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), m_descLayoutBindings );
 
   

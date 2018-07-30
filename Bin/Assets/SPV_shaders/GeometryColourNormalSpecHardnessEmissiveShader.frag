@@ -7,10 +7,10 @@ layout (location = 2) in vec3 vEyeTan;	    // tangent
 
 layout (std140, set = 0, binding = 2) uniform MaterialData
 {
-  vec3 UDiffuse;
-  vec3 USpecular;
-  float UHardness;
-  vec3 UEmissive;
+  vec4 UDiffuse;
+  vec4 USpecular;
+  vec4 UHardness;
+  vec4 UEmissive;
 } material;
 
 layout (set = 0, binding = 3) uniform sampler2D u_diffuseMap;  // The diffuse colour sampler
@@ -54,9 +54,9 @@ void main()
 	 // normalOut = vec4(normalize(vEyeTan).xyz, 1);
   //  normalOut = vec4(normalize(vEyeNorm).xyz, 1);
     
-    diffuseOut = vec4(material.UDiffuse, 1) * texDiffuse;	// set texture color
+    diffuseOut = vec4(material.UDiffuse.xyz, 1) * texDiffuse;	// set texture color
     
-    specularOut = vec4( material.USpecular*texSpecular.xyz, material.UHardness*texHardness);
-    emissiveOut = vec4(material.UEmissive, 1.) * texEmissive;
+    specularOut = vec4( material.USpecular.xyz*texSpecular.xyz, material.UHardness*texHardness.x);
+    emissiveOut = vec4(material.UEmissive.xyz, 1.) * texEmissive;
 
 }

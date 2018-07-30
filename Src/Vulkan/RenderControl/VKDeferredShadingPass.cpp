@@ -35,10 +35,15 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
   std::shared_ptr<IMesh> l_rec = a_shapeFactory->GetOpenAssetImportMesh("../Assets/Models/Asteroid/asteroid.obj");
   for( unsigned int i =0; i < a_subparts; ++i)
   {
-    std::shared_ptr<ITexture> l_text = a_textFactory->GetTexture();
+    std::shared_ptr<ITexture> l_text = a_textFactory->GetTexture("../Assets/Models/Asteroid/diffuse.png");
+    std::shared_ptr<ITexture> l_text2 = a_textFactory->GetTexture("../Assets/Models/Asteroid/normal.png");
     // std::shared_ptr<ITexture> l_text = a_textFactory->GetTexture("..\\Assets\\Skybox\\spacebox\\DX+.jpg");
     m_subpartRects.push_back( m_scnManager->AddMeshSceneNode(l_rec) );
     m_subpartRects.back()->SetTexture(0,l_text);
+    m_subpartRects.back()->SetTexture(1,l_text2);
+    m_subpartRects.back()->SetTexture(2,l_text);
+    m_subpartRects.back()->SetTexture(3,l_text);
+    m_subpartRects.back()->SetTexture(4,l_text);
   }
   
   // m_subpartRects[0]->SetPos( glm::vec3( m_resolution.x/2, m_resolution.y/2, 0 ) );
@@ -426,29 +431,41 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
 
 void RenderControl::VKDeferredShadingPass::CreatePipelines()
 {
+  m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(1);
 
   // geometry shader shaders
-  VkShaderModule l_vertex = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryShader.vert.spv"), m_logicalDevice->GetDevice());
-  VkShaderModule l_frag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryShader.frag.spv"), m_logicalDevice->GetDevice());
+  // CreateSingleGeometryPassPipeline(0, 0, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryShader.frag.spv");
+  // CreateSingleGeometryPassPipeline(0, 1, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryEmissiveShader.frag.spv");
+  // CreateSingleGeometryPassPipeline(0, 1, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourShader.frag.spv");
+  // CreateSingleGeometryPassPipeline(0, 2, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalShader.frag.spv");
+  // CreateSingleGeometryPassPipeline(0, 3, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecShader.frag.spv");
+  // CreateSingleGeometryPassPipeline(0, 4, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessShader.frag.spv");
+  CreateSingleGeometryPassPipeline(0, 5, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessEmissiveShader.frag.spv");
   
-  m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(1);
+}
+
+void RenderControl::VKDeferredShadingPass::CreateSingleGeometryPassPipeline(const unsigned int& a_index, const unsigned int& a_inputSamplers, const std::string& a_vertPath, const std::string& a_fragPath)
+{
+  // geometry shader shaders
+  VkShaderModule l_vertex = CreateShaderModule(ReadFile( a_vertPath.c_str() ), m_logicalDevice->GetDevice());
+  VkShaderModule l_frag = CreateShaderModule(ReadFile( a_fragPath.c_str() ), m_logicalDevice->GetDevice());
+  
   // simple geometry 
-  m_pipelines[0] = std::make_shared<VKGeometryPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_vertex, l_frag), 0, m_resolution, glm::vec4(0,0,m_resolution.x,m_resolution.y), 0 );
-  m_pipelines[0]->Init();
+  m_pipelines[a_index] = std::make_shared<VKGeometryPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_vertex, l_frag), a_index, 
+                                                                  m_resolution, glm::vec4(0,0,m_resolution.x,m_resolution.y), a_inputSamplers );
+  m_pipelines[a_index]->Init();
   
   // destroy shader modules
   vkDestroyShaderModule(m_logicalDevice->GetDevice(), l_vertex, nullptr);
   vkDestroyShaderModule(m_logicalDevice->GetDevice(), l_frag, nullptr);
   
-  
-  std::shared_ptr<VulkanSecondaryCommandBuffer> l_secondaryCmdBufferTmp;
-  for( unsigned int i = 0; i < m_pipelines.size(); ++i)
-  {
-    l_secondaryCmdBufferTmp = std::make_shared<VulkanSecondaryCommandBuffer>(m_logicalDevice->GetDevice(), m_commandPool, m_pipelines[i]->GetPipelineLayout(), m_renderPass, i);
-    l_secondaryCmdBufferTmp->Init();
-    m_pipelines[i]->AddSecondaryBuffer(l_secondaryCmdBufferTmp);
-  }
+  std::shared_ptr<VulkanSecondaryCommandBuffer> l_secondaryCmdBufferTmp =
+    std::make_shared<VulkanSecondaryCommandBuffer>(m_logicalDevice->GetDevice(), m_commandPool, m_pipelines[a_index]->GetPipelineLayout(), m_renderPass, a_index);
+  l_secondaryCmdBufferTmp->Init();
+  m_pipelines[a_index]->AddSecondaryBuffer(l_secondaryCmdBufferTmp);
+
 }
+
 
 void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
 {
