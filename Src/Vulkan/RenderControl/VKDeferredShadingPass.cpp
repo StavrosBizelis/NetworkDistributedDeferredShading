@@ -201,7 +201,7 @@ void RenderControl::VKDeferredShadingPass::Render()
     }
   
   vkUnmapMemory(m_logicalDevice->GetDevice(), l_buf->m_memorySpace);
-  std::cout << "PRESUCCEED IN SAVING A SCREENSHOT\n";
+  l_buf->Free();
   
   if( FreeImage_Save(FIF_PNG, bitmap, "test.png", 0 ) )
     std::cout << "SUCCEED IN SAVING A SCREENSHOT\n";
@@ -428,8 +428,8 @@ void RenderControl::VKDeferredShadingPass::CreatePipelines()
 {
 
   // geometry shader shaders
-  VkShaderModule l_vertex = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\testShader.vert.spv"), m_logicalDevice->GetDevice());
-  VkShaderModule l_frag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\testShader.frag.spv"), m_logicalDevice->GetDevice());
+  VkShaderModule l_vertex = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryShader.vert.spv"), m_logicalDevice->GetDevice());
+  VkShaderModule l_frag = CreateShaderModule(ReadFile("..\\Assets\\SPV_shaders\\GeometryShader.frag.spv"), m_logicalDevice->GetDevice());
   
   m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(1);
   // simple geometry 
@@ -574,32 +574,35 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
   std::vector< VkWriteDescriptorSet > l_descriptorSetWrites = {descriptorWrite, descriptorWrite2, descriptorWrite3 };
   
 
-  SceneControl::TexturedSceneNode* l_texturedSceneNode = dynamic_cast<SceneControl::TexturedSceneNode*>(a_renderable);
-  std::shared_ptr<ITexture> l_texture = l_texturedSceneNode->GetTexture(0);
+  unsigned int l_textureCount = l_bindings.size() - 3;
+  std::vector<VkDescriptorImageInfo> l_imageInfo(l_textureCount, {});
+  std::vector<VkWriteDescriptorSet> extraDescriptorWrites(l_textureCount, {});
   
-  VkDescriptorImageInfo l_imageInfo = {};
-  VkWriteDescriptorSet descriptorWrite4 = {};
-  if( l_texture )
-  {
-    VKATexture* l_tempTexture = reinterpret_cast<VKATexture*>( l_texture->GetExtra() );
-    if( l_tempTexture )
-    {      
-      l_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
-      l_imageInfo.sampler = l_tempTexture->GetSampler()->m_sampler; // VkSampler                      
-      l_imageInfo.imageView = l_tempTexture->GetImage()->m_imageView;  // VkImageView
-      
-      
-      descriptorWrite4.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      descriptorWrite4.dstSet = l_descSet;
-      descriptorWrite4.dstBinding = l_bindings[3].binding;
-      descriptorWrite4.dstArrayElement = 0;
-      descriptorWrite4.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      descriptorWrite4.descriptorCount = 1;
-      descriptorWrite4.pImageInfo = &l_imageInfo;
-      l_descriptorSetWrites.push_back(descriptorWrite4);
+  for( unsigned int i = 0; i < l_textureCount; ++i)
+  {  
+    SceneControl::TexturedSceneNode* l_texturedSceneNode = dynamic_cast<SceneControl::TexturedSceneNode*>(a_renderable);
+    std::shared_ptr<ITexture> l_texture = l_texturedSceneNode->GetTexture(i);
+    if( l_texture )
+    {
+      VKATexture* l_tempTexture = reinterpret_cast<VKATexture*>( l_texture->GetExtra() );
+      if( l_tempTexture )
+      {      
+        l_imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
+        l_imageInfo[i].sampler = l_tempTexture->GetSampler()->m_sampler; // VkSampler                      
+        l_imageInfo[i].imageView = l_tempTexture->GetImage()->m_imageView;  // VkImageView
+        
+        
+        extraDescriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        extraDescriptorWrites[i].dstSet = l_descSet;
+        extraDescriptorWrites[i].dstBinding = l_bindings[i+3].binding;
+        extraDescriptorWrites[i].dstArrayElement = 0;
+        extraDescriptorWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        extraDescriptorWrites[i].descriptorCount = 1;
+        extraDescriptorWrites[i].pImageInfo = &l_imageInfo[i];
+        l_descriptorSetWrites.push_back(extraDescriptorWrites[i]);
+      }
     }
   }
- 
   
   vkUpdateDescriptorSets(m_logicalDevice->GetDevice(), l_descriptorSetWrites.size(), l_descriptorSetWrites.data(), 0, nullptr);
 }
