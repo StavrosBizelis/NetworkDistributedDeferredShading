@@ -69,7 +69,7 @@ void VulkanDriver::Init(const glm::vec2& a_windowSize )
   VkDeviceSize l_stagingMemorySize = 1048576 * 200; // 200mb
   VkDeviceSize l_vertexMemorySize = 1048576 * 4; // 4mb
   VkDeviceSize l_indexMemorySize = 1048576 * 4; // 4mb
-  VkDeviceSize l_uniformBufferMemorySize = 1048576 * 4; // 4mb
+  VkDeviceSize l_uniformBufferMemorySize = 1048576 * 30; // 30mb
   VkDeviceSize l_mixBufferMemorySize = 1048576 * 4; // 4mb
   VkDeviceSize l_shaderImagesSize = 1048576 * 200; // 200mb
   VkDeviceSize l_colourAttachmentsSize = 1048576 * 80; // 80mb

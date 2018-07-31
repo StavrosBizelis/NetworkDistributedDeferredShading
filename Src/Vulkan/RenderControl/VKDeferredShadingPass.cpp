@@ -108,6 +108,7 @@ bool RenderControl::VKDeferredShadingPass::Init()
   m_camera->SetPerspectiveProjectionMatrix(45.0f, m_resolution.x / m_resolution.y, 0.5f, 7000.0f);;
 
   m_uboMemBuffer = m_memory->CreateUniformBuffer( sizeof(VertexViewProjMatrices) );
+  m_uboMemBuffer2 = m_memory->CreateUniformBuffer( sizeof(FragLightGlobalVars) );
   
   std::cout << "m_subpartRects.size() " << m_subpartRects.size() << std::endl;
   std::cout << "m_pipelines.size() " << m_pipelines.size() << std::endl;
@@ -124,6 +125,9 @@ bool RenderControl::VKDeferredShadingPass::Init()
   CreateDescriptorSet(m_pipelines[0], m_subpartRects[1]);
   l_cmdBuffers = m_pipelines[0]->GetSecondaryCommandBuffers();
   l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_subpartRects[1]->GetExtra() )  );
+  m_subpartRects[1]->SetPersistentUniform(0,"UEmissive", glm::vec4(0) );
+  // m_subpartRects[1]->SetPersistentUniform(0,"UDiffuse", glm::vec4(0) );
+  
   
   return true;
 }
@@ -252,6 +256,14 @@ void RenderControl::VKDeferredShadingPass::VulkanUpdate( char* a_mappedBuffer )
   m_globalsUbo.viewMatrix = glm::mat4(); // always identity matrix
   
   memcpy(a_mappedBuffer+m_uboMemBuffer->GetMemoryOffset(), &m_globalsUbo, sizeof(VertexViewProjMatrices) );
+  
+  
+  m_globalsUbo2.UInverseViewProjectionMatrix = glm::inverse(m_globalsUbo.projMatrix * m_globalsUbo.viewMatrix);
+  m_globalsUbo2.UCamPos = m_camera->GetPosition();
+  m_globalsUbo2.UScreenResDiv = glm::vec2( 1/m_resolutionPart.x, 1/m_resolutionPart.y);
+  
+  memcpy(a_mappedBuffer+m_uboMemBuffer2->GetMemoryOffset(), &m_globalsUbo2, sizeof(FragLightGlobalVars) );
+  
 }
 
 
@@ -342,8 +354,8 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  depthAttachment.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+  depthAttachment.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
   VkAttachmentReference colorAttachmentRef = {};
   colorAttachmentRef.attachment = 0;
@@ -374,32 +386,83 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   subpass.pDepthStencilAttachment = &depthAttachmentRef;
   
   
-  std::vector< VkSubpassDescription > l_subpasses = { subpass, subpass, subpass, subpass, subpass, subpass, subpass};
+
+  
+  
+  
+  VkAttachmentReference inputColourAttachmentRef = {};
+  depthAttachmentRef.attachment = 0;
+  depthAttachmentRef.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  
+  VkAttachmentReference inputColourAttachmentRef2 = {};
+  inputColourAttachmentRef2.attachment = 1;
+  inputColourAttachmentRef2.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  
+  VkAttachmentReference inputColourAttachmentRef3 = {};
+  inputColourAttachmentRef3.attachment = 2;
+  inputColourAttachmentRef3.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  
+  VkAttachmentReference inputDepthAttachmentRef = {};
+  depthAttachmentRef.attachment = 4;
+  depthAttachmentRef.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;  
+  
+  std::vector<VkAttachmentReference> l_lightColourAttachmentRefs = { colorAttachmentRef4};
+  std::vector<VkAttachmentReference> l_lightInputAttachmentRefs = { inputColourAttachmentRef, inputColourAttachmentRef2, inputColourAttachmentRef3, inputDepthAttachmentRef};
+  
+  
+  VkSubpassDescription lightSubpass = {};
+  lightSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  lightSubpass.colorAttachmentCount = static_cast<uint32_t>( l_lightColourAttachmentRefs.size() );
+  lightSubpass.pColorAttachments = l_lightColourAttachmentRefs.data();
+  lightSubpass.inputAttachmentCount  = static_cast<uint32_t>( l_lightInputAttachmentRefs.size() );
+  lightSubpass.pInputAttachments  = l_lightInputAttachmentRefs.data();
+  
+  
+  
+  
+  std::vector< VkSubpassDescription > l_subpasses = { subpass, subpass, subpass, subpass, subpass, subpass, subpass, lightSubpass};
   std::vector< VkSubpassDependency > l_dependencies = {};
 
-  for(unsigned int i = 0; i < l_subpasses.size(); ++i)
+  // GEOMETRY PASSES
+  for(unsigned int i = 0; i < 7; ++i)
   {
     VkSubpassDependency dependency = {};
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
+    dependency.dstSubpass = i;
     dependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
     dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
     dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-    VkSubpassDependency dependency2 = {};
-    dependency2.srcSubpass = 0;
-    dependency2.dstSubpass = VK_SUBPASS_EXTERNAL;
-    dependency2.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency2.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-    dependency2.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    dependency2.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-    dependency2.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
     
     l_dependencies.push_back(dependency);
-    l_dependencies.push_back(dependency2);
   }
+  
+  // directional light pass
+  for( unsigned int i = 0; i < 7; ++i)
+  {
+    VkSubpassDependency dependency = {};
+    dependency.srcSubpass = i,
+    dependency.dstSubpass = 7,
+    dependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+    dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+    dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+    dependency.dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
+    dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+    l_dependencies.push_back(dependency);
+  }
+
+  
+  VkSubpassDependency dependency2 = {};
+  dependency2.srcSubpass = 7;
+  dependency2.dstSubpass = VK_SUBPASS_EXTERNAL;
+  dependency2.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency2.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+  dependency2.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependency2.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  dependency2.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+  l_dependencies.push_back(dependency2);
   
   
   std::vector<VkAttachmentDescription > attachments = { colorAttachment, colorAttachment2, colorAttachment3, colorAttachment4, depthAttachment};
@@ -453,7 +516,7 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
 
 void RenderControl::VKDeferredShadingPass::CreatePipelines()
 {
-  m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(7);
+  m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(8);
 
   // geometry pass shaders
   CreateSingleGeometryPassPipeline(0, 0, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryShader.frag.spv");
@@ -463,6 +526,8 @@ void RenderControl::VKDeferredShadingPass::CreatePipelines()
   CreateSingleGeometryPassPipeline(4, 3, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecShader.frag.spv");
   CreateSingleGeometryPassPipeline(5, 4, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessShader.frag.spv");
   CreateSingleGeometryPassPipeline(6, 5, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessEmissiveShader.frag.spv");
+  
+  CreateSingleLightPassPipeline(7, "..\\Assets\\SPV_shaders\\DirectionalLightShader.vert.spv", "..\\Assets\\SPV_shaders\\DirectionalLightShader.frag.spv");
   
 }
 
@@ -486,6 +551,27 @@ void RenderControl::VKDeferredShadingPass::CreateSingleGeometryPassPipeline(cons
   l_secondaryCmdBufferTmp->Init();
   m_pipelines[a_index]->AddSecondaryBuffer(l_secondaryCmdBufferTmp);
 
+}
+
+void RenderControl::VKDeferredShadingPass::CreateSingleLightPassPipeline(const unsigned int& a_index, const std::string& a_vertPath, const std::string& a_fragPath)
+{
+  // geometry shader shaders
+  VkShaderModule l_vertex = CreateShaderModule(ReadFile( a_vertPath.c_str() ), m_logicalDevice->GetDevice());
+  VkShaderModule l_frag = CreateShaderModule(ReadFile( a_fragPath.c_str() ), m_logicalDevice->GetDevice());
+  
+  // simple geometry 
+  m_pipelines[a_index] = std::make_shared<VKDirLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_vertex, l_frag), a_index, 
+                                                                  m_resolution, glm::vec4(0,0,m_resolution.x,m_resolution.y) );
+  m_pipelines[a_index]->Init();
+  
+  // destroy shader modules
+  vkDestroyShaderModule(m_logicalDevice->GetDevice(), l_vertex, nullptr);
+  vkDestroyShaderModule(m_logicalDevice->GetDevice(), l_frag, nullptr);
+  
+  std::shared_ptr<VulkanSecondaryCommandBuffer> l_secondaryCmdBufferTmp =
+    std::make_shared<VulkanSecondaryCommandBuffer>(m_logicalDevice->GetDevice(), m_commandPool, m_pipelines[a_index]->GetPipelineLayout(), m_renderPass, a_index);
+  l_secondaryCmdBufferTmp->Init();
+  m_pipelines[a_index]->AddSecondaryBuffer(l_secondaryCmdBufferTmp);
 }
 
 
@@ -516,13 +602,12 @@ void RenderControl::VKDeferredShadingPass::CreateCommandBuffers()
 {
   m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, m_frameBuffers, m_renderPass, m_resolution, 5) );
   m_primaryCmdBuffer->Init();
-  for( auto l_pipeline : m_pipelines )
-    m_primaryCmdBuffer->AddPipeline(l_pipeline);
+  for( unsigned int i = 0; i < m_pipelines.size(); ++i)
+    m_primaryCmdBuffer->AddPipeline( m_pipelines[i] );
 }
 
 void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, IRenderable* a_renderable)
 {
-    std::cout << "Prioiiiiiits\n";
   VkDescriptorSetLayout l_layout = a_pipeline->GetDescriptorSetLayout();
   VkDescriptorSetAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -531,7 +616,6 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
   allocInfo.pSetLayouts = &l_layout;
 
   VkDescriptorSet l_descSet;
-    std::cout << "Prioiiiiiits2\n";
   if (vkAllocateDescriptorSets(m_logicalDevice->GetDevice(), &allocInfo, &l_descSet ) != VK_SUCCESS) {
     throw std::runtime_error("VKDeferredShadingPass::CreateDescriptorSet() - failed to allocate descriptor sets!");
   }
@@ -642,6 +726,99 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
         l_descriptorSetWrites.push_back(extraDescriptorWrites[i]);
       }
     }
+  }
+
+  vkUpdateDescriptorSets(m_logicalDevice->GetDevice(), l_descriptorSetWrites.size(), l_descriptorSetWrites.data(), 0, nullptr);
+}
+
+
+void RenderControl::VKDeferredShadingPass::CreateDescriptorSetDirLight(const std::shared_ptr<VKPipeline>& a_pipeline, IRenderable* a_renderable)
+{
+  VkDescriptorSetLayout l_layout = a_pipeline->GetDescriptorSetLayout();
+  VkDescriptorSetAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocInfo.descriptorPool = m_descriptorPool;
+  allocInfo.descriptorSetCount = 1;
+  allocInfo.pSetLayouts = &l_layout;
+
+  VkDescriptorSet l_descSet;
+  if (vkAllocateDescriptorSets(m_logicalDevice->GetDevice(), &allocInfo, &l_descSet ) != VK_SUCCESS) {
+    throw std::runtime_error("VKDeferredShadingPass::CreateDescriptorSetDirLight() - failed to allocate descriptor sets!");
+  }
+  
+  // personal ubos here
+  std::vector<size_t> l_uboSizes = a_pipeline->GetObjUboSizes();
+  std::vector< std::shared_ptr<VulkanMemoryChunk> > l_uboMemBuffer = {nullptr,nullptr};
+  l_uboMemBuffer[0] = m_memory->CreateUniformBuffer( l_uboSizes[0] );
+  
+  reinterpret_cast<VulkanRenderable*>( a_renderable->GetExtra() )->Init(l_descSet, l_uboMemBuffer[0], l_uboMemBuffer[1] );
+  
+  
+  // get appropriate size of ubo from pipeline - 
+  // and also need to know if this pipeline requires any type of global data and what type that is ( ex. VertexSingleMat4, FragDirLightGlobalVars )
+  // also need to know what kind of samplers does this pipeline requires and what type( input attachments or combined image samplers)
+  unsigned int l_uboIndex = 0;
+  unsigned int l_imagesIndex = 0;
+  unsigned int l_inputAttachmentsIndex = 0;
+  
+  std::vector<VkDescriptorSetLayoutBinding> l_bindings = a_pipeline->GetDescriptorSetLayoutBindings();
+  
+  // first the global 
+  VkDescriptorBufferInfo l_bufferInfo = {};
+  l_bufferInfo.buffer = m_uboMemBuffer2->m_buffer->m_buffer;
+  l_bufferInfo.offset = m_uboMemBuffer2->GetBufferOffset();
+  l_bufferInfo.range = m_uboMemBuffer2->m_size;
+  
+  
+  VkWriteDescriptorSet descriptorWrite = {};
+  descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite.dstSet = l_descSet;
+  descriptorWrite.dstBinding = l_bindings[0].binding;
+  descriptorWrite.dstArrayElement = 0;
+  descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite.descriptorCount = 1;
+  descriptorWrite.pBufferInfo = &l_bufferInfo;
+  
+  
+
+  // first object data
+  VkDescriptorBufferInfo l_bufferInfo2 = {};
+  l_bufferInfo2.buffer = l_uboMemBuffer[0]->m_buffer->m_buffer;
+  l_bufferInfo2.offset = l_uboMemBuffer[0]->GetBufferOffset();
+  l_bufferInfo2.range = l_uboMemBuffer[0]->m_size;
+  
+  
+  VkWriteDescriptorSet descriptorWrite2 = {};
+  descriptorWrite2.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite2.dstSet = l_descSet;
+  descriptorWrite2.dstBinding = l_bindings[1].binding;
+  descriptorWrite2.dstArrayElement = 0;
+  descriptorWrite2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite2.descriptorCount = 1;
+  descriptorWrite2.pBufferInfo = &l_bufferInfo2;
+  
+  
+  std::vector< VkWriteDescriptorSet > l_descriptorSetWrites = {descriptorWrite, descriptorWrite2 };
+  
+
+  unsigned int l_textureCount = l_bindings.size() - 2;
+  std::vector<VkDescriptorImageInfo> l_imageInfo(l_textureCount, {});
+  std::vector<VkWriteDescriptorSet> extraDescriptorWrites(l_textureCount, {});
+  
+  for( unsigned int i = 0; i < l_textureCount; ++i)
+  {  
+    l_imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
+    l_imageInfo[i].imageView = m_attachmentImages[i == 3 ? 4 : i]->m_imageView;  // VkImageView
+    
+    
+    extraDescriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    extraDescriptorWrites[i].dstSet = l_descSet;
+    extraDescriptorWrites[i].dstBinding = l_bindings[i+2].binding;
+    extraDescriptorWrites[i].dstArrayElement = 0;
+    extraDescriptorWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+    extraDescriptorWrites[i].descriptorCount = 1;
+    extraDescriptorWrites[i].pImageInfo = &l_imageInfo[i];
+    l_descriptorSetWrites.push_back(extraDescriptorWrites[i]);
   }
 
   vkUpdateDescriptorSets(m_logicalDevice->GetDevice(), l_descriptorSetWrites.size(), l_descriptorSetWrites.data(), 0, nullptr);

@@ -40,6 +40,7 @@
   
   bool VulkanSecondaryCommandBuffer::RecordCommands(const VkPipeline& a_pipeline)
   {
+
     
     VkCommandBufferInheritanceInfo l_inheritanceInfo;
     l_inheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
@@ -60,7 +61,7 @@
     beginInfo.pInheritanceInfo = &l_inheritanceInfo;
     
     vkBeginCommandBuffer(m_secondaryCmdBuffer, &beginInfo);
-    std::cout << "Start Recording Secondary command buffer \n";
+    std::cout << "Start Recording Secondary command buffer, index: " << m_subpassIndex << std::endl;
     vkCmdBindPipeline(m_secondaryCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, a_pipeline );
     // actual recording happening here
     for (std::set< VulkanRenderable* >::iterator it=m_objectsToDraw.begin(); it!=m_objectsToDraw.end(); ++it)

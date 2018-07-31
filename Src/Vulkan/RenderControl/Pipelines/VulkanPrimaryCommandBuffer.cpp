@@ -27,23 +27,16 @@ void VulkanPrimaryCommandBuffer::RecordCommands()
     vkCmdBeginRenderPass(m_cmdBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
     
     // actual recording happening here
-    std::deque<std::shared_ptr< VKPipeline > > l_newPipelines;
-    unsigned int l_counter = m_pipelines.size();
-    while( !m_pipelines.empty() )
+    for( unsigned int j = 0; j < m_pipelines.size(); ++j)
     {
-      l_counter--;
-      std::shared_ptr< VKPipeline >  l_currPipeline = m_pipelines.front();
-      m_pipelines.pop_front();
-      
-      
+      std::shared_ptr< VKPipeline >  l_currPipeline = m_pipelines[j];
       
       this->RecordPipeline( m_cmdBuffers[i], l_currPipeline );
-      l_newPipelines.push_back(l_currPipeline);
+      
       // go to next subpass - in order to attach the next pipeline
-      if( l_counter > 0 )
+      if( j !=  m_pipelines.size() - 1)
         vkCmdNextSubpass(m_cmdBuffers[i], VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
     }
-    m_pipelines = std::move( l_newPipelines );
     
     
     // end render pass
@@ -76,7 +69,7 @@ VulkanPrimaryCommandBuffer::VulkanPrimaryCommandBuffer(const VkDevice& a_logical
   : m_logicalDevice(a_logicalDevice), m_cmdPool(a_cmdPool), m_swapChainFramebuffers(a_swapChainFramebuffers), m_renderPass(a_renderPass), m_resolution(a_resolution), 
     m_clearValues(a_attachmentsCount), m_index(0), m_dirty(true)
 {
-  for( unsigned int i = 0; i < a_attachmentsCount - 1; ++i)
+  for( unsigned int i = 0; i < a_attachmentsCount; ++i)
     m_clearValues[i].color = {1.0f, 0.0f, 0.0f, 1.0f};
   m_clearValues[a_attachmentsCount - 1].depthStencil = {1.0f, 1};
 }
@@ -122,7 +115,7 @@ void VulkanPrimaryCommandBuffer::ReInit()
   // // // // // // // // // // m_dirty = true;
 }
 
-void VulkanPrimaryCommandBuffer::AddPipeline(const std::shared_ptr< VKPipeline >& a_pipeline) { m_pipelines.push_front(a_pipeline); m_dirty = true;}
+void VulkanPrimaryCommandBuffer::AddPipeline(const std::shared_ptr< VKPipeline >& a_pipeline) { m_pipelines.push_back(a_pipeline); m_dirty = true;}
   
 void VulkanPrimaryCommandBuffer::RemovePipeline(const std::shared_ptr< VKPipeline >& a_pipeline)
 {

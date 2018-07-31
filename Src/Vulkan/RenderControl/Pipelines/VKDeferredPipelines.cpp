@@ -540,6 +540,7 @@ VKDirLightPassPipeline::VKDirLightPassPipeline(const std::shared_ptr<VulkanLogic
 void
 VKDirLightPassPipeline::Init()
 {
+  
   VkVertexInputBindingDescription l_bindingDesc = VKShapeFactory::GetBindingDescription();
   VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
   vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -602,9 +603,9 @@ VKDirLightPassPipeline::Init()
   
   depthStencil.front = {};
   depthStencil.back = {};
+
   
-  
-  
+
   VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
   colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
   colorBlendAttachment.blendEnable = VK_TRUE;
@@ -616,20 +617,18 @@ VKDirLightPassPipeline::Init()
   colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
 
+  std::vector< VkPipelineColorBlendAttachmentState > l_colourBlendAttachments = { colorBlendAttachment };
+  
   VkPipelineColorBlendStateCreateInfo colorBlending = {};
   colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
   colorBlending.logicOpEnable = VK_FALSE;
   colorBlending.logicOp = VK_LOGIC_OP_COPY;
-  colorBlending.attachmentCount = 1;
-  colorBlending.pAttachments = &colorBlendAttachment;
+  colorBlending.attachmentCount = l_colourBlendAttachments.size();
+  colorBlending.pAttachments = l_colourBlendAttachments.data();
   colorBlending.blendConstants[0] = 0.0f;
   colorBlending.blendConstants[1] = 0.0f;
   colorBlending.blendConstants[2] = 0.0f;
   colorBlending.blendConstants[3] = 0.0f;
-  
-  
-  
-  
   
   // create descripor set layout bindinds
   VkDescriptorSetLayoutBinding l_fragBindingGlobal = GetUniformFragmentLayoutBinding(0);
@@ -642,14 +641,12 @@ VKDirLightPassPipeline::Init()
   m_descLayoutBindings = { l_fragBindingGlobal, l_fragBindingObject, l_sampler1, l_sampler2, l_sampler3, l_sampler4 };
   m_descriptorSetLayout = CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), m_descLayoutBindings ); 
 
-
   
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 1;
   pipelineLayoutInfo.pSetLayouts = &m_descriptorSetLayout;
 
-  
   pipelineLayoutInfo.pushConstantRangeCount = 0;
   if (vkCreatePipelineLayout(m_logicalDevice->GetDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS)
     throw std::runtime_error("VKDirLightPassPipeline::Init() - failed to create pipeline layout!");
@@ -672,6 +669,7 @@ VKDirLightPassPipeline::Init()
 
   if (vkCreateGraphicsPipelines(m_logicalDevice->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_graphicsPipeline )  != VK_SUCCESS)
     throw std::runtime_error("VKDirLightPassPipeline::Init() - failed to create graphics pipeline!");
+  
 }
 
 
