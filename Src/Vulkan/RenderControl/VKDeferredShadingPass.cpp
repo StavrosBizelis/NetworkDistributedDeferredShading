@@ -118,9 +118,11 @@ bool RenderControl::VKDeferredShadingPass::Init()
   CreateDescriptorSet(m_pipelines[6], m_subpartRects[0]);
   l_cmdBuffers = m_pipelines[6]->GetSecondaryCommandBuffers();
   l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_subpartRects[0]->GetExtra() )  );
+  m_subpartRects[0]->SetPersistentUniform(0,"UEmissive", glm::vec4(1) );
   
-  CreateDescriptorSet(m_pipelines[1], m_subpartRects[1]);
-  l_cmdBuffers = m_pipelines[1]->GetSecondaryCommandBuffers();
+  
+  CreateDescriptorSet(m_pipelines[0], m_subpartRects[1]);
+  l_cmdBuffers = m_pipelines[0]->GetSecondaryCommandBuffers();
   l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_subpartRects[1]->GetExtra() )  );
   
   return true;

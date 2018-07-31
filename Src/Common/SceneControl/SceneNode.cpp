@@ -1,6 +1,7 @@
 #include "Common/SceneControl/SceneNode.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include <glm/gtx/quaternion.hpp>
+#include <iostream>
 namespace SceneControl
 {
 	std::map<unsigned int, SceneNode*> SceneNode::s_idRegistry;
@@ -187,9 +188,9 @@ namespace SceneControl
 
 	bool SceneNode::SetPersistentUniform(const unsigned int & a_materialIndex, const std::string & a_name, const int & a_var)
 	{
+    m_dirty = true;
 		if (a_materialIndex < m_materialUniformsInt.size())
 		{
-      m_dirty = true;
 			m_materialUniformsInt[a_materialIndex][a_name] = a_var;
 			return true;
 		}
@@ -198,9 +199,9 @@ namespace SceneControl
 
 	bool SceneNode::SetPersistentUniform(const unsigned int & a_materialIndex, const std::string & a_name, const float & a_var)
 	{
+    m_dirty = true;
 		if (a_materialIndex < m_materialUniformsFloat.size())
 		{
-      m_dirty = true;
 			m_materialUniformsInt[a_materialIndex][a_name] = (int)a_var;
 			return true;
 		}
@@ -209,9 +210,9 @@ namespace SceneControl
 
 	bool SceneNode::SetPersistentUniform(const unsigned int & a_materialIndex, const std::string & a_name, const glm::vec2 & a_var)
 	{
+    m_dirty = true;
 		if (a_materialIndex < m_materialUniformsVec2.size())
 		{
-      m_dirty = true;
 			m_materialUniformsVec2[a_materialIndex][a_name] = a_var;
 			return true;
 		}
@@ -220,9 +221,9 @@ namespace SceneControl
 
 	bool SceneNode::SetPersistentUniform(const unsigned int & a_materialIndex, const std::string & a_name, const glm::vec3 & a_var)
 	{
+    m_dirty = true;
 		if (a_materialIndex < m_materialUniformsVec3.size())
 		{
-      m_dirty = true;
 			m_materialUniformsVec3[a_materialIndex][a_name] = a_var;
 			return true;
 		}
@@ -231,9 +232,9 @@ namespace SceneControl
 
 	bool SceneNode::SetPersistentUniform(const unsigned int & a_materialIndex, const std::string & a_name, const glm::vec4 & a_var)
 	{
+    m_dirty = true;
 		if (a_materialIndex < m_materialUniformsVec4.size())
 		{
-      m_dirty = true;
 			m_materialUniformsVec4[a_materialIndex][a_name] = a_var;
 			return true;
 		}
@@ -242,9 +243,9 @@ namespace SceneControl
 
 	bool SceneNode::SetPersistentUniform(const unsigned int & a_materialIndex, const std::string & a_name, const glm::mat3 & a_var)
 	{
+    m_dirty = true;
 		if (a_materialIndex < m_materialUniformsMat3.size())
 		{
-      m_dirty = true;
 			m_materialUniformsMat3[a_materialIndex][a_name] = a_var;
 			return true;
 		}
@@ -253,9 +254,9 @@ namespace SceneControl
 
 	bool SceneNode::SetPersistentUniform(const unsigned int & a_materialIndex, const std::string & a_name, const glm::mat4 & a_var)
 	{
+    m_dirty = true;
 		if (a_materialIndex < m_materialUniformsMat4.size() )
 		{
-      m_dirty = true;
 			m_materialUniformsMat4[a_materialIndex][a_name] = a_var;
 			return true;
 		}
