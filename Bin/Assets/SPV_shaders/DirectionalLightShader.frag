@@ -12,11 +12,11 @@ layout (std140, set = 0, binding = 0) uniform GlobalVars
 
 layout (std140, set = 0, binding = 1) uniform DirectionalLight
 {
-  vec3 m_direction;
+  vec4 m_direction;
 
-  vec3 m_ambient;
-  vec3 m_diffuse;
-  vec3 m_specular;
+  vec4 m_ambient;
+  vec4 m_diffuse;
+  vec4 m_specular;
 } ULightData;
 
 layout (set = 0, binding = 2) uniform sampler2D UColor;
@@ -36,20 +36,21 @@ void HandleDirectionalLight( in vec3 a_camPos, in vec3 a_fragmentNormal, in vec4
   a_specular = vec4(0);
   // a_ambient += /* l_att * */ vec4( ULightData.m_ambient ,1);
   
-  vec3 l_lightDirection = ULightData.m_direction;
+  vec3 l_lightDirection = ULightData.m_direction.xyz;
   vec3 l_normal = normalize(a_fragmentNormal);
   float l_diffuseFactor = dot(l_normal, l_lightDirection);
 
   if (l_diffuseFactor > 0) 
   {
-    a_diffuse = l_diffuseFactor * vec4(ULightData.m_diffuse, 1.0f);
+    a_diffuse = l_diffuseFactor * ULightData.m_diffuse;
     
     vec3 l_vertexToEye  = normalize(  a_fragmentPos.xyz - a_camPos);
-    vec3 l_lightReflect = normalize(reflect(ULightData.m_direction, l_normal));
+    vec3 l_lightReflect = normalize(reflect(ULightData.m_direction.xyz, l_normal));
     float l_specularFactor = dot(l_vertexToEye, l_lightReflect);
     l_specularFactor = pow(l_specularFactor, a_fragmentSpecPower*500 );
     if( l_specularFactor > 0.0)
-      a_specular = l_specularFactor * vec4(ULightData.m_specular * a_fragmentSpecIntensity, 1.0);
+      a_specular = l_specularFactor * vec4(ULightData.m_specular.xyz * a_fragmentSpecIntensity, 1.0);
+    
   }
 }
 
@@ -84,13 +85,15 @@ void main()
   vec4 l_diffuse;
   vec4 l_specular; 
   HandleDirectionalLight( globalVars.UCamPos, vTexNormal.xyz, vec4(l_fragWorldSpacePoint.xyz,1), vTexSpecular.xyz, vTexSpecular.a, l_diffuse, l_specular);
-  vOutputColour = vec4( length(l_diffuse) > 0 ? ULightData.m_ambient : vec3(0),  1.f) + l_diffuse * vTexColour + l_specular;
+  vOutputColour = vec4( length(l_diffuse) > 0 ? ULightData.m_ambient.xyz : vec3(0),  1.f) + l_diffuse * vTexColour + l_specular;
   // vOutputColour = vTexNormal.xyzz;
     
 //  if( length( vTexNormal.xyz ) == 0)
 //	vOutputColour  = vec4( 1);
 //  else
-//    vOutputColour = vTexNormal;
+   // vOutputColour = vTexNormal;
+   // vOutputColour = vec4(l_screenTextureCoord.xy, 0, 1);
+   // vOutputColour = l_fragWorldSpacePoint;
 
 
 }

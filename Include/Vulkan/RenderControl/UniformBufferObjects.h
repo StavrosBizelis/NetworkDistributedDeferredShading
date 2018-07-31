@@ -41,11 +41,11 @@ struct FragMaterialData
 
 struct FragDirectionalLight
 {
-  glm::vec3 m_direction;
+  glm::vec4 m_direction;
 
-  glm::vec3 m_ambient;
-  glm::vec3 m_diffuse;
-  glm::vec3 m_specular;
+  glm::vec4 m_ambient;
+  glm::vec4 m_diffuse;
+  glm::vec4 m_specular;
 };
 
 struct FragPointLight

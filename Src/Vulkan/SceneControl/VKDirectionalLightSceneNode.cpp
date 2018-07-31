@@ -1,6 +1,6 @@
 #include "Vulkan/SceneControl/VKDirectionalLightSceneNode.h"
 
-
+#include <iostream>
 
 namespace SceneControl
 {
@@ -29,7 +29,7 @@ namespace SceneControl
   {
     bool l_dirty = m_dirty || a_dirty;
     
-    VKDirectionalLightSceneNode::Update(a_deltaTime, a_dirty, a_parentAbsoluteTrans);
+    DirectionalLightSceneNode::Update(a_deltaTime, a_dirty, a_parentAbsoluteTrans);
     
     if( l_dirty )
     {
@@ -37,11 +37,12 @@ namespace SceneControl
       glm::vec4 l_direction( 0.0f, -1.f, 0.f, 1.f);
       l_direction = GetRot() * l_direction;
       
-      m_vulkanRenderOperations->m_ubo2.m_direction = glm::vec3(l_direction.x, l_direction.y, l_direction.z);
+      m_vulkanRenderOperations->m_ubo2.m_direction = l_direction;
 
-      m_vulkanRenderOperations->m_ubo2.m_ambient = GetAmbient();
-      m_vulkanRenderOperations->m_ubo2.m_diffuse = GetDiffuse();
-      m_vulkanRenderOperations->m_ubo2.m_specular = GetSpecular();
+      std::cout << "ambient is " << GetAmbient().x << " " << GetAmbient().y << " " << GetAmbient().z << std::endl;
+      m_vulkanRenderOperations->m_ubo2.m_ambient = glm::vec4(GetAmbient(), 1);
+      m_vulkanRenderOperations->m_ubo2.m_diffuse = glm::vec4(GetDiffuse(), 1);
+      m_vulkanRenderOperations->m_ubo2.m_specular = glm::vec4(GetSpecular(), 1);
   
       m_vulkanRenderOperations->m_ubo.modelMatrix = m_lastAbsoluteTrans;
       

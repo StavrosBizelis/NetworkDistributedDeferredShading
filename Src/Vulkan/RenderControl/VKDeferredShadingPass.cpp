@@ -52,6 +52,8 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
     m_subpartRects.back()->SetTexture(3,l_text);
     m_subpartRects.back()->SetTexture(4,l_text);
     
+    m_lights.push_back( m_scnManager->AddDirectionalLightSceneNode( a_shapeFactory->GetRectangle() ) );
+    // m_scnManager->AddDirectionalLightSceneNode( a_shapeFactory->GetRectangle() );
   }
   
   m_subpartRects[0]->SetPos( glm::vec3( -3, 0, -10 ) );
@@ -129,11 +131,18 @@ bool RenderControl::VKDeferredShadingPass::Init()
   // m_subpartRects[1]->SetPersistentUniform(0,"UDiffuse", glm::vec4(0) );
   
   
+  
+  CreateDescriptorSetDirLight(m_pipelines[7], m_lights[0]);
+  l_cmdBuffers = m_pipelines[7]->GetSecondaryCommandBuffers();
+  l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_lights[0]->GetExtra() )  );
+
+  
   return true;
 }
 
 void RenderControl::VKDeferredShadingPass::Render()
 {
+  std::cout << "At least we tried\n";
   // uint32_t l_imageIndex;
   // VkResult result = vkAcquireNextImageKHR(m_logicalDevice->GetDevice(), m_logicalDevice->GetSwapChain(), std::numeric_limits<uint64_t>::max(), m_imageAvailableSemaphore[m_currentFrame], VK_NULL_HANDLE, &l_imageIndex);
   // if (result == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -203,6 +212,7 @@ void RenderControl::VKDeferredShadingPass::Render()
   
   
   // write attachment to file
+  //unsigned int l_indexToWrite = 1;
   unsigned int l_indexToWrite = 3;
   std::shared_ptr<VulkanMemoryChunk> l_buf = m_memory->CreateBufferFromImage( m_attachmentImages[l_indexToWrite] );
   FIBITMAP* bitmap = FreeImage_Allocate(m_attachmentImages[l_indexToWrite]->m_width, m_attachmentImages[l_indexToWrite]->m_height, 24);
@@ -310,7 +320,7 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   colorAttachment.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
   
   // second colour attachment
-  m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R8G8B8A8_UNORM ) );
+  m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R16G16B16A16_SFLOAT ) );
   VkAttachmentDescription colorAttachment2 = {};
   colorAttachment2.format = m_attachmentImages.back()->m_format;
   colorAttachment2.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -749,7 +759,8 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSetDirLight(const std
   // personal ubos here
   std::vector<size_t> l_uboSizes = a_pipeline->GetObjUboSizes();
   std::vector< std::shared_ptr<VulkanMemoryChunk> > l_uboMemBuffer = {nullptr,nullptr};
-  l_uboMemBuffer[0] = m_memory->CreateUniformBuffer( l_uboSizes[0] );
+  l_uboMemBuffer[1] = m_memory->CreateUniformBuffer( l_uboSizes[0] );
+
   
   reinterpret_cast<VulkanRenderable*>( a_renderable->GetExtra() )->Init(l_descSet, l_uboMemBuffer[0], l_uboMemBuffer[1] );
   
@@ -780,12 +791,11 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSetDirLight(const std
   descriptorWrite.pBufferInfo = &l_bufferInfo;
   
   
-
   // first object data
   VkDescriptorBufferInfo l_bufferInfo2 = {};
-  l_bufferInfo2.buffer = l_uboMemBuffer[0]->m_buffer->m_buffer;
-  l_bufferInfo2.offset = l_uboMemBuffer[0]->GetBufferOffset();
-  l_bufferInfo2.range = l_uboMemBuffer[0]->m_size;
+  l_bufferInfo2.buffer = l_uboMemBuffer[1]->m_buffer->m_buffer;
+  l_bufferInfo2.offset = l_uboMemBuffer[1]->GetBufferOffset();
+  l_bufferInfo2.range = l_uboMemBuffer[1]->m_size;
   
   
   VkWriteDescriptorSet descriptorWrite2 = {};

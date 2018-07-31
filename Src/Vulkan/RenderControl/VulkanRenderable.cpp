@@ -3,7 +3,7 @@
 
 
 VulkanRenderable::VulkanRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry)
-: m_updateRegistry(a_updateRegistry), m_shape(a_shape){}
+: m_updateRegistry(a_updateRegistry), m_shape(a_shape), m_uniformBuffer(nullptr), m_uniformBuffer2(nullptr){}
 
 VulkanRenderable::~VulkanRenderable()
 {

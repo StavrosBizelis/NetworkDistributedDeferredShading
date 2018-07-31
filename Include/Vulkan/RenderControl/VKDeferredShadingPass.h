@@ -26,6 +26,7 @@ namespace RenderControl
 	{
   protected:
     std::vector< SceneControl::MeshSceneNode* > m_subpartRects;
+    std::vector< SceneControl::LightSceneNode* > m_lights;
     SceneControl::SceneManager* m_scnManager;
   
   

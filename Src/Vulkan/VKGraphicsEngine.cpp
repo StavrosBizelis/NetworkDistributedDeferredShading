@@ -116,7 +116,7 @@ void VKGraphicsEngine::Update(const double& a_deltaTime)
   {
     // update scene objects
     m_sceneManager->UpdateScene(a_deltaTime);
-    // // update vulkan Renderables uniform buffer
+    // update vulkan Renderables uniform buffer
     char* l_mappedBuffer = nullptr;
     std::shared_ptr< VulkanMemory > l_memory = m_driver->GetLogicalDeviceManager()->GetMemoryManager();
     
@@ -135,7 +135,8 @@ void VKGraphicsEngine::Update(const double& a_deltaTime)
     l_memory->GetMemoryPool(3)->UnMapMemory();
     l_registry->clear();
   }
-    
+  
+  
   // // submit queues
   if(m_compositionPass) 
     m_compositionPass->Render();

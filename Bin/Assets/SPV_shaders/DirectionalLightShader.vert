@@ -15,6 +15,9 @@ void main()
 
 	// Transform the vertex spatial position using 
 	gl_Position = vec4(inPosition, 1.0f);
+  
+  
+  
 	vTexCoord = inCoord;
 } 
 	
