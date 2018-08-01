@@ -69,7 +69,7 @@ VKGeometryPassPipeline::Init()
   rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
   rasterizer.lineWidth = 1.0f;
   rasterizer.cullMode =  VK_CULL_MODE_BACK_BIT;
-  rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;
   
   VkPipelineMultisampleStateCreateInfo multisampling = {};
@@ -223,8 +223,8 @@ VKSkyboxPassPipeline::Init()
   rasterizer.rasterizerDiscardEnable = VK_FALSE;
   rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
   rasterizer.lineWidth = 1.0f;
-  rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  rasterizer.cullMode = VK_CULL_MODE_FRONT_BIT;
+  rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;
   
   VkPipelineMultisampleStateCreateInfo multisampling = {};
@@ -378,8 +378,8 @@ VKLightPassPipeline::Init()
   rasterizer.rasterizerDiscardEnable = VK_FALSE;
   rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
   rasterizer.lineWidth = 1.0f;
-  rasterizer.cullMode = VK_CULL_MODE_FRONT_BIT;
-  rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+  rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;
   
   VkPipelineMultisampleStateCreateInfo multisampling = {};
@@ -400,49 +400,9 @@ VKLightPassPipeline::Init()
   
   depthStencil.front = {};
   depthStencil.back = {};
-  
-  
-  // // stencil 
-  // if( a_type == 3 )
-  // {
-    // VkStencilOpState l_front;
-    // l_front.failOp = VK_STENCIL_OP_KEEP ;
-    // l_front.passOp = VK_STENCIL_OP_KEEP;
-    // l_front.depthFailOp = VK_STENCIL_OP_DECREMENT_AND_WRAP ;
-    // l_front.compareOp = VK_COMPARE_OP_ALWAYS;
-    // l_front.compareMask = 0;
-    // l_front.writeMask = 0;
-    // l_front.reference = 0;
 
-    // VkStencilOpState l_back;
-    // l_back.failOp = VK_STENCIL_OP_KEEP;
-    // l_back.passOp = VK_STENCIL_OP_KEEP;
-    // l_back.depthFailOp = VK_STENCIL_OP_INCREMENT_AND_WRAP;
-    // l_back.compareOp = VK_COMPARE_OP_ALWAYS;
-    // l_back.compareMask = 0;
-    // l_back.writeMask = 0;
-    // l_back.reference = 0;
-    
-    // depthStencil.front = l_front;
-    // depthStencil.back = l_back;
-  // }
-  // normal for light uncomment
-  // if( a_type == 4 )
-  // {
-    // VkStencilOpState l_back;
-    // l_back.failOp = VK_STENCIL_OP_KEEP;
-    // l_back.passOp = VK_STENCIL_OP_KEEP;
-    // l_back.depthFailOp = VK_STENCIL_OP_KEEP;
-    // l_back.compareOp = VK_COMPARE_OP_EQUAL;
-    // l_back.compareMask = 0;
-    // l_back.writeMask = 0xFF;
-    // l_back.reference = 0;
-    
-    // depthStencil.front = {};
-    // depthStencil.back = l_back;
-  // }
   
-  
+
   VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
   colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
   colorBlendAttachment.blendEnable = VK_TRUE;
@@ -454,12 +414,14 @@ VKLightPassPipeline::Init()
   colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
 
+  std::vector< VkPipelineColorBlendAttachmentState > l_colourBlendAttachments = { colorBlendAttachment };
+  
   VkPipelineColorBlendStateCreateInfo colorBlending = {};
   colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
   colorBlending.logicOpEnable = VK_FALSE;
   colorBlending.logicOp = VK_LOGIC_OP_COPY;
-  colorBlending.attachmentCount = 1;
-  colorBlending.pAttachments = &colorBlendAttachment;
+  colorBlending.attachmentCount = l_colourBlendAttachments.size();
+  colorBlending.pAttachments = l_colourBlendAttachments.data();
   colorBlending.blendConstants[0] = 0.0f;
   colorBlending.blendConstants[1] = 0.0f;
   colorBlending.blendConstants[2] = 0.0f;
@@ -493,10 +455,9 @@ VKLightPassPipeline::Init()
   pipelineLayoutInfo.setLayoutCount = 1;
   pipelineLayoutInfo.pSetLayouts = &m_descriptorSetLayout;
 
-  
   pipelineLayoutInfo.pushConstantRangeCount = 0;
   if (vkCreatePipelineLayout(m_logicalDevice->GetDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS)
-    throw std::runtime_error("VKLightPassPipeline::Init() - failed to create pipeline layout!");
+    throw std::runtime_error("VKDirLightPassPipeline::Init() - failed to create pipeline layout!");
   
   VkGraphicsPipelineCreateInfo pipelineInfo = {};
   pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -515,7 +476,7 @@ VKLightPassPipeline::Init()
   
 
   if (vkCreateGraphicsPipelines(m_logicalDevice->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_graphicsPipeline )  != VK_SUCCESS)
-    throw std::runtime_error("VKLightPassPipeline::Init() -failed to create graphics pipeline!");
+    throw std::runtime_error("VKDirLightPassPipeline::Init() - failed to create graphics pipeline!");
 }
 
 

@@ -53,7 +53,7 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
     m_subpartRects.back()->SetTexture(4,l_text);
     
     m_lights.push_back( m_scnManager->AddDirectionalLightSceneNode( a_shapeFactory->GetRectangle() ) );
-    // m_scnManager->AddDirectionalLightSceneNode( a_shapeFactory->GetRectangle() );
+    m_lights.push_back( m_scnManager->AddPointLightSceneNode( a_shapeFactory->GetSphere() ) );
   }
   
   m_subpartRects[0]->SetPos( glm::vec3( -3, 0, -10 ) );
@@ -63,6 +63,10 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
   m_subpartRects[1]->SetPos( glm::vec3( 0, 0, -10 ) );
   m_subpartRects[1]->SetScale( glm::vec3( 2, 2, 1 ) );
   m_subpartRects[1]->SetEulerAngles( glm::vec3( 0, 0, 0 ) );
+  
+  
+  m_lights[1]->SetPos( glm::vec3( 2, 0, -10) );
+  m_lights[1]->SetDiffuse( glm::vec3( 20, 0, 20 ) );
 }
 
 
@@ -131,10 +135,15 @@ bool RenderControl::VKDeferredShadingPass::Init()
   // m_subpartRects[1]->SetPersistentUniform(0,"UDiffuse", glm::vec4(0) );
   
   
-  
+  // directional light
   CreateDescriptorSetDirLight(m_pipelines[7], m_lights[0]);
   l_cmdBuffers = m_pipelines[7]->GetSecondaryCommandBuffers();
   l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_lights[0]->GetExtra() )  );
+
+  // point light
+  CreateDescriptorSetLight(m_pipelines[8], m_lights[1]);
+  l_cmdBuffers = m_pipelines[8]->GetSecondaryCommandBuffers();
+  l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_lights[1]->GetExtra() )  );
 
   
   return true;
@@ -269,8 +278,8 @@ void RenderControl::VKDeferredShadingPass::VulkanUpdate( char* a_mappedBuffer )
   
   
   m_globalsUbo2.UInverseViewProjectionMatrix = glm::inverse(m_globalsUbo.projMatrix * m_globalsUbo.viewMatrix);
-  m_globalsUbo2.UCamPos = m_camera->GetPosition();
-  m_globalsUbo2.UScreenResDiv = glm::vec2( 1/m_resolutionPart.x, 1/m_resolutionPart.y);
+  m_globalsUbo2.UCamPos = glm::vec4(m_camera->GetPosition(), 1);
+  m_globalsUbo2.UScreenResDiv = glm::vec4( glm::vec2( 1/m_resolutionPart.x, 1/m_resolutionPart.y), 0, 1);
   
   memcpy(a_mappedBuffer+m_uboMemBuffer2->GetMemoryOffset(), &m_globalsUbo2, sizeof(FragLightGlobalVars) );
   
@@ -430,7 +439,7 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   
   
   
-  std::vector< VkSubpassDescription > l_subpasses = { subpass, subpass, subpass, subpass, subpass, subpass, subpass, lightSubpass};
+  std::vector< VkSubpassDescription > l_subpasses = { subpass, subpass, subpass, subpass, subpass, subpass, subpass, lightSubpass, lightSubpass};
   std::vector< VkSubpassDependency > l_dependencies = {};
 
   // GEOMETRY PASSES
@@ -451,9 +460,10 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   
   // directional light pass
   for( unsigned int i = 0; i < 7; ++i)
+  for( unsigned int j = 7; j < 9; ++j)
   {
     VkSubpassDependency dependency = {};
-    dependency.srcSubpass = i,
+    dependency.srcSubpass = j,
     dependency.dstSubpass = 7,
     dependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
     dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
@@ -473,6 +483,16 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   dependency2.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
   dependency2.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
   l_dependencies.push_back(dependency2);
+  
+  dependency2.srcSubpass = 8;
+  dependency2.dstSubpass = VK_SUBPASS_EXTERNAL;
+  dependency2.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency2.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+  dependency2.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependency2.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  dependency2.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+  l_dependencies.push_back(dependency2);
+  
   
   
   std::vector<VkAttachmentDescription > attachments = { colorAttachment, colorAttachment2, colorAttachment3, colorAttachment4, depthAttachment};
@@ -526,7 +546,7 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
 
 void RenderControl::VKDeferredShadingPass::CreatePipelines()
 {
-  m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(8);
+  m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(9);
 
   // geometry pass shaders
   CreateSingleGeometryPassPipeline(0, 0, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryShader.frag.spv");
@@ -537,7 +557,8 @@ void RenderControl::VKDeferredShadingPass::CreatePipelines()
   CreateSingleGeometryPassPipeline(5, 4, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessShader.frag.spv");
   CreateSingleGeometryPassPipeline(6, 5, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessEmissiveShader.frag.spv");
   
-  CreateSingleLightPassPipeline(7, "..\\Assets\\SPV_shaders\\DirectionalLightShader.vert.spv", "..\\Assets\\SPV_shaders\\DirectionalLightShader.frag.spv");
+  CreateSingleLightPassPipeline(7, "..\\Assets\\SPV_shaders\\DirectionalLightShader.vert.spv", "..\\Assets\\SPV_shaders\\DirectionalLightShader.frag.spv", true);
+  CreateSingleLightPassPipeline(8, "..\\Assets\\SPV_shaders\\PointLightShader.vert.spv", "..\\Assets\\SPV_shaders\\PointLightShader.frag.spv");
   
 }
 
@@ -563,15 +584,19 @@ void RenderControl::VKDeferredShadingPass::CreateSingleGeometryPassPipeline(cons
 
 }
 
-void RenderControl::VKDeferredShadingPass::CreateSingleLightPassPipeline(const unsigned int& a_index, const std::string& a_vertPath, const std::string& a_fragPath)
+void RenderControl::VKDeferredShadingPass::CreateSingleLightPassPipeline(const unsigned int& a_index, const std::string& a_vertPath, const std::string& a_fragPath, bool a_directional)
 {
   // geometry shader shaders
   VkShaderModule l_vertex = CreateShaderModule(ReadFile( a_vertPath.c_str() ), m_logicalDevice->GetDevice());
   VkShaderModule l_frag = CreateShaderModule(ReadFile( a_fragPath.c_str() ), m_logicalDevice->GetDevice());
   
-  // simple geometry 
-  m_pipelines[a_index] = std::make_shared<VKDirLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_vertex, l_frag), a_index, 
-                                                                  m_resolution, glm::vec4(0,0,m_resolution.x,m_resolution.y) );
+  // simple geometry
+  if( a_directional )
+    m_pipelines[a_index] = std::make_shared<VKDirLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_vertex, l_frag), a_index, 
+                                                                    m_resolution, glm::vec4(0,0,m_resolution.x,m_resolution.y) );
+  else
+    m_pipelines[a_index] = std::make_shared<VKLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_vertex, l_frag), a_index, 
+                                                                    m_resolution, glm::vec4(0,0,m_resolution.x,m_resolution.y) );
   m_pipelines[a_index]->Init();
   
   // destroy shader modules
@@ -824,6 +849,131 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSetDirLight(const std
     extraDescriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     extraDescriptorWrites[i].dstSet = l_descSet;
     extraDescriptorWrites[i].dstBinding = l_bindings[i+2].binding;
+    extraDescriptorWrites[i].dstArrayElement = 0;
+    extraDescriptorWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+    extraDescriptorWrites[i].descriptorCount = 1;
+    extraDescriptorWrites[i].pImageInfo = &l_imageInfo[i];
+    l_descriptorSetWrites.push_back(extraDescriptorWrites[i]);
+  }
+
+  vkUpdateDescriptorSets(m_logicalDevice->GetDevice(), l_descriptorSetWrites.size(), l_descriptorSetWrites.data(), 0, nullptr);
+}
+
+void RenderControl::VKDeferredShadingPass::CreateDescriptorSetLight(const std::shared_ptr<VKPipeline>& a_pipeline, IRenderable* a_renderable)
+{
+  VkDescriptorSetLayout l_layout = a_pipeline->GetDescriptorSetLayout();
+  VkDescriptorSetAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocInfo.descriptorPool = m_descriptorPool;
+  allocInfo.descriptorSetCount = 1;
+  allocInfo.pSetLayouts = &l_layout;
+
+  VkDescriptorSet l_descSet;
+  if (vkAllocateDescriptorSets(m_logicalDevice->GetDevice(), &allocInfo, &l_descSet ) != VK_SUCCESS) {
+    throw std::runtime_error("VKDeferredShadingPass::CreateDescriptorSetDirLight() - failed to allocate descriptor sets!");
+  }
+  
+  // personal ubos here
+  std::vector<size_t> l_uboSizes = a_pipeline->GetObjUboSizes();
+  std::vector< std::shared_ptr<VulkanMemoryChunk> > l_uboMemBuffer = {nullptr,nullptr};
+  l_uboMemBuffer[0] = m_memory->CreateUniformBuffer( l_uboSizes[0] );
+  l_uboMemBuffer[1] = m_memory->CreateUniformBuffer( l_uboSizes[1] );
+
+  
+  reinterpret_cast<VulkanRenderable*>( a_renderable->GetExtra() )->Init(l_descSet, l_uboMemBuffer[0], l_uboMemBuffer[1] );
+  
+  
+  // get appropriate size of ubo from pipeline - 
+  // and also need to know if this pipeline requires any type of global data and what type that is ( ex. VertexSingleMat4, FragDirLightGlobalVars )
+  // also need to know what kind of samplers does this pipeline requires and what type( input attachments or combined image samplers)
+  unsigned int l_uboIndex = 0;
+  unsigned int l_imagesIndex = 0;
+  unsigned int l_inputAttachmentsIndex = 0;
+  
+  std::vector<VkDescriptorSetLayoutBinding> l_bindings = a_pipeline->GetDescriptorSetLayoutBindings();
+  
+  // first global data
+  VkDescriptorBufferInfo l_bufferInfo = {};
+  l_bufferInfo.buffer = m_uboMemBuffer->m_buffer->m_buffer;
+  l_bufferInfo.offset = m_uboMemBuffer->GetBufferOffset();
+  l_bufferInfo.range = m_uboMemBuffer->m_size;
+  
+  
+  VkWriteDescriptorSet descriptorWrite = {};
+  descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite.dstSet = l_descSet;
+  descriptorWrite.dstBinding = l_bindings[0].binding;
+  descriptorWrite.dstArrayElement = 0;
+  descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite.descriptorCount = 1;
+  descriptorWrite.pBufferInfo = &l_bufferInfo;
+  
+  // second global data
+  VkDescriptorBufferInfo l_bufferInfo2 = {};
+  l_bufferInfo2.buffer = m_uboMemBuffer2->m_buffer->m_buffer;
+  l_bufferInfo2.offset = m_uboMemBuffer2->GetBufferOffset();
+  l_bufferInfo2.range = m_uboMemBuffer2->m_size;
+  
+  
+  VkWriteDescriptorSet descriptorWrite2 = {};
+  descriptorWrite2.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite2.dstSet = l_descSet;
+  descriptorWrite2.dstBinding = l_bindings[1].binding;
+  descriptorWrite2.dstArrayElement = 0;
+  descriptorWrite2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite2.descriptorCount = 1;
+  descriptorWrite2.pBufferInfo = &l_bufferInfo2;
+  
+  
+  // first object data
+  VkDescriptorBufferInfo l_bufferInfo3 = {};
+  l_bufferInfo3.buffer = l_uboMemBuffer[0]->m_buffer->m_buffer;
+  l_bufferInfo3.offset = l_uboMemBuffer[0]->GetBufferOffset();
+  l_bufferInfo3.range = l_uboMemBuffer[0]->m_size;
+  
+  
+  VkWriteDescriptorSet descriptorWrite3 = {};
+  descriptorWrite3.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite3.dstSet = l_descSet;
+  descriptorWrite3.dstBinding = l_bindings[2].binding;
+  descriptorWrite3.dstArrayElement = 0;
+  descriptorWrite3.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite3.descriptorCount = 1;
+  descriptorWrite3.pBufferInfo = &l_bufferInfo3;
+  
+  // second object data
+  VkDescriptorBufferInfo l_bufferInfo4 = {};
+  l_bufferInfo4.buffer = l_uboMemBuffer[1]->m_buffer->m_buffer;
+  l_bufferInfo4.offset = l_uboMemBuffer[1]->GetBufferOffset();
+  l_bufferInfo4.range = l_uboMemBuffer[1]->m_size;
+  
+  
+  VkWriteDescriptorSet descriptorWrite4 = {};
+  descriptorWrite4.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrite4.dstSet = l_descSet;
+  descriptorWrite4.dstBinding = l_bindings[3].binding;
+  descriptorWrite4.dstArrayElement = 0;
+  descriptorWrite4.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrite4.descriptorCount = 1;
+  descriptorWrite4.pBufferInfo = &l_bufferInfo4;
+  
+  
+  std::vector< VkWriteDescriptorSet > l_descriptorSetWrites = {descriptorWrite, descriptorWrite2, descriptorWrite3, descriptorWrite4 };
+  
+
+  unsigned int l_textureCount = l_bindings.size() - 4;
+  std::vector<VkDescriptorImageInfo> l_imageInfo(l_textureCount, {});
+  std::vector<VkWriteDescriptorSet> extraDescriptorWrites(l_textureCount, {});
+  
+  for( unsigned int i = 0; i < l_textureCount; ++i)
+  {  
+    l_imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
+    l_imageInfo[i].imageView = m_attachmentImages[i == 3 ? 4 : i]->m_imageView;  // VkImageView
+    
+    
+    extraDescriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    extraDescriptorWrites[i].dstSet = l_descSet;
+    extraDescriptorWrites[i].dstBinding = l_bindings[i+4].binding;
     extraDescriptorWrites[i].dstArrayElement = 0;
     extraDescriptorWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
     extraDescriptorWrites[i].descriptorCount = 1;

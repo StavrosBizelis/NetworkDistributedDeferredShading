@@ -5,8 +5,8 @@ layout(location = 0) in vec2 vTexCoord;			// Interpolated texture coordinate usi
 layout (std140, set = 0, binding = 0) uniform GlobalVars
 {
   uniform mat4 UInverseViewProjectionMatrix;
-  uniform vec3 UCamPos;
-  uniform vec2 UScreenResDiv;
+  uniform vec4 UCamPos;
+  uniform vec4 UScreenResDiv;
 } globalVars;
 
 
@@ -84,7 +84,7 @@ void main()
 
   vec4 l_diffuse;
   vec4 l_specular; 
-  HandleDirectionalLight( globalVars.UCamPos, vTexNormal.xyz, vec4(l_fragWorldSpacePoint.xyz,1), vTexSpecular.xyz, vTexSpecular.a, l_diffuse, l_specular);
+  HandleDirectionalLight( globalVars.UCamPos.xyz, vTexNormal.xyz, vec4(l_fragWorldSpacePoint.xyz,1), vTexSpecular.xyz, vTexSpecular.a, l_diffuse, l_specular);
   vOutputColour = vec4( length(l_diffuse) > 0 ? ULightData.m_ambient.xyz : vec3(0),  1.f) + l_diffuse * vTexColour + l_specular;
   // vOutputColour = vTexNormal.xyzz;
     

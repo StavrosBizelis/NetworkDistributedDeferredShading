@@ -31,16 +31,15 @@ namespace SceneControl
     if( l_dirty )
     {
       // update the local ubo structure
-      m_vulkanRenderOperations->m_ubo2.m_position =  GetPos();
+      m_vulkanRenderOperations->m_ubo2.m_position =  glm::vec4(GetPos() , 1);
 
-      m_vulkanRenderOperations->m_ubo2.m_diffuse = GetDiffuse();
-      m_vulkanRenderOperations->m_ubo2.m_specular = GetSpecular();
-  
-      m_vulkanRenderOperations->m_ubo2.m_constantAtt = GetConstAttenuation();
-      m_vulkanRenderOperations->m_ubo2.m_linearAtt = GetLinAttenuation();
-      m_vulkanRenderOperations->m_ubo2.m_quadraticAtt = GetQuadAttenuation();
+      m_vulkanRenderOperations->m_ubo2.m_diffuse = glm::vec4(GetDiffuse(), 1);
+      m_vulkanRenderOperations->m_ubo2.m_specular = glm::vec4(GetSpecular(), 1);
+      
+      m_vulkanRenderOperations->m_ubo2.m_attenuation = glm::vec4( GetConstAttenuation(), GetLinAttenuation(), GetQuadAttenuation(), 1 );
       
       m_vulkanRenderOperations->m_ubo.modelMatrix = m_lastAbsoluteTrans;
+      
       // register for update
       m_vulkanRenderOperations->RegisterForUpdate();
     }

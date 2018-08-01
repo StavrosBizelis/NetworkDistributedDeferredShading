@@ -22,8 +22,8 @@ struct VertexObjectMatrices
 struct FragLightGlobalVars 
 {
   glm::mat4 UInverseViewProjectionMatrix;
-  glm::vec3 UCamPos;
-  glm::vec2 UScreenResDiv;
+  glm::vec4 UCamPos;
+  glm::vec4 UScreenResDiv;
 };
 
 
@@ -50,33 +50,29 @@ struct FragDirectionalLight
 
 struct FragPointLight
 {
-  glm::vec3 m_position;
+  glm::vec4 m_position;
 
   //vec3 m_ambient;
-  glm::vec3 m_diffuse;
-  glm::vec3 m_specular;
+  glm::vec4 m_diffuse;
+  glm::vec4 m_specular;
   
   // attenuation
-  float m_constantAtt;
-  float m_linearAtt;
-  float m_quadraticAtt;
+  glm::vec4 m_attenuation; // x:constant, y:linear, z:quadratic
 };
 
 struct FragSpotLight
 {
-  glm::vec3 m_position;
-  glm::vec3 m_direction;
-  float m_spotCutoff;
-  float m_spotExponent;
+  glm::vec4 m_position;
+  glm::vec4 m_direction;
+  
+  glm::vec4 m_spotCutoffAndExponent;
   
   //vec3 m_ambient;
-  glm::vec3 m_diffuse;
-  glm::vec3 m_specular;
+  glm::vec4 m_diffuse;
+  glm::vec4 m_specular;
   
   // attenuation
-  float m_constantAtt;
-  float m_linearAtt;
-  float m_quadraticAtt;
+  glm::vec4 m_attenuation; // x:constant, y:linear, z:quadratic
 };
 
 

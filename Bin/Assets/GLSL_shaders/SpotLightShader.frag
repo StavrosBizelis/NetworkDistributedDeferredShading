@@ -61,7 +61,7 @@ void HandleSpotLight(in SpotLight a_lightSrc, in vec3 a_camPos, in vec3 a_fragme
   {
     l_spotEffect = pow(l_spotEffect, a_lightSrc.m_spotExponent );
   
-    a_diffuse = l_att * l_diffuseFactor * vec4(a_lightSrc.m_diffuse, 1.0f)  * vec4( vec3(0.3), 1);//gl_FrontMaterial.diffuse;
+    a_diffuse = l_att * l_diffuseFactor * vec4(a_lightSrc.m_diffuse, 1.0f);//gl_FrontMaterial.diffuse;
     
     vec3 l_vertexToEye  = normalize( a_camPos - a_fragmentPos.xyz);
     vec3 l_lightReflect = normalize(reflect(l_lightDirection, l_normal));

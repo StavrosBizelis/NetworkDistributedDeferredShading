@@ -2,22 +2,21 @@
 layout (std140, set = 0, binding = 2) uniform GlobalVars
 {
   uniform mat4 UInverseViewProjectionMatrix;
-  uniform vec3 UCamPos;
-  uniform vec2 UScreenResDiv;
+  uniform vec4 UCamPos;
+  uniform vec4 UScreenResDiv;
 } globalVars;
 
 layout (std140, set = 0, binding = 3) uniform PointLight
 {
-  vec3 m_position;
+  vec4 m_position;
 
   //vec3 m_ambient;
-  vec3 m_diffuse;
-  vec3 m_specular;
+  vec4 m_diffuse;
+  vec4 m_specular;
   
   // attenuation
-  float m_constantAtt;
-  float m_linearAtt;
-  float m_quadraticAtt;
+  vec4 m_attenuation; // x:constant, y:linear, z:quadratic
+
 } ULightData;
 
 
@@ -37,20 +36,20 @@ void HandlePointLight( in vec3 a_camPos, in vec3 a_fragmentNormal,  in vec4 a_fr
   a_diffuse = vec4(0);
   a_specular = vec4(0);
   // compute attenuation
-  float l_dist = length(ULightData.m_position - a_fragmentPos.xyz);
-  float l_att = 1. / (ULightData.m_constantAtt +   
-                ULightData.m_linearAtt  * l_dist +    
-                ULightData.m_quadraticAtt * l_dist * l_dist);   
+  float l_dist = length(ULightData.m_position.xyz - a_fragmentPos.xyz);
+  float l_att = 1. / (ULightData.m_attenuation.x +   
+                ULightData.m_attenuation.y  * l_dist +    
+                ULightData.m_attenuation.z * l_dist * l_dist);   
   
 
   
-  vec3 l_lightDirection =  normalize(  a_fragmentPos.xyz - ULightData.m_position);
+  vec3 l_lightDirection =  normalize(  a_fragmentPos.xyz - ULightData.m_position.xyz);
   vec3 l_normal = normalize(a_fragmentNormal);
   float l_diffuseFactor = dot(l_normal, -l_lightDirection);
 
   if (l_diffuseFactor > 0) 
   {
-    a_diffuse = l_att * l_diffuseFactor * vec4(ULightData.m_diffuse, 1.0f);
+    a_diffuse = l_att * l_diffuseFactor * ULightData.m_diffuse;
     
    
     vec3 l_vertexToEye  = normalize( a_camPos - a_fragmentPos.xyz);
@@ -58,7 +57,7 @@ void HandlePointLight( in vec3 a_camPos, in vec3 a_fragmentNormal,  in vec4 a_fr
     float l_specularFactor = dot(l_vertexToEye, l_lightReflect);
     l_specularFactor = pow(l_specularFactor, a_fragmentSpecPower*500 );
     if( l_specularFactor > 0.0)
-      a_specular = l_att * l_specularFactor *  vec4(ULightData.m_specular * a_fragmentSpecIntensity, 1.0f);
+      a_specular = l_att * l_specularFactor *  vec4(ULightData.m_specular.xyz * a_fragmentSpecIntensity, 1.0f);
   }
 
 }
@@ -84,7 +83,7 @@ void main()
    
   vec4 l_diffuse;
   vec4 l_specular;
-  HandlePointLight( globalVars.UCamPos, vTexNormal.xyz, l_fragWorldSpacePoint, vTexSpecular.xyz, vTexSpecular.a, l_diffuse, l_specular);
+  HandlePointLight( globalVars.UCamPos.xyz, vTexNormal.xyz, l_fragWorldSpacePoint, vTexSpecular.xyz, vTexSpecular.a, l_diffuse, l_specular);
   vOutputColour = vec4( l_diffuse*vTexColour + l_specular ) ;
   
   // if( (l_diffuse.x == l_diffuse.y) && (l_diffuse.x == l_diffuse.z) && (l_diffuse.x == 0.0f))
@@ -92,8 +91,7 @@ void main()
   
   //vOutputColour.xyz = vTexDepth.xyz;
   //vOutputColour.a = 1;
-  //vOutputColour = ( vTexColour );
-  //vOutputColour = vec4(l_screenTextureCoord.xy, 0, 1);
+  // vOutputColour = vec4(l_screenTextureCoord.xy, 0, 1);
   // vOutputColour = vec4( l_fragWorldSpacePoint.xyz ,1.0f ) ;
   //vOutputColour = vec4(1.0);
 

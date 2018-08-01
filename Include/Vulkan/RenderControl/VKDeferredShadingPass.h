@@ -74,13 +74,14 @@ namespace RenderControl
     void CreateFramebuffer();
     void CreatePipelines();
     void CreateSingleGeometryPassPipeline(const unsigned int& a_index, const unsigned int& a_inputSamplers, const std::string& a_vertPath, const std::string& a_fragPath);
-    void CreateSingleLightPassPipeline(const unsigned int& a_index, const std::string& a_vertPath, const std::string& a_fragPath);
+    void CreateSingleLightPassPipeline(const unsigned int& a_index, const std::string& a_vertPath, const std::string& a_fragPath, bool a_directional = false);
 
     void CreateDescriptorPool();
     void CreateCommandBuffers();
     
     void CreateDescriptorSet(const std::shared_ptr<VKPipeline>& a_pipeline, IRenderable* a_renderable); // descriptor sets will be created and allocated on the fly as objects are introduced to the VKDeferredShadingPass
     void CreateDescriptorSetDirLight(const std::shared_ptr<VKPipeline>& a_pipeline, IRenderable* a_renderable); // descriptor sets will be created and allocated on the fly as objects are introduced to the VKDeferredShadingPass
+    void CreateDescriptorSetLight(const std::shared_ptr<VKPipeline>& a_pipeline, IRenderable* a_renderable); // descriptor sets will be created and allocated on the fly as objects are introduced to the VKDeferredShadingPass
 
     
     std::vector< std::shared_ptr<VKPipeline> > m_pipelines;

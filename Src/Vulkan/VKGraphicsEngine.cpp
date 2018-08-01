@@ -82,7 +82,7 @@ void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
   }
   else
   {
-    IFDBG( std::cout << "next: Create m_compositionPass \n"; );
+    IFDBG( std::cout << "next: Create m_deferredShadingPass \n"; );
     
     m_deferredShadingPass = new RenderControl::VKDeferredShadingPass(m_driver->GetLogicalDeviceManager(), m_driver->GetSelectedPhysicalDevice(), m_driver->GetLogicalDeviceManager()->GetMemoryManager(),
                                                              m_driver->GetLogicalDeviceManager()->GetGraphicsQueue(),m_driver->GetLogicalDeviceManager()->GetPresentQueue(), m_driver->GetLogicalDeviceManager()->GetQueueFamilyIndices(),

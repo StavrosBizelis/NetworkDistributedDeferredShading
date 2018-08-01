@@ -39,7 +39,6 @@ namespace SceneControl
       
       m_vulkanRenderOperations->m_ubo2.m_direction = l_direction;
 
-      std::cout << "ambient is " << GetAmbient().x << " " << GetAmbient().y << " " << GetAmbient().z << std::endl;
       m_vulkanRenderOperations->m_ubo2.m_ambient = glm::vec4(GetAmbient(), 1);
       m_vulkanRenderOperations->m_ubo2.m_diffuse = glm::vec4(GetDiffuse(), 1);
       m_vulkanRenderOperations->m_ubo2.m_specular = glm::vec4(GetSpecular(), 1);
