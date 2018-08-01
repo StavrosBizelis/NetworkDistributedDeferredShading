@@ -277,7 +277,7 @@ namespace Network
    * Returns: void
    * Effects: 
    */
-  void NetworkMsg::CreateRenderResultMsg(char* a_textureData, const glm::vec2& a_resolution, const unsigned int& a_colorType, const unsigned int& a_bitDepth)
+  void NetworkMsg::CreateRenderResultMsg(char* a_textureData, const glm::vec2& a_resolution, const unsigned int& a_colorType, const unsigned int& a_bitDepth, bool a_compress)
   {
     // first encode the image so we can know the resulting size
     unsigned int l_bitDepth = a_bitDepth == 8 || a_bitDepth == 16 ? a_bitDepth : 8;
@@ -285,8 +285,8 @@ namespace Network
     
     // l_timer.Start();
     unsigned int l_bmpSize = a_resolution.x*a_resolution.y*4;
-    // 1 type + 4 pngFileSize + 4 colourtype + 4 bit Depth + max immage size
-    uint32_t l_size = 17 + l_bmpSize;
+    // 1 type + 4 pngFileSize + 4 colourtype + 4 bit Depth + bool compressed + max immage size
+    uint32_t l_size = 18 + l_bmpSize;
     Reset(l_size);
     m_type = MsgType::CLNT_RENDER_RESULT;
     char* l_pos = m_data;
@@ -304,11 +304,20 @@ namespace Network
     // bit depth
     ConsistentUInt32ToCharArray((uint32_t)l_bitDepth, l_pos);
     l_pos += 4;
-    
+    *l_pos = (char)a_compress;
+    l_pos++;
     
     // CHighResolutionTimer l_timer;
     // l_timer.Start();    
-    m_size = 17 + LZ4_compress_default(a_textureData, l_pos, l_bmpSize, l_bmpSize);
+    if( a_compress )
+    {
+      m_size = 18 + LZ4_compress_default(a_textureData, l_pos, l_bmpSize, l_bmpSize);
+    }
+    else
+    {
+      m_size = 18 + l_bmpSize;
+      memcpy(l_pos, a_textureData, l_bmpSize);
+    }
     // std::cout << "encoding time " << l_timer.Elapsed() << std::endl; 
     // std::cout << "compression ratio =  " << float(l_size)/float(m_size) << std::endl; 
     
@@ -540,7 +549,7 @@ namespace Network
   {
     char* l_pos = m_data;
     // 1 type + 8 resolution + 4 colourtype + 4 bit Depth
-    if(m_size < 17)
+    if(m_size < 18)
       return false;
     if( (MsgType)m_data[0] != MsgType::CLNT_RENDER_RESULT )
       return false;
@@ -555,10 +564,21 @@ namespace Network
     l_pos += 4;
     a_outBitDepth = ConsistentCharArrToUInt32(l_pos);
     l_pos += 4;
-
+    bool l_compress = (bool)(*l_pos);
+    ++l_pos;
+    
     unsigned int l_originalSize = a_outResolution.x*a_outResolution.y*4;
-    if( LZ4_decompress_fast(l_pos, a_outTextureData, l_originalSize) > 0 )
+    if( l_compress )
+    {
+      if( LZ4_decompress_fast(l_pos, a_outTextureData, l_originalSize) > 0 )
+        return true;
+    }
+    else
+    {
+      memcpy(a_outTextureData, l_pos, l_originalSize);
       return true;
+    }
+    
     return false;
   }
 

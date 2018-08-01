@@ -442,7 +442,7 @@ bool RenderControl::GLDeferredShadingPass::PackTexture( Network::NetworkMsgPtr& 
   if(l_ptr)
   {
     // IFDBG( std::cout << "Packed Actual Texture " << std::endl; );
-    a_outMsg->CreateRenderResultMsg(l_ptr, m_resolutionPart, 0, 8 );
+    a_outMsg->CreateRenderResultMsg(l_ptr, m_resolutionPart, 0, 8, false );
     glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
   }
   else

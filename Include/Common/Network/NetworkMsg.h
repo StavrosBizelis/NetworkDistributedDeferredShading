@@ -136,7 +136,7 @@ namespace Network
     void CreateSizeMsg(const uint32_t& a_size); ///< MSG_SIZE
     void CreateClientRequestMsg(); ///< CLNT_REQUEST
     void CreateEngineReadyMsg(); ///< CLNT_ENGINE_READY
-    void CreateRenderResultMsg(char* a_textureData, const glm::vec2& a_resolution, const unsigned int& a_colorType = 0, const unsigned int& a_bitDepth = 8);  ///< CLNT_RENDER_RESULT
+    void CreateRenderResultMsg(char* a_textureData, const glm::vec2& a_resolution, const unsigned int& a_colorType = 0, const unsigned int& a_bitDepth = 8, bool a_compress = true);  ///< CLNT_RENDER_RESULT
     
     void CreateSetupMsg( const glm::vec4& a_viewportInfo, const glm::vec2& a_partialResolution, const glm::vec2& a_resolution ); ///< SRV_SETUP
     void CreateSceneUpdateMsg(

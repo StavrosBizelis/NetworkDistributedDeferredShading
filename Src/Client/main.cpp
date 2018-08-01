@@ -32,7 +32,7 @@
 
 
 // ClientApp g_app("192.168.1.3", 50001);
-ClientApp g_app("localhost", 50001, ImplTech::OPENGL );
+ClientApp g_app("localhost", 50001, ImplTech::VULKAN );
 
 LRESULT CALLBACK WinProc(HWND window, UINT message, WPARAM w_param, LPARAM l_param)
 {

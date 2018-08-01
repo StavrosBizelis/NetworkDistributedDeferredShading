@@ -25,9 +25,10 @@
  ***********************************************************************/
 RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_ptr<VulkanLogicalDeviceManager>& a_device, const VkPhysicalDevice& a_physicalDevice, const std::shared_ptr<VulkanMemory>& a_memory,
                                                     const VkQueue& a_graphicsQueue, const VkQueue& a_presentQueue, const QueueFamilyIndices& a_indices,
-                                                    const glm::vec2 &a_resolution, SceneControl::SceneManager *a_scnManager, IShapeFactory *a_shapeFactory, 
+                                                    const glm::vec2 &a_resolution, const glm::vec2& a_resolutionPart, const glm::vec4& a_viewportSettings,
+                                                    SceneControl::SceneManager *a_scnManager, IShapeFactory *a_shapeFactory, 
                                                     ITextureFactory* a_textFactory, const unsigned int &a_subparts)
-  :ADeferredShadingPass(a_resolution, a_resolution, glm::vec4(0,0,a_resolution.x,a_resolution.y) ),
+  :ADeferredShadingPass(a_resolution, a_resolutionPart, a_viewportSettings ),
     m_logicalDevice(a_device), m_physicalDevice(a_physicalDevice), m_memory(a_memory), m_graphicsQueue(a_graphicsQueue), m_presentQueue(a_presentQueue), m_indices(a_indices), m_currentFrame(0), 
     m_scnManager(a_scnManager), m_textFactory(a_textFactory), m_shapeFactory(a_shapeFactory)
 {
@@ -404,7 +405,7 @@ bool RenderControl::VKDeferredShadingPass::PackTexture(Network::NetworkMsgPtr& a
   void* data;
   vkMapMemory(m_logicalDevice->GetDevice(), l_buf->m_memorySpace, l_buf->GetMemoryOffset(), l_buf->m_size, 0, &data);
   
-  a_msg->CreateRenderResultMsg( (char*)data, glm::vec2(m_attachmentImages[l_indexToWrite]->m_width, m_attachmentImages[l_indexToWrite]->m_height), 0, 8);
+  a_msg->CreateRenderResultMsg( (char*)data, glm::vec2(m_attachmentImages[l_indexToWrite]->m_width, m_attachmentImages[l_indexToWrite]->m_height), 0, 8, true);
   
   // for( int i = 0; i < m_attachmentImages[l_indexToWrite]->m_height; ++i)
     // for( int j = 0; j < m_attachmentImages[l_indexToWrite]->m_width; ++j)
@@ -511,7 +512,7 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   colorAttachment3.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
   
   // fourth colour attachment
-  m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R8G8B8A8_UNORM ) );
+  m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_B8G8R8A8_UNORM ) );
   VkAttachmentDescription colorAttachment4 = {};
   colorAttachment4.format = m_attachmentImages.back()->m_format;
   colorAttachment4.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -722,7 +723,7 @@ void RenderControl::VKDeferredShadingPass::CreateSingleGeometryPassPipeline(cons
   
   // simple geometry 
   m_pipelines[a_index] = std::make_shared<VKGeometryPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_vertex, l_frag), a_index, 
-                                                                  m_resolution, glm::vec4(0,0,m_resolution.x,m_resolution.y), a_inputSamplers );
+                                                                  m_resolutionPart, m_viewPortSetting, a_inputSamplers );
   m_pipelines[a_index]->Init();
   
   // destroy shader modules
@@ -747,15 +748,15 @@ void RenderControl::VKDeferredShadingPass::CreateSingleLightPassPipeline(const u
   {
     case LightTypeFlags::DIRECTIONAL_LIGHT: 
     m_pipelines[a_index] = std::make_shared<VKDirLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_vertex, l_frag), a_index, 
-                                                                    m_resolution, glm::vec4(0,0,m_resolution.x,m_resolution.y) );
+                                                                    m_resolutionPart, m_viewPortSetting );
     break;
     case LightTypeFlags::POINT_LIGHT: 
     m_pipelines[a_index] = std::make_shared<VKLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_vertex, l_frag), a_index, 
-                                                                    m_resolution, glm::vec4(0,0,m_resolution.x,m_resolution.y), false );
+                                                                    m_resolutionPart, m_viewPortSetting, false );
     break;
     case LightTypeFlags::SPOT_LIGHT: 
     m_pipelines[a_index] = std::make_shared<VKLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_vertex, l_frag), a_index, 
-                                                                    m_resolution, glm::vec4(0,0,m_resolution.x,m_resolution.y), true );                                                          
+                                                                    m_resolutionPart, m_viewPortSetting, true );                                                          
     break;
   }
 
@@ -798,7 +799,7 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
 
 void RenderControl::VKDeferredShadingPass::CreateCommandBuffers()
 {
-  m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, m_frameBuffers, m_renderPass, m_resolution, 5) );
+  m_primaryCmdBuffer = std::shared_ptr<VulkanPrimaryCommandBuffer>( new VulkanPrimaryCommandBuffer(m_logicalDevice->GetDevice(), m_commandPool, m_frameBuffers, m_renderPass, m_resolutionPart, 5) );
   m_primaryCmdBuffer->Init();
   for( unsigned int i = 0; i < m_pipelines.size(); ++i)
     m_primaryCmdBuffer->AddPipeline( m_pipelines[i] );

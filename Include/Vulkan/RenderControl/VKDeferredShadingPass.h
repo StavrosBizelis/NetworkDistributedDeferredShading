@@ -98,7 +98,8 @@ namespace RenderControl
 	public:
 		VKDeferredShadingPass(const std::shared_ptr<VulkanLogicalDeviceManager>& a_device, const VkPhysicalDevice& a_physicalDevice, const std::shared_ptr<VulkanMemory>& a_memory,
                       const VkQueue& a_graphicsQueue, const VkQueue& a_presentQueue, const QueueFamilyIndices& a_indices,
-                      const glm::vec2& a_resolution, SceneControl::SceneManager* a_scnManager, IShapeFactory* a_shapeFactory, ITextureFactory* a_textFactory, const unsigned int& a_subparts );
+                      const glm::vec2& a_resolution, const glm::vec2& a_resolutionPart, const glm::vec4& a_viewportSettings, 
+                      SceneControl::SceneManager* a_scnManager, IShapeFactory* a_shapeFactory, ITextureFactory* a_textFactory, const unsigned int& a_subparts );
 		virtual ~VKDeferredShadingPass();
     
     
