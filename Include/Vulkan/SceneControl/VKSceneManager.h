@@ -52,7 +52,7 @@ namespace SceneControl
 		/// @return - if null, a_parent is not part of the scene
 		virtual PointLightSceneNode* AddPointLightSceneNode( const std::shared_ptr<ASphere>& a_sphere, SceneNode* a_parent = nullptr);
 		/// @return - if null, a_parent is not part of the scene
-		// virtual SpotLightSceneNode* AddSpotLightSceneNode( const std::shared_ptr<ACone>& a_cone, SceneNode* a_parent = nullptr);
+		virtual SpotLightSceneNode* AddSpotLightSceneNode( const std::shared_ptr<ACone>& a_cone, SceneNode* a_parent = nullptr);
 		/// @return - if null, a_parent is not part of the scene
 		virtual DirectionalLightSceneNode* AddDirectionalLightSceneNode( const std::shared_ptr<ARect>& a_rect, SceneNode* a_parent = nullptr);
 	};

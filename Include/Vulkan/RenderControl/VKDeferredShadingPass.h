@@ -25,6 +25,9 @@ namespace RenderControl
 		public ADeferredShadingPass
 	{
   protected:
+    ITextureFactory* m_textFactory;
+    IShapeFactory *m_shapeFactory;
+  
     std::vector< SceneControl::MeshSceneNode* > m_subpartRects;
     std::vector< SceneControl::LightSceneNode* > m_lights;
     SceneControl::SceneManager* m_scnManager;
@@ -74,7 +77,7 @@ namespace RenderControl
     void CreateFramebuffer();
     void CreatePipelines();
     void CreateSingleGeometryPassPipeline(const unsigned int& a_index, const unsigned int& a_inputSamplers, const std::string& a_vertPath, const std::string& a_fragPath);
-    void CreateSingleLightPassPipeline(const unsigned int& a_index, const std::string& a_vertPath, const std::string& a_fragPath, bool a_directional = false);
+    void CreateSingleLightPassPipeline(const unsigned int& a_index, const std::string& a_vertPath, const std::string& a_fragPath, const LightTypeFlags& a_lightType);
 
     void CreateDescriptorPool();
     void CreateCommandBuffers();

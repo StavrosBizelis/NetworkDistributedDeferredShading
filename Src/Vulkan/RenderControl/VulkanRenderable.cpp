@@ -93,3 +93,24 @@ void VulkanPointLightRenderable::VulkanUpdate(char* a_mappedUBO)
 }
 
 
+
+VulkanSpotLightRenderable::VulkanSpotLightRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry)
+  : VulkanRenderable(a_shape, a_updateRegistry){}
+  
+void VulkanSpotLightRenderable::VulkanUpdate(char* a_mappedUBO)
+{
+  if( m_uniformBuffer )
+  {
+    // map the model matrix
+    memcpy(a_mappedUBO+m_uniformBuffer->GetMemoryOffset(), &m_ubo, sizeof(VertexObjectMatrices));
+  }
+  if( m_uniformBuffer2 )
+  {
+    // map the material data
+    memcpy(a_mappedUBO+m_uniformBuffer2->GetMemoryOffset(), &m_ubo2, sizeof(FragPointLight));
+  }
+}
+
+
+
+

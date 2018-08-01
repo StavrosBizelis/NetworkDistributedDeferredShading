@@ -1,5 +1,5 @@
 #version 450 core
-layout (std140, set = 0, binding = 1) uniform GlobalVars
+layout (std140, set = 0, binding = 2) uniform GlobalVars
 {
   uniform mat4 UInverseViewProjectionMatrix;
   uniform vec4 UCamPos;
@@ -7,7 +7,7 @@ layout (std140, set = 0, binding = 1) uniform GlobalVars
 } globalVars;
 
 
-layout (std140, set = 0, binding = 2) uniform SpotLight
+layout (std140, set = 0, binding = 3) uniform SpotLight
 {
   vec4 m_position;
   vec4 m_direction;
@@ -27,10 +27,10 @@ layout (std140, set = 0, binding = 2) uniform SpotLight
 layout(location = 0) out vec4 vOutputColour;		// The output colour
 
 
-layout (set = 0, binding = 3) uniform sampler2D UColor;
-layout (set = 0, binding = 4) uniform sampler2D UNormal;
-layout (set = 0, binding = 5) uniform sampler2D USpecularIntensityPower;
-layout (set = 0, binding = 6) uniform sampler2D UDepth;
+layout (set = 0, binding = 4) uniform sampler2D UColor;
+layout (set = 0, binding = 5) uniform sampler2D UNormal;
+layout (set = 0, binding = 6) uniform sampler2D USpecularIntensityPower;
+layout (set = 0, binding = 7) uniform sampler2D UDepth;
 
 
 
@@ -45,7 +45,7 @@ void HandleSpotLight(in vec3 a_camPos, in vec3 a_fragmentNormal, in vec4 a_fragm
   // compute spot effect
   float l_spotEffect = dot(normalize(-ULightData.m_direction.xyz), normalize(-l_lightDirection));
   if (l_spotEffect <= ULightData.m_spotCutoffAndExponent.x)
-	return;
+    return;
 
   l_spotEffect = pow(l_spotEffect, ULightData.m_spotCutoffAndExponent.y ); 
    
@@ -63,7 +63,7 @@ void HandleSpotLight(in vec3 a_camPos, in vec3 a_fragmentNormal, in vec4 a_fragm
 
   if (l_diffuseFactor > 0) 
   {
-    l_spotEffect = pow(l_spotEffect, ULightData.m_spotExponent );
+    // l_spotEffect = pow(l_spotEffect, ULightData.m_spotCutoffAndExponent.y );
   
     a_diffuse = l_att * l_diffuseFactor * ULightData.m_diffuse;
     
@@ -82,7 +82,7 @@ void HandleSpotLight(in vec3 a_camPos, in vec3 a_fragmentNormal, in vec4 a_fragm
 
 void main()
 {
-   // screen space texture coordinates
+  // screen space texture coordinates
   vec2 l_screenTextureCoord = gl_FragCoord.xy * globalVars.UScreenResDiv.xy;
 
   vec4 vTexColour = texture(UColor, l_screenTextureCoord);	
@@ -100,15 +100,16 @@ void main()
   vec4 l_diffuse;
   vec4 l_specular;
   HandleSpotLight( globalVars.UCamPos.xyz, vTexNormal.xyz, l_fragWorldSpacePoint, vTexSpecular.xyz, vTexSpecular.a, l_diffuse, l_specular);
-   vOutputColour = vec4( l_diffuse*vTexColour ) +l_specular;
+   
+  vOutputColour = vec4( l_diffuse*vTexColour ) +l_specular;
   
 //  if( (l_diffuse.x == l_diffuse.y) && (l_diffuse.x == l_diffuse.z) && (l_diffuse.x == 0.0f))
-//	vOutputColour = vec4(1,0,0,1);
+	// vOutputColour = vec4(1,0,0,1);
   
   // vOutputColour.xyz = vTexDepth.xyz;
   //vOutputColour.a = 1;
   // vOutputColour = ( vTexColour );
-  //vOutputColour = vec4(l_screenTextureCoord.xy, 0, 1);
+  // vOutputColour = vec4(l_screenTextureCoord.xy, 0, 1);
   // vOutputColour = vec4( l_fragWorldSpacePoint.xyz ,1.0f ) ;
  // vOutputColour = vec4(1.0);
 

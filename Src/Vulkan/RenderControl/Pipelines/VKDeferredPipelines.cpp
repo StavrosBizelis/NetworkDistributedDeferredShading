@@ -323,8 +323,9 @@ VKSkyboxPassPipeline::Init()
  *  Params: const std::shared_ptr<VulkanLogicalDeviceManager>& a_logicalDevice, VkRenderPass a_renderPass, const std::vector<VkPipelineShaderStageCreateInfo>& a_shaders, const unsigned int &a_subpassIndex, const glm::vec2& a_res, const glm::vec4 &a_viewportSettings
  * Effects: 
  ***********************************************************************/
-VKLightPassPipeline::VKLightPassPipeline(const std::shared_ptr<VulkanLogicalDeviceManager>& a_logicalDevice, VkRenderPass a_renderPass, const std::vector<VkPipelineShaderStageCreateInfo>& a_shaders, const unsigned int &a_subpassIndex, const glm::vec2& a_res, const glm::vec4 &a_viewportSettings)
- : VKPipeline(a_logicalDevice, a_renderPass, a_shaders, a_subpassIndex, a_res, a_viewportSettings)
+VKLightPassPipeline::VKLightPassPipeline(const std::shared_ptr<VulkanLogicalDeviceManager>& a_logicalDevice, VkRenderPass a_renderPass, const std::vector<VkPipelineShaderStageCreateInfo>& a_shaders, 
+                                         const unsigned int &a_subpassIndex, const glm::vec2& a_res, const glm::vec4 &a_viewportSettings, bool a_isSpot)
+ : VKPipeline(a_logicalDevice, a_renderPass, a_shaders, a_subpassIndex, a_res, a_viewportSettings), m_spot(a_isSpot)
 {
 }
 
@@ -378,7 +379,7 @@ VKLightPassPipeline::Init()
   rasterizer.rasterizerDiscardEnable = VK_FALSE;
   rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
   rasterizer.lineWidth = 1.0f;
-  rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+  rasterizer.cullMode = VK_CULL_MODE_FRONT_BIT;
   rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;
   
@@ -478,6 +479,11 @@ VKLightPassPipeline::Init()
   if (vkCreateGraphicsPipelines(m_logicalDevice->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_graphicsPipeline )  != VK_SUCCESS)
     throw std::runtime_error("VKDirLightPassPipeline::Init() - failed to create graphics pipeline!");
 }
+
+
+
+
+
 
 
 

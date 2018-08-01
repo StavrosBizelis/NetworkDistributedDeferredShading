@@ -26,47 +26,13 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
                                                     ITextureFactory* a_textFactory, const unsigned int &a_subparts)
   :ADeferredShadingPass(a_resolution, a_resolution, glm::vec4(0,0,a_resolution.x,a_resolution.y) ),
     m_logicalDevice(a_device), m_physicalDevice(a_physicalDevice), m_memory(a_memory), m_graphicsQueue(a_graphicsQueue), m_presentQueue(a_presentQueue), m_indices(a_indices), m_currentFrame(0), 
-    m_scnManager(a_scnManager)
+    m_scnManager(a_scnManager), m_textFactory(a_textFactory), m_shapeFactory(a_shapeFactory)
 {
   
   
   std::cout<< a_resolution.x << " " << a_resolution.y << " " << a_subparts << std::endl;
   
-  std::shared_ptr<IMesh> l_rec = a_shapeFactory->GetOpenAssetImportMesh("../Assets/Models/Asteroid/asteroid.obj");
-  for( unsigned int i =0; i < a_subparts; ++i)
-  {
-    std::shared_ptr<ITexture> l_text = a_textFactory->GetTexture("../Assets/Models/Asteroid/diffuse.png");
-    std::shared_ptr<ITexture> l_text2 = a_textFactory->GetTexture("../Assets/Models/Asteroid/normal.png");
-    // std::shared_ptr<ITexture> l_text = a_textFactory->GetTexture("..\\Assets\\Skybox\\spacebox\\DX+.jpg");
-    m_subpartRects.push_back( m_scnManager->AddMeshSceneNode(l_rec) );
-    m_subpartRects.back()->SetTexture(0,l_text);
-    m_subpartRects.back()->SetTexture(1,l_text2);
-    m_subpartRects.back()->SetTexture(2,l_text);
-    m_subpartRects.back()->SetTexture(3,l_text);
-    m_subpartRects.back()->SetTexture(4,l_text);
-    
-    m_subpartRects.push_back( m_scnManager->AddMeshSceneNode(l_rec) );
-    m_subpartRects.back()->SetTexture(0,l_text);
-    m_subpartRects.back()->SetTexture(1,l_text2);
-    m_subpartRects.back()->SetTexture(2,l_text);
-    m_subpartRects.back()->SetTexture(3,l_text);
-    m_subpartRects.back()->SetTexture(4,l_text);
-    
-    m_lights.push_back( m_scnManager->AddDirectionalLightSceneNode( a_shapeFactory->GetRectangle() ) );
-    m_lights.push_back( m_scnManager->AddPointLightSceneNode( a_shapeFactory->GetSphere() ) );
-  }
   
-  m_subpartRects[0]->SetPos( glm::vec3( -3, 0, -10 ) );
-  m_subpartRects[0]->SetScale( glm::vec3( 2, 2, 1 ) );
-  m_subpartRects[0]->SetEulerAngles( glm::vec3( 0, 0, 0 ) );
-  
-  m_subpartRects[1]->SetPos( glm::vec3( 0, 0, -10 ) );
-  m_subpartRects[1]->SetScale( glm::vec3( 2, 2, 1 ) );
-  m_subpartRects[1]->SetEulerAngles( glm::vec3( 0, 0, 0 ) );
-  
-  
-  m_lights[1]->SetPos( glm::vec3( 2, 0, -10) );
-  m_lights[1]->SetDiffuse( glm::vec3( 20, 0, 20 ) );
 }
 
 
@@ -120,6 +86,52 @@ bool RenderControl::VKDeferredShadingPass::Init()
   std::cout << "m_pipelines.size() " << m_pipelines.size() << std::endl;
   // add the rectancles to the appropriate pipelines
   
+  
+  std::shared_ptr<IMesh> l_rec = m_shapeFactory->GetOpenAssetImportMesh("../Assets/Models/Asteroid/asteroid.obj");
+
+  std::shared_ptr<ITexture> l_text = m_textFactory->GetTexture("../Assets/Models/Asteroid/diffuse.png");
+  std::shared_ptr<ITexture> l_text2 = m_textFactory->GetTexture("../Assets/Models/Asteroid/normal.png");
+  // std::shared_ptr<ITexture> l_text = m_textFactory->GetTexture("..\\Assets\\Skybox\\spacebox\\DX+.jpg");
+  m_subpartRects.push_back( m_scnManager->AddMeshSceneNode(l_rec) );
+  m_subpartRects.back()->SetTexture(0,l_text);
+  m_subpartRects.back()->SetTexture(1,l_text2);
+  m_subpartRects.back()->SetTexture(2,l_text);
+  m_subpartRects.back()->SetTexture(3,l_text);
+  m_subpartRects.back()->SetTexture(4,l_text);
+  
+  m_subpartRects.push_back( m_scnManager->AddMeshSceneNode(l_rec) );
+  m_subpartRects.back()->SetTexture(0,l_text);
+  m_subpartRects.back()->SetTexture(1,l_text2);
+  m_subpartRects.back()->SetTexture(2,l_text);
+  m_subpartRects.back()->SetTexture(3,l_text);
+  m_subpartRects.back()->SetTexture(4,l_text);
+  
+  m_lights.push_back( m_scnManager->AddDirectionalLightSceneNode( m_shapeFactory->GetRectangle() ) );
+  m_lights.push_back( m_scnManager->AddPointLightSceneNode( m_shapeFactory->GetSphere() ) );
+  // m_lights.push_back( m_scnManager->AddSpotLightSceneNode( m_shapeFactory->GetCone() ) );
+
+  m_subpartRects[0]->SetPos( glm::vec3( -3, 0, -10 ) );
+  m_subpartRects[0]->SetScale( glm::vec3( 2, 2, 1 ) );
+  m_subpartRects[0]->SetEulerAngles( glm::vec3( 0, 0, 0 ) );
+  
+  m_subpartRects[1]->SetPos( glm::vec3( 0, 0, -10 ) );
+  m_subpartRects[1]->SetScale( glm::vec3( 2, 2, 1 ) );
+  m_subpartRects[1]->SetEulerAngles( glm::vec3( 0, 0, 0 ) );
+  
+  
+  m_lights[0]->SetEulerAngles( glm::vec3( 0, 0, -90 ) );
+  // m_lights[0]->SetDiffuse( glm::vec3( 0, 0, 0 ) );
+  
+  m_lights[1]->SetPos( glm::vec3( 0, 0, -7) );
+  m_lights[1]->SetDiffuse( glm::vec3( 20, 0, 20 ) );
+  // m_lights[1]->SetDiffuse( glm::vec3( 0, 0, 0 ) );
+  
+  
+  // m_lights[2]->SetPos( glm::vec3( 5, 0, -7) );
+  // m_lights[2]->SetDiffuse( glm::vec3( 0.6, 0, 0 ) );
+  // m_lights[2]->SetRot( glm::rotate( m_lights[2]->GetRot(), -90.0f, glm::vec3(1,0,0) ) );
+  
+  
   std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > l_cmdBuffers;
   
   CreateDescriptorSet(m_pipelines[6], m_subpartRects[0]);
@@ -144,6 +156,11 @@ bool RenderControl::VKDeferredShadingPass::Init()
   CreateDescriptorSetLight(m_pipelines[8], m_lights[1]);
   l_cmdBuffers = m_pipelines[8]->GetSecondaryCommandBuffers();
   l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_lights[1]->GetExtra() )  );
+
+  // // spot light
+  // CreateDescriptorSetLight(m_pipelines[9], m_lights[2]);
+  // l_cmdBuffers = m_pipelines[9]->GetSecondaryCommandBuffers();
+  // l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_lights[2]->GetExtra() )  );
 
   
   return true;
@@ -439,7 +456,7 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   
   
   
-  std::vector< VkSubpassDescription > l_subpasses = { subpass, subpass, subpass, subpass, subpass, subpass, subpass, lightSubpass, lightSubpass};
+  std::vector< VkSubpassDescription > l_subpasses = { subpass, subpass, subpass, subpass, subpass, subpass, subpass, lightSubpass, lightSubpass, lightSubpass};
   std::vector< VkSubpassDependency > l_dependencies = {};
 
   // GEOMETRY PASSES
@@ -460,39 +477,32 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   
   // directional light pass
   for( unsigned int i = 0; i < 7; ++i)
-  for( unsigned int j = 7; j < 9; ++j)
-  {
-    VkSubpassDependency dependency = {};
-    dependency.srcSubpass = j,
-    dependency.dstSubpass = 7,
-    dependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-    dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-    dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-    dependency.dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
-    dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-    l_dependencies.push_back(dependency);
-  }
+    for( unsigned int j = 7; j < 10; ++j)
+    {
+      VkSubpassDependency dependency = {};
+      dependency.srcSubpass = i,
+      dependency.dstSubpass = j,
+      dependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+      dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+      dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+      dependency.dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
+      dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+      l_dependencies.push_back(dependency);
+    }
 
   
-  VkSubpassDependency dependency2 = {};
-  dependency2.srcSubpass = 7;
-  dependency2.dstSubpass = VK_SUBPASS_EXTERNAL;
-  dependency2.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependency2.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-  dependency2.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  dependency2.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-  dependency2.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-  l_dependencies.push_back(dependency2);
-  
-  dependency2.srcSubpass = 8;
-  dependency2.dstSubpass = VK_SUBPASS_EXTERNAL;
-  dependency2.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependency2.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-  dependency2.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  dependency2.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-  dependency2.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-  l_dependencies.push_back(dependency2);
-  
+  for( unsigned int i = 7; i < 10; ++i)
+  {
+    VkSubpassDependency dependency2 = {};
+    dependency2.srcSubpass = i;
+    dependency2.dstSubpass = VK_SUBPASS_EXTERNAL;
+    dependency2.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency2.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    dependency2.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependency2.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+    dependency2.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+    l_dependencies.push_back(dependency2);    
+  }
   
   
   std::vector<VkAttachmentDescription > attachments = { colorAttachment, colorAttachment2, colorAttachment3, colorAttachment4, depthAttachment};
@@ -546,7 +556,7 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
 
 void RenderControl::VKDeferredShadingPass::CreatePipelines()
 {
-  m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(9);
+  m_pipelines = std::vector< std::shared_ptr<VKPipeline> >(10);
 
   // geometry pass shaders
   CreateSingleGeometryPassPipeline(0, 0, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryShader.frag.spv");
@@ -556,9 +566,10 @@ void RenderControl::VKDeferredShadingPass::CreatePipelines()
   CreateSingleGeometryPassPipeline(4, 3, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecShader.frag.spv");
   CreateSingleGeometryPassPipeline(5, 4, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessShader.frag.spv");
   CreateSingleGeometryPassPipeline(6, 5, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessEmissiveShader.frag.spv");
-  
-  CreateSingleLightPassPipeline(7, "..\\Assets\\SPV_shaders\\DirectionalLightShader.vert.spv", "..\\Assets\\SPV_shaders\\DirectionalLightShader.frag.spv", true);
-  CreateSingleLightPassPipeline(8, "..\\Assets\\SPV_shaders\\PointLightShader.vert.spv", "..\\Assets\\SPV_shaders\\PointLightShader.frag.spv");
+  // light pass
+  CreateSingleLightPassPipeline(7, "..\\Assets\\SPV_shaders\\DirectionalLightShader.vert.spv", "..\\Assets\\SPV_shaders\\DirectionalLightShader.frag.spv", LightTypeFlags::DIRECTIONAL_LIGHT);
+  CreateSingleLightPassPipeline(8, "..\\Assets\\SPV_shaders\\PointLightShader.vert.spv", "..\\Assets\\SPV_shaders\\PointLightShader.frag.spv", LightTypeFlags::POINT_LIGHT);
+  CreateSingleLightPassPipeline(9, "..\\Assets\\SPV_shaders\\SpotLightShader.vert.spv", "..\\Assets\\SPV_shaders\\SpotLightShader.frag.spv", LightTypeFlags::SPOT_LIGHT);
   
 }
 
@@ -584,19 +595,30 @@ void RenderControl::VKDeferredShadingPass::CreateSingleGeometryPassPipeline(cons
 
 }
 
-void RenderControl::VKDeferredShadingPass::CreateSingleLightPassPipeline(const unsigned int& a_index, const std::string& a_vertPath, const std::string& a_fragPath, bool a_directional)
+void RenderControl::VKDeferredShadingPass::CreateSingleLightPassPipeline(const unsigned int& a_index, const std::string& a_vertPath, const std::string& a_fragPath, const LightTypeFlags& a_lightType)
 {
   // geometry shader shaders
   VkShaderModule l_vertex = CreateShaderModule(ReadFile( a_vertPath.c_str() ), m_logicalDevice->GetDevice());
   VkShaderModule l_frag = CreateShaderModule(ReadFile( a_fragPath.c_str() ), m_logicalDevice->GetDevice());
   
   // simple geometry
-  if( a_directional )
+  switch( a_lightType )
+  {
+    case LightTypeFlags::DIRECTIONAL_LIGHT: 
     m_pipelines[a_index] = std::make_shared<VKDirLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_vertex, l_frag), a_index, 
                                                                     m_resolution, glm::vec4(0,0,m_resolution.x,m_resolution.y) );
-  else
+    break;
+    case LightTypeFlags::POINT_LIGHT: 
     m_pipelines[a_index] = std::make_shared<VKLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_vertex, l_frag), a_index, 
-                                                                    m_resolution, glm::vec4(0,0,m_resolution.x,m_resolution.y) );
+                                                                    m_resolution, glm::vec4(0,0,m_resolution.x,m_resolution.y), false );
+    break;
+    case LightTypeFlags::SPOT_LIGHT: 
+    m_pipelines[a_index] = std::make_shared<VKLightPassPipeline>(m_logicalDevice, m_renderPass, CreatePipelineShaderCreateInfo(l_vertex, l_frag), a_index, 
+                                                                    m_resolution, glm::vec4(0,0,m_resolution.x,m_resolution.y), true );                                                          
+    break;
+  }
+
+
   m_pipelines[a_index]->Init();
   
   // destroy shader modules

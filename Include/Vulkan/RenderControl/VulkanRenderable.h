@@ -78,3 +78,13 @@ class VulkanPointLightRenderable : public VulkanRenderable
   void VulkanUpdate(char* a_mappedUBO);
 };
 
+class VulkanSpotLightRenderable : public VulkanRenderable
+{
+  public :
+  VertexObjectMatrices m_ubo;
+  FragSpotLight m_ubo2;
+  
+  VulkanSpotLightRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry);
+    
+  void VulkanUpdate(char* a_mappedUBO);
+};

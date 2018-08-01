@@ -37,7 +37,7 @@ Vulkan/RenderControl/Pipelines/VKPipeline.cpp Vulkan/RenderControl/Pipelines/VKD
 Vulkan/RenderControl/Pipelines/VKCompositionPipeline.cpp \
 Vulkan/Textures/VKTextureFactory.cpp Vulkan/Textures/VKTexture.cpp Vulkan/Textures/VKCubemap.cpp \
 Vulkan/Shapes/VKShapeFactory.cpp Vulkan/Shapes/VKRect.cpp Vulkan/Shapes/VKSphere.cpp Vulkan/Shapes/VKCone.cpp Vulkan/Shapes/VKCube.cpp Vulkan/Shapes/VKSkybox.cpp Vulkan/Shapes/VKOpenAssetImportMesh.cpp \
-Vulkan/SceneControl/VKSceneManager.cpp Vulkan/SceneControl/VKPointLightSceneNode.cpp Vulkan/SceneControl/VKMeshSceneNode.cpp Vulkan/SceneControl/VKDirectionalLightSceneNode.cpp \
+Vulkan/SceneControl/VKSceneManager.cpp Vulkan/SceneControl/VKPointLightSceneNode.cpp Vulkan/SceneControl/VKSpotLightSceneNode.cpp Vulkan/SceneControl/VKMeshSceneNode.cpp Vulkan/SceneControl/VKDirectionalLightSceneNode.cpp \
 Vulkan/VKGraphicsEngine.cpp \
 \
 Client/main.cpp Client/ClientApp.cpp Client/ClientControl.cpp \

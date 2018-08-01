@@ -3,6 +3,7 @@
 
 #include "Vulkan//SceneControl/VKMeshSceneNode.h"
 // #include "Vulkan//SceneControl/VKCameraSceneNode.h"
+#include "Vulkan//SceneControl/VKSpotLightSceneNode.h"
 #include "Vulkan//SceneControl/VKPointLightSceneNode.h"
 #include "Vulkan//SceneControl/VKDirectionalLightSceneNode.h"
 
@@ -71,18 +72,18 @@ namespace SceneControl
 		return new VKPointLightSceneNode(m_sceneRoot, a_sphere, m_updateRegistry );
 	}
 
-	// SpotLightSceneNode * SceneManager::AddSpotLightSceneNode(const std::shared_ptr<ACone>& a_cone, SceneNode * a_parent)
-	// {
-		// if (a_parent)
-		// {
-			// if (m_sceneRoot->DescendantExists(a_parent))
-				// return new VKSpotLightSceneNode(a_parent , a_cone, m_updateRegistry);
-			// else
-				// return nullptr;
-		// }
-		// // else
-		// return new VKSpotLightSceneNode(m_sceneRoot, a_cone, m_updateRegistry);
-	// }
+	SpotLightSceneNode * VKSceneManager::AddSpotLightSceneNode(const std::shared_ptr<ACone>& a_cone, SceneNode * a_parent)
+	{
+		if (a_parent)
+		{
+			if (m_sceneRoot->DescendantExists(a_parent))
+				return new VKSpotLightSceneNode(a_parent, a_cone, m_updateRegistry);
+			else
+				return nullptr;
+		}
+		// else
+		return new VKSpotLightSceneNode(m_sceneRoot, a_cone, m_updateRegistry);
+	}
 
 	DirectionalLightSceneNode * VKSceneManager::AddDirectionalLightSceneNode( const std::shared_ptr<ARect>& a_rect, SceneNode * a_parent)
 	{

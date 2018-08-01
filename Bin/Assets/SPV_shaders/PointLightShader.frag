@@ -6,6 +6,7 @@ layout (std140, set = 0, binding = 2) uniform GlobalVars
   uniform vec4 UScreenResDiv;
 } globalVars;
 
+
 layout (std140, set = 0, binding = 3) uniform PointLight
 {
   vec4 m_position;
@@ -49,8 +50,9 @@ void HandlePointLight( in vec3 a_camPos, in vec3 a_fragmentNormal,  in vec4 a_fr
 
   if (l_diffuseFactor > 0) 
   {
-    a_diffuse = l_att * l_diffuseFactor * ULightData.m_diffuse;
+
     
+    a_diffuse = l_att * l_diffuseFactor * ULightData.m_diffuse;
    
     vec3 l_vertexToEye  = normalize( a_camPos - a_fragmentPos.xyz);
     vec3 l_lightReflect = normalize(reflect(l_lightDirection, l_normal));
@@ -89,6 +91,7 @@ void main()
   // if( (l_diffuse.x == l_diffuse.y) && (l_diffuse.x == l_diffuse.z) && (l_diffuse.x == 0.0f))
   //   vOutputColour = vec4(1,0,0,1);
   
+
   //vOutputColour.xyz = vTexDepth.xyz;
   //vOutputColour.a = 1;
   // vOutputColour = vec4(l_screenTextureCoord.xy, 0, 1);
