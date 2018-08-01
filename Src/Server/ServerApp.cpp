@@ -26,7 +26,7 @@ ServerApp::ServerApp(const glm::vec2& a_dimensions, const ImplTech& a_implTech, 
   : m_appActive(true), m_elapsedTime(0), m_dt(0), m_frameCount(0), m_dimensions(a_dimensions), m_pHighResolutionTimer(nullptr), m_graphics(nullptr), m_serverCtrl(50001), m_implTech(a_implTech),
     m_clientsCount(a_clientsCount)
 {
-  m_textureData = new char[m_dimensions.x * m_dimensions.y  * 3];
+  m_textureData = new char[m_dimensions.x * m_dimensions.y  * 4];
 }
 
 
@@ -242,13 +242,14 @@ ServerApp::Update()
         std::shared_ptr<ATexture> l_text = std::dynamic_pointer_cast< ATexture > ( l_rects[l_index]->GetTexture(0) );
         if( l_text )
         {
-          // l_text->UpdateData(m_textureData, l_resolution.x, l_resolution.y, 24, false);
+          l_text->UpdateData(m_textureData, l_resolution.x, l_resolution.y, 32, false);
         }
       }
     }
   }
-  m_graphics->Update(m_dt);
   
+  m_graphics->Update(m_dt);
+  // system("pause");
   m_dt = m_pHighResolutionTimer->Elapsed();
   
   // framerate output
@@ -288,7 +289,7 @@ ServerApp::UpdateScene()
   
   
   l_msg->CreateSceneUpdateMsg(
-  {glm::vec3(0,0,5), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
+  {glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
   {}, {}, {l_asteroidStartTransform}, {}, {}, {}, {});
 
   
@@ -429,7 +430,7 @@ ServerApp::InitialiseScene()
   l_asteroidStartTransform.m_transformType = Network::ObjectTransformType::OBJ_POS;
   l_asteroidStartTransform.x = 0;
   l_asteroidStartTransform.y = 0;
-  l_asteroidStartTransform.z = -5;
+  l_asteroidStartTransform.z = -10;
   
   Network::TextureChangeInfo l_asteroidText;
   l_asteroidText.m_id = 2;
@@ -444,7 +445,7 @@ ServerApp::InitialiseScene()
   {glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
   // {l_sky, l_asteroid}, {}, {}, {l_skyText, l_asteroidText}, {}, {}, {});
   // {l_sky}, {}, {}, {l_skyText}, {}, {}, {});
-  {}, {}, {}, {}, {}, {}, {});
+  {l_asteroid}, {}, {l_asteroidStartTransform}, {l_asteroidText}, {}, {}, {});
 
 
   for( std::map<std::shared_ptr<asio::ip::tcp::socket>, unsigned int>::iterator l_iter = m_clients.begin(); l_iter != m_clients.end(); ++l_iter )

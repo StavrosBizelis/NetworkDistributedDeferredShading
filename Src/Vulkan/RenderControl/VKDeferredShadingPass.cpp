@@ -15,6 +15,9 @@
 #include "Common/Core/MyUtilities.h"
 #include "Vulkan/Core/VulkanUtilities.h"
 #include "freeimage/include/FreeImage.h"
+
+#include "Common/Network/NetworkMsg.h"
+
 /***********************************************************************
  *  Method: RenderControl::VKDeferredShadingPass::VKDeferredShadingPass
  *  Params: const glm::vec2 &a_resolution, SceneControl::SceneManager *a_scnManager, SceneControl::IShapeFactory *a_shapeFactory, const unsigned int &a_subparts
@@ -59,6 +62,121 @@ RenderControl::VKDeferredShadingPass::SetMaterialManager(MaterialControl::IMater
   ADeferredShadingPass::SetMaterialManager(a_materialManager);
 
 }
+bool RenderControl::VKDeferredShadingPass::AddRenderable(RenderControl::IRenderable* a_renderable, const RenderControl::GeometryPassMaterialFlags& a_geometryMaterialFlags)
+{
+  if (!Exists(a_renderable))
+		{
+      
+      
+      // // geometry pass shaders
+      // CreateSingleGeometryPassPipeline(0, 0, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryShader.frag.spv");
+      // CreateSingleGeometryPassPipeline(1, 1, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryEmissiveShader.frag.spv");
+      // CreateSingleGeometryPassPipeline(2, 1, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourShader.frag.spv");
+      // CreateSingleGeometryPassPipeline(3, 2, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalShader.frag.spv");
+      // CreateSingleGeometryPassPipeline(4, 3, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecShader.frag.spv");
+      // CreateSingleGeometryPassPipeline(5, 4, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessShader.frag.spv");
+      // CreateSingleGeometryPassPipeline(6, 5, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessEmissiveShader.frag.spv");
+
+      
+			// std::shared_ptr<IShaderProgram> l_selectedMat;
+			// get the appropriate material func
+      
+      std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > l_cmdBuffers;
+			// simple color
+			if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP | EMISSION_MAP)) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP | EMISSION_MAP))
+      {
+        CreateDescriptorSet(m_pipelines[6], a_renderable);
+        l_cmdBuffers = m_pipelines[6]->GetSecondaryCommandBuffers();
+      }
+			else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP )) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP | HARDNESS_MAP))
+			{
+        CreateDescriptorSet(m_pipelines[5], a_renderable);
+        l_cmdBuffers = m_pipelines[5]->GetSecondaryCommandBuffers();
+      }
+      else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP)) == (NORMAL_MAP | DIFFUSE_MAP | SPECULAR_MAP))
+			{
+        CreateDescriptorSet(m_pipelines[4], a_renderable);
+        l_cmdBuffers = m_pipelines[4]->GetSecondaryCommandBuffers();
+      }
+      else if ((a_geometryMaterialFlags & (NORMAL_MAP | DIFFUSE_MAP)) == (NORMAL_MAP | DIFFUSE_MAP))
+			{
+        CreateDescriptorSet(m_pipelines[3], a_renderable);
+        l_cmdBuffers = m_pipelines[3]->GetSecondaryCommandBuffers();
+      }
+      else if ((a_geometryMaterialFlags & (DIFFUSE_MAP)) == (DIFFUSE_MAP))
+			{
+        CreateDescriptorSet(m_pipelines[2], a_renderable);
+      }
+      else if ((a_geometryMaterialFlags & (EMISSION_MAP)) == (EMISSION_MAP))
+			{
+        CreateDescriptorSet(m_pipelines[1], a_renderable);
+        l_cmdBuffers = m_pipelines[1]->GetSecondaryCommandBuffers();
+      }
+      else if ((a_geometryMaterialFlags & (SKYBOX)) == (SKYBOX))
+			{
+        // CreateDescriptorSet(m_pipelines[7], a_renderable);
+        // l_cmdBuffers = m_pipelines[7]->GetSecondaryCommandBuffers();
+      }
+      else 
+			{
+        CreateDescriptorSet(m_pipelines[0], a_renderable);
+        l_cmdBuffers = m_pipelines[0]->GetSecondaryCommandBuffers();
+      }
+      
+      VulkanRenderable* l_renderable = reinterpret_cast<VulkanRenderable*>( a_renderable->GetExtra() );
+      if( l_cmdBuffers.size() > 0 && l_renderable)
+      {
+        m_subpartRects.push_back( a_renderable );
+        l_cmdBuffers[0]->AddMesh(l_renderable);
+      }
+      
+			// a_renderable->SetMaterial(l_selectedMat);
+			// m_toRender[l_selectedMat].push_back(a_renderable);
+			return true;
+		} 
+		return false;
+}
+
+void RenderControl::VKDeferredShadingPass::AddLight(RenderControl::IRenderable* a_light, const RenderControl::LightTypeFlags& a_lightType)
+{
+
+  // // light pass
+  // CreateSingleLightPassPipeline(7, "..\\Assets\\SPV_shaders\\DirectionalLightShader.vert.spv", "..\\Assets\\SPV_shaders\\DirectionalLightShader.frag.spv", LightTypeFlags::DIRECTIONAL_LIGHT);
+  // CreateSingleLightPassPipeline(8, "..\\Assets\\SPV_shaders\\PointLightShader.vert.spv", "..\\Assets\\SPV_shaders\\PointLightShader.frag.spv", LightTypeFlags::POINT_LIGHT);
+  // CreateSingleLightPassPipeline(9, "..\\Assets\\SPV_shaders\\SpotLightShader.vert.spv", "..\\Assets\\SPV_shaders\\SpotLightShader.frag.spv", LightTypeFlags::SPOT_LIGHT);
+  
+  std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > l_cmdBuffers;  
+  switch (a_lightType)
+	{
+		case LightTypeFlags::POINT_LIGHT:
+    {
+      CreateDescriptorSetLight(m_pipelines[8], a_light);
+      l_cmdBuffers = m_pipelines[8]->GetSecondaryCommandBuffers();
+    }
+		break;
+		case LightTypeFlags::SPOT_LIGHT:
+		{
+      CreateDescriptorSetLight(m_pipelines[9], a_light);
+      l_cmdBuffers = m_pipelines[9]->GetSecondaryCommandBuffers();
+    }
+		break;
+		case LightTypeFlags::DIRECTIONAL_LIGHT:
+		{
+      CreateDescriptorSetDirLight(m_pipelines[7], a_light);
+      l_cmdBuffers = m_pipelines[7]->GetSecondaryCommandBuffers();
+    }
+			break;
+  }
+
+  VulkanRenderable* l_renderable = reinterpret_cast<VulkanRenderable*>( a_light->GetExtra() );
+  if( l_cmdBuffers.size() > 0 && l_renderable)
+  {
+    m_lights.insert(a_light);
+    l_cmdBuffers[0]->AddMesh(l_renderable);
+  }
+  
+}
+
 
 
 bool RenderControl::VKDeferredShadingPass::Init()
@@ -92,75 +210,85 @@ bool RenderControl::VKDeferredShadingPass::Init()
   std::shared_ptr<ITexture> l_text = m_textFactory->GetTexture("../Assets/Models/Asteroid/diffuse.png");
   std::shared_ptr<ITexture> l_text2 = m_textFactory->GetTexture("../Assets/Models/Asteroid/normal.png");
   // std::shared_ptr<ITexture> l_text = m_textFactory->GetTexture("..\\Assets\\Skybox\\spacebox\\DX+.jpg");
-  m_subpartRects.push_back( m_scnManager->AddMeshSceneNode(l_rec) );
-  m_subpartRects.back()->SetTexture(0,l_text);
-  m_subpartRects.back()->SetTexture(1,l_text2);
-  m_subpartRects.back()->SetTexture(2,l_text);
-  m_subpartRects.back()->SetTexture(3,l_text);
-  m_subpartRects.back()->SetTexture(4,l_text);
-  
-  m_subpartRects.push_back( m_scnManager->AddMeshSceneNode(l_rec) );
-  m_subpartRects.back()->SetTexture(0,l_text);
-  m_subpartRects.back()->SetTexture(1,l_text2);
-  m_subpartRects.back()->SetTexture(2,l_text);
-  m_subpartRects.back()->SetTexture(3,l_text);
-  m_subpartRects.back()->SetTexture(4,l_text);
-  
-  m_lights.push_back( m_scnManager->AddDirectionalLightSceneNode( m_shapeFactory->GetRectangle() ) );
-  m_lights.push_back( m_scnManager->AddPointLightSceneNode( m_shapeFactory->GetSphere() ) );
-  // m_lights.push_back( m_scnManager->AddSpotLightSceneNode( m_shapeFactory->GetCone() ) );
 
-  m_subpartRects[0]->SetPos( glm::vec3( -3, 0, -10 ) );
-  m_subpartRects[0]->SetScale( glm::vec3( 2, 2, 1 ) );
-  m_subpartRects[0]->SetEulerAngles( glm::vec3( 0, 0, 0 ) );
   
-  m_subpartRects[1]->SetPos( glm::vec3( 0, 0, -10 ) );
-  m_subpartRects[1]->SetScale( glm::vec3( 2, 2, 1 ) );
-  m_subpartRects[1]->SetEulerAngles( glm::vec3( 0, 0, 0 ) );
-  
-  
-  m_lights[0]->SetEulerAngles( glm::vec3( 0, 0, -90 ) );
-  // m_lights[0]->SetDiffuse( glm::vec3( 0, 0, 0 ) );
-  
-  m_lights[1]->SetPos( glm::vec3( 0, 0, -7) );
-  m_lights[1]->SetDiffuse( glm::vec3( 20, 0, 20 ) );
-  // m_lights[1]->SetDiffuse( glm::vec3( 0, 0, 0 ) );
-  
-  
-  // m_lights[2]->SetPos( glm::vec3( 5, 0, -7) );
-  // m_lights[2]->SetDiffuse( glm::vec3( 0.6, 0, 0 ) );
-  // m_lights[2]->SetRot( glm::rotate( m_lights[2]->GetRot(), -90.0f, glm::vec3(1,0,0) ) );
-  
-  
-  std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > l_cmdBuffers;
-  
-  CreateDescriptorSet(m_pipelines[6], m_subpartRects[0]);
-  l_cmdBuffers = m_pipelines[6]->GetSecondaryCommandBuffers();
-  l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_subpartRects[0]->GetExtra() )  );
-  m_subpartRects[0]->SetPersistentUniform(0,"UEmissive", glm::vec4(1) );
-  
-  
-  CreateDescriptorSet(m_pipelines[0], m_subpartRects[1]);
-  l_cmdBuffers = m_pipelines[0]->GetSecondaryCommandBuffers();
-  l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_subpartRects[1]->GetExtra() )  );
-  m_subpartRects[1]->SetPersistentUniform(0,"UEmissive", glm::vec4(0) );
-  // m_subpartRects[1]->SetPersistentUniform(0,"UDiffuse", glm::vec4(0) );
-  
-  
-  // directional light
-  CreateDescriptorSetDirLight(m_pipelines[7], m_lights[0]);
-  l_cmdBuffers = m_pipelines[7]->GetSecondaryCommandBuffers();
-  l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_lights[0]->GetExtra() )  );
 
-  // point light
-  CreateDescriptorSetLight(m_pipelines[8], m_lights[1]);
-  l_cmdBuffers = m_pipelines[8]->GetSecondaryCommandBuffers();
-  l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_lights[1]->GetExtra() )  );
+  
 
-  // // spot light
-  // CreateDescriptorSetLight(m_pipelines[9], m_lights[2]);
-  // l_cmdBuffers = m_pipelines[9]->GetSecondaryCommandBuffers();
-  // l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_lights[2]->GetExtra() )  );
+  
+  
+  
+  
+  
+  
+  
+  // std::vector< std::shared_ptr<VulkanSecondaryCommandBuffer> > l_cmdBuffers;
+  
+  // m_subpartRects.push_back( m_scnManager->AddMeshSceneNode(l_rec) );
+  // m_subpartRects.back()->SetTexture(0,l_text);
+  // m_subpartRects.back()->SetTexture(1,l_text2);
+  // m_subpartRects.back()->SetTexture(2,l_text);
+  // m_subpartRects.back()->SetTexture(3,l_text);
+  // m_subpartRects.back()->SetTexture(4,l_text);
+
+  // m_subpartRects[0]->SetPos( glm::vec3( -3, 0, -10 ) );
+  // m_subpartRects[0]->SetScale( glm::vec3( 2, 2, 1 ) );
+  // m_subpartRects[0]->SetEulerAngles( glm::vec3( 0, 0, 0 ) );
+
+  
+  // CreateDescriptorSet(m_pipelines[6], m_subpartRects[0]);
+  // l_cmdBuffers = m_pipelines[6]->GetSecondaryCommandBuffers();
+  // l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_subpartRects[0]->GetExtra() )  );
+  // m_subpartRects[0]->SetPersistentUniform(0,"UEmissive", glm::vec4(1) );
+  
+  
+  // m_subpartRects.push_back( m_scnManager->AddMeshSceneNode(l_rec) );
+  // m_subpartRects.back()->SetTexture(0,l_text);
+  // m_subpartRects.back()->SetTexture(1,l_text2);
+  // m_subpartRects.back()->SetTexture(2,l_text);
+  // m_subpartRects.back()->SetTexture(3,l_text);
+  // m_subpartRects.back()->SetTexture(4,l_text);
+
+  // m_subpartRects[1]->SetPos( glm::vec3( 0, 0, -10 ) );
+  // m_subpartRects[1]->SetScale( glm::vec3( 2, 2, 1 ) );
+  // m_subpartRects[1]->SetEulerAngles( glm::vec3( 0, 0, 0 ) );
+
+  // CreateDescriptorSet(m_pipelines[0], m_subpartRects[1]);
+  // l_cmdBuffers = m_pipelines[0]->GetSecondaryCommandBuffers();
+  // l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_subpartRects[1]->GetExtra() )  );
+  // m_subpartRects[1]->SetPersistentUniform(0,"UEmissive", glm::vec4(0) );
+  // // m_subpartRects[1]->SetPersistentUniform(0,"UDiffuse", glm::vec4(0) );
+  
+  
+  // // directional light
+  // m_lights.push_back( m_scnManager->AddDirectionalLightSceneNode( m_shapeFactory->GetRectangle() ) );
+  // m_lights[0]->SetEulerAngles( glm::vec3( 0, 0, -90 ) );
+  // // m_lights[0]->SetDiffuse( glm::vec3( 0, 0, 0 ) );
+
+  // CreateDescriptorSetDirLight(m_pipelines[7], m_lights[0]);
+  // l_cmdBuffers = m_pipelines[7]->GetSecondaryCommandBuffers();
+  // l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_lights[0]->GetExtra() )  );
+
+  // // point light
+  // m_lights.push_back( m_scnManager->AddPointLightSceneNode( m_shapeFactory->GetSphere() ) );
+  // m_lights[1]->SetPos( glm::vec3( 0, 0, -7) );
+  // m_lights[1]->SetDiffuse( glm::vec3( 20, 0, 20 ) );
+  // // m_lights[1]->SetDiffuse( glm::vec3( 0, 0, 0 ) );
+
+  // CreateDescriptorSetLight(m_pipelines[8], m_lights[1]);
+  // l_cmdBuffers = m_pipelines[8]->GetSecondaryCommandBuffers();
+  // l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_lights[1]->GetExtra() )  );
+
+  // // // spot light
+  // // m_lights.push_back( m_scnManager->AddSpotLightSceneNode( m_shapeFactory->GetCone() ) );
+  
+  // // m_lights[2]->SetPos( glm::vec3( 5, 0, -7) );
+  // // m_lights[2]->SetDiffuse( glm::vec3( 0.6, 0, 0 ) );
+  // // m_lights[2]->SetRot( glm::rotate( m_lights[2]->GetRot(), -90.0f, glm::vec3(1,0,0) ) );
+
+  // // CreateDescriptorSetLight(m_pipelines[9], m_lights[2]);
+  // // l_cmdBuffers = m_pipelines[9]->GetSecondaryCommandBuffers();
+  // // l_cmdBuffers[0]->AddMesh( reinterpret_cast<VulkanRenderable*>( m_lights[2]->GetExtra() )  );
 
   
   return true;
@@ -168,7 +296,7 @@ bool RenderControl::VKDeferredShadingPass::Init()
 
 void RenderControl::VKDeferredShadingPass::Render()
 {
-  std::cout << "At least we tried\n";
+
   // uint32_t l_imageIndex;
   // VkResult result = vkAcquireNextImageKHR(m_logicalDevice->GetDevice(), m_logicalDevice->GetSwapChain(), std::numeric_limits<uint64_t>::max(), m_imageAvailableSemaphore[m_currentFrame], VK_NULL_HANDLE, &l_imageIndex);
   // if (result == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -237,34 +365,13 @@ void RenderControl::VKDeferredShadingPass::Render()
   
   
   
-  // write attachment to file
-  //unsigned int l_indexToWrite = 1;
-  unsigned int l_indexToWrite = 3;
-  std::shared_ptr<VulkanMemoryChunk> l_buf = m_memory->CreateBufferFromImage( m_attachmentImages[l_indexToWrite] );
-  FIBITMAP* bitmap = FreeImage_Allocate(m_attachmentImages[l_indexToWrite]->m_width, m_attachmentImages[l_indexToWrite]->m_height, 24);
-  RGBQUAD color;
+
   
-  
-  void* data;
-  vkMapMemory(m_logicalDevice->GetDevice(), l_buf->m_memorySpace, l_buf->GetMemoryOffset(), l_buf->m_size, 0, &data);
-      char* l_curr = (char*)data;
-  
-  for( int i = 0; i < m_attachmentImages[l_indexToWrite]->m_height; ++i)
-    for( int j = 0; j < m_attachmentImages[l_indexToWrite]->m_width; ++j)
-    {
-      color.rgbRed = *l_curr; l_curr++;
-      color.rgbGreen = *l_curr; l_curr++;
-      color.rgbBlue = *l_curr; l_curr++;
-      color.rgbReserved = 0; l_curr++;
-      FreeImage_SetPixelColor(bitmap, j,i, &color);
-    }
-  
-  vkUnmapMemory(m_logicalDevice->GetDevice(), l_buf->m_memorySpace);
-  l_buf->Free();
-  
-  if( FreeImage_Save(FIF_PNG, bitmap, "test.png", 0 ) )
-    std::cout << "SUCCEED IN SAVING A SCREENSHOT\n";
-  
+  // static bool l_first = true;
+  // if(first)
+  // {
+    // first = false;
+  // }
   
 }
 
@@ -283,6 +390,40 @@ if( m_descriptorPool )
   if(m_renderPass)
     vkDestroyRenderPass(m_logicalDevice->GetDevice(), m_renderPass, nullptr);
 }
+
+bool RenderControl::VKDeferredShadingPass::PackTexture(Network::NetworkMsgPtr& a_msg)
+{
+  // write attachment to file
+  //unsigned int l_indexToWrite = 1;
+  unsigned int l_indexToWrite = 3;
+  std::shared_ptr<VulkanMemoryChunk> l_buf = m_memory->CreateBufferFromImage( m_attachmentImages[l_indexToWrite] );
+  // FIBITMAP* bitmap = FreeImage_Allocate(m_attachmentImages[l_indexToWrite]->m_width, m_attachmentImages[l_indexToWrite]->m_height, 24);
+  // RGBQUAD color;
+  
+  
+  void* data;
+  vkMapMemory(m_logicalDevice->GetDevice(), l_buf->m_memorySpace, l_buf->GetMemoryOffset(), l_buf->m_size, 0, &data);
+  
+  a_msg->CreateRenderResultMsg( (char*)data, glm::vec2(m_attachmentImages[l_indexToWrite]->m_width, m_attachmentImages[l_indexToWrite]->m_height), 0, 8);
+  
+  // for( int i = 0; i < m_attachmentImages[l_indexToWrite]->m_height; ++i)
+    // for( int j = 0; j < m_attachmentImages[l_indexToWrite]->m_width; ++j)
+    // {
+      // color.rgbRed = *l_curr; l_curr++;
+      // color.rgbGreen = *l_curr; l_curr++;
+      // color.rgbBlue = *l_curr; l_curr++;
+      // color.rgbReserved = 0; l_curr++;
+      // FreeImage_SetPixelColor(bitmap, j,i, &color);
+    // }
+  
+  vkUnmapMemory(m_logicalDevice->GetDevice(), l_buf->m_memorySpace);
+  l_buf->Free();
+  
+  // if( FreeImage_Save(FIF_PNG, bitmap, "test.png", 0 ) )
+    // std::cout << "SUCCEED IN SAVING A SCREENSHOT\n";  
+  return true;
+}
+
 
 void RenderControl::VKDeferredShadingPass::VulkanUpdate( char* a_mappedBuffer )
 {

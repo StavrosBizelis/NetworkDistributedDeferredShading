@@ -14,7 +14,7 @@ namespace SceneControl
     m_vulkanRenderOperations->m_ubo2.UDiffuse = glm::vec4(1);
     m_vulkanRenderOperations->m_ubo2.USpecular = glm::vec4(1);
     m_vulkanRenderOperations->m_ubo2.UHardness = glm::vec4(1);
-    m_vulkanRenderOperations->m_ubo2.UEmissive = glm::vec4(0);
+    m_vulkanRenderOperations->m_ubo2.UEmissive = glm::vec4(1);
     
     m_materialUniformsFloat.resize(4);
     m_materialUniformsVec3.resize(4);

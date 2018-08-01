@@ -28,8 +28,8 @@ namespace RenderControl
     ITextureFactory* m_textFactory;
     IShapeFactory *m_shapeFactory;
   
-    std::vector< SceneControl::MeshSceneNode* > m_subpartRects;
-    std::vector< SceneControl::LightSceneNode* > m_lights;
+    std::vector< IRenderable* > m_subpartRects;
+    // std::vector< IRenderable* > m_lights;
     SceneControl::SceneManager* m_scnManager;
   
   
@@ -110,8 +110,12 @@ namespace RenderControl
 		virtual void Render() override;
 		virtual void OutputOnScreen() override;
     
+    virtual bool AddRenderable(IRenderable* a_renderable, const GeometryPassMaterialFlags& a_geometryMaterialFlags = GeometryPassMaterialFlags::SIMPLE_GEOMETRY );
+    // virtual void RemoveRenderable(IRenderable* a_renderable);
+    virtual void AddLight(IRenderable* a_light, const LightTypeFlags& a_lightType);
+    
     void UpdateViewportSettings(const glm::vec2 &,const glm::vec4 &){}
-    bool PackTexture(Network::NetworkMsgPtr &){return true;}
+    bool PackTexture(Network::NetworkMsgPtr& a_msg);
     
     void VulkanUpdate( char* a_mappedBuffer );
 	};

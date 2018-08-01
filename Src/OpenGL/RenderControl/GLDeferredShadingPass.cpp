@@ -42,13 +42,13 @@ bool RenderControl::GLDeferredShadingPass::Init()
     glGenBuffers(2, &m_pbos[0]);
     glBindBufferARB(GL_PIXEL_PACK_BUFFER_EXT, m_pbos[0]);
     glBufferDataARB(GL_PIXEL_PACK_BUFFER_EXT, 
-                    (m_resolutionPart.x * m_resolutionPart.y * 3 ), 
+                    (m_resolutionPart.x * m_resolutionPart.y * 4 ), 
                     NULL, 
                     GL_STREAM_READ);
 
     glBindBufferARB(GL_PIXEL_PACK_BUFFER_EXT, m_pbos[1]);
     glBufferDataARB(GL_PIXEL_PACK_BUFFER_EXT, 
-                    (m_resolutionPart.x * m_resolutionPart.y * 3) , 
+                    (m_resolutionPart.x * m_resolutionPart.y * 4) , 
                     NULL, 
                     GL_STREAM_READ);
   
@@ -98,7 +98,7 @@ bool RenderControl::GLDeferredShadingPass::Init()
 
 		// final image
 		glBindTexture(GL_TEXTURE_2D, m_outputTextures[3]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, (GLsizei)l_res.x, (GLsizei)l_res.y, 0, GL_RGB, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei)l_res.x, (GLsizei)l_res.y, 0, GL_RGBA, GL_FLOAT, NULL);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, (GLuint)m_outputTextures[3], 0);
 
 
@@ -433,7 +433,7 @@ bool RenderControl::GLDeferredShadingPass::PackTexture( Network::NetworkMsgPtr& 
   
   
   glBindBuffer(GL_PIXEL_PACK_BUFFER, m_pbos[m_pboIndex] );
-  glReadPixels(0, 0, (GLsizei)m_resolutionPart.x, (GLsizei)m_resolutionPart.y, GL_BGR, GL_UNSIGNED_BYTE, 0);  // returns immediately
+  glReadPixels(0, 0, (GLsizei)m_resolutionPart.x, (GLsizei)m_resolutionPart.y, GL_BGRA, GL_UNSIGNED_BYTE, 0);  // returns immediately
   
 
   glBindBuffer(GL_PIXEL_PACK_BUFFER, m_pbos[l_nextIndex]);
@@ -448,10 +448,11 @@ bool RenderControl::GLDeferredShadingPass::PackTexture( Network::NetworkMsgPtr& 
   else
   {
     IFDBG( std::cout << "Packed pseudo Texture " << std::endl; );
-    char* l_tmp = new char[3];
+    char* l_tmp = new char[4];
     l_tmp[0] = 0;
     l_tmp[1] = 0;
     l_tmp[2] = 0;
+    l_tmp[3] = 0;
     a_outMsg->CreateRenderResultMsg(l_tmp, m_resolutionPart );
     delete l_tmp;
   }

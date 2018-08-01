@@ -279,12 +279,12 @@ namespace Network
    */
   void NetworkMsg::CreateRenderResultMsg(char* a_textureData, const glm::vec2& a_resolution, const unsigned int& a_colorType, const unsigned int& a_bitDepth)
   {
-    // first encode the image to png so we can know the resulting size
+    // first encode the image so we can know the resulting size
     unsigned int l_bitDepth = a_bitDepth == 8 || a_bitDepth == 16 ? a_bitDepth : 8;
     
     
     // l_timer.Start();
-    unsigned int l_bmpSize = a_resolution.x*a_resolution.y*3;
+    unsigned int l_bmpSize = a_resolution.x*a_resolution.y*4;
     // 1 type + 4 pngFileSize + 4 colourtype + 4 bit Depth + max immage size
     uint32_t l_size = 17 + l_bmpSize;
     Reset(l_size);
@@ -556,7 +556,7 @@ namespace Network
     a_outBitDepth = ConsistentCharArrToUInt32(l_pos);
     l_pos += 4;
 
-    unsigned int l_originalSize = a_outResolution.x*a_outResolution.y*3;
+    unsigned int l_originalSize = a_outResolution.x*a_outResolution.y*4;
     if( LZ4_decompress_fast(l_pos, a_outTextureData, l_originalSize) > 0 )
       return true;
     return false;
