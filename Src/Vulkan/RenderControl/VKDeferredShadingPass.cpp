@@ -431,7 +431,7 @@ void RenderControl::VKDeferredShadingPass::VulkanUpdate( char* a_mappedBuffer )
   // copy global camera matrices and screen resolution for lights fragments shaders
   // m_globalsUbo.projMatrix = *m_camera->GetOrthographicProjectionMatrix();
   m_globalsUbo.projMatrix = *m_camera->GetPerspectiveProjectionMatrix();
-  m_globalsUbo.viewMatrix = glm::mat4(); // always identity matrix
+  m_globalsUbo.viewMatrix = m_camera->GetViewMatrix(); 
   
   memcpy(a_mappedBuffer+m_uboMemBuffer->GetMemoryOffset(), &m_globalsUbo, sizeof(VertexViewProjMatrices) );
   

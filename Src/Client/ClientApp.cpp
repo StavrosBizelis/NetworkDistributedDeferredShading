@@ -279,6 +279,7 @@ ClientApp::Update()
   std::vector<Network::NetworkMsgPtr> l_msgs = m_client->GetMsgs();
   // update scene as appropriate
   m_hasUpdated[ m_hasUpdated[2] ] = false;
+      
   
   for( std::vector<Network::NetworkMsgPtr>::const_iterator l_iter = l_msgs.cbegin(); l_iter != l_msgs.cend(); ++l_iter)
   {
@@ -292,7 +293,11 @@ ClientApp::Update()
       
       // objects to add
       for( std::vector<Network::ObjAddInfo>::iterator l_objsToAdd = m_outObjsToAdd.begin(); l_objsToAdd != m_outObjsToAdd.end(); ++l_objsToAdd)
+      {
+        system("pause");
         AddObject(*l_objsToAdd, m_outTextureChange);
+        system("pause");
+      }
       // objects to remove
       for( std::vector<uint32_t>::iterator l_objsToRemove = m_outObjsToRemove.begin(); l_objsToRemove != m_outObjsToRemove.end(); ++l_objsToRemove)
         RemoveObject(*l_objsToRemove, false);
@@ -312,7 +317,6 @@ ClientApp::Update()
     
       
   }
-
   // IFDBG( std::cout << "Scene Update" << std::endl; );
   
   // CLIENTS RENDER SCENE (GEOMETRY PASS)
@@ -407,13 +411,13 @@ ClientApp::AddObject(const Network::ObjAddInfo& a_info, const std::vector<Networ
     if( l_meshNode->SetID(a_info.m_id) )
     {
       // texture set before adding it to the renderpass 
-      for( std::vector<Network::TextureChangeInfo>::const_iterator l_textChange = a_textures.cbegin(); l_textChange != a_textures.cend(); ++l_textChange)
-        if( l_textChange->m_id == a_info.m_id )
-        {
-          TextureChange(*l_textChange);
-        }
+      // for( std::vector<Network::TextureChangeInfo>::const_iterator l_textChange = a_textures.cbegin(); l_textChange != a_textures.cend(); ++l_textChange)
+        // if( l_textChange->m_id == a_info.m_id )
+        // {
+          // TextureChange(*l_textChange);
+        // }
       m_graphics->GetDeferredRenderPass()->AddRenderable(l_meshNode, (RenderControl::GeometryPassMaterialFlags)(a_info.m_materialFlags));
-      l_meshNode->SetPersistentUniform(0, "UEmissive", 1.f);
+      
 
     }
     else // if bad id given remove it from the registry and detach it from the scene manager
