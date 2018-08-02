@@ -496,7 +496,7 @@ namespace Network
     l_pos += 4;
     for( unsigned int i = 0; i < a_lightsToTransform.size(); ++i)
     {
-      a_lightsToTransform[i].Serialize(l_pos);
+      a_lightsToTransform[i].Serialize(l_pos);      
       l_pos += ObjTransformInfo::Size();
     }
     
@@ -739,7 +739,7 @@ namespace Network
     for( unsigned int i = 0; i < l_outLightsToTransformSize; ++i)
     {
       a_outLightsToTransform[i].Deserialize(l_pos);
-      l_pos += sizeof(ObjTransformInfo);
+      l_pos += a_outLightsToTransform[i].Size();
     }
 
     

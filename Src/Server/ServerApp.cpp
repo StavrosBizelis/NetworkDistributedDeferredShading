@@ -215,7 +215,7 @@ ServerApp::Update()
   // 6) SERVER RENDERS THE RESULT ON SCREEN
   
   // SERVER SENDS SCENE UPDATE MESSAGE
-  UpdateScene();
+  
   
   m_serverCtrl.Update();
   
@@ -255,6 +255,17 @@ ServerApp::Update()
   // framerate output
   m_frameCount++;
   m_elapsedTime += m_dt;
+  
+  
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // we remove this - find a better way
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if ( (int)m_elapsedTime % 30 < 2 )
+  {
+    UpdateScene();
+  }  
   // Now we want to subtract the current time by the last time that was stored
 	// to see if the time elapsed has been over a second, which means we found our FPS.
 	if (m_elapsedTime > 1000)
@@ -287,9 +298,10 @@ ServerApp::UpdateScene()
   l_asteroidStartTransform.y = l_y;
   l_asteroidStartTransform.z = 0;
   
-  
+
   l_msg->CreateSceneUpdateMsg(
-  {glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
+  // {glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
+  {m_camera->GetCamera()->GetPosition(), m_camera->GetCamera()->GetView(), m_camera->GetCamera()->GetUpVector() },
   {}, {}, {l_asteroidStartTransform}, {}, {}, {}, {});
 
   
@@ -306,6 +318,8 @@ ServerApp::UpdateScene()
 void
 ServerApp::Initialise()
 {
+
+  
   /////////////////////////////////////////////
   // do here what need to be done /////////////
   /////////////////////////////////////////////
@@ -392,6 +406,14 @@ ServerApp::Initialise()
   }
   IFDBG( std::cout << "All clients ready." << std::endl; );
   
+  
+  std::shared_ptr<CCamera> l_camera = std::make_shared<CCamera>();
+  l_camera->SetDimentsions( m_graphics->GetResolution() );
+  l_camera->Set(glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) );
+  m_camera = m_graphics->GetSceneManager()->AddCameraSceneNode(l_camera);
+  m_camera->SetPos( glm::vec3(0,0,0) );
+  IFDBG( std::cout << "Camera ready." << std::endl; );
+  
   InitialiseScene();
 }
 
@@ -422,7 +444,7 @@ ServerApp::InitialiseScene()
   Network::ObjAddInfo l_asteroid;
   l_asteroid.m_id = 2;
   l_asteroid.m_objType = Network::ObjectType::MESH;
-  l_asteroid.m_materialFlags = RenderControl::GeometryPassMaterialFlags::EMISSION_MAP;
+  l_asteroid.m_materialFlags = RenderControl::GeometryPassMaterialFlags::DIFFUSE_MAP;
   l_asteroid.m_meshPath = std::string("../Assets/Models/Asteroid/asteroid.obj");
   
   Network::ObjTransformInfo l_asteroidStartTransform;
@@ -438,14 +460,34 @@ ServerApp::InitialiseScene()
   l_asteroidText.m_cubeText = false;
   l_asteroidText.m_path[0] = std::string("../Assets/Models/Asteroid/diffuse.png");
   
+
   
+  
+  Network::ObjAddInfo l_light;
+  l_light.m_id = 3;
+  l_light.m_lightFlags = RenderControl::LightTypeFlags::DIRECTIONAL_LIGHT;
+
+  Network::ObjTransformInfo l_lightTransform1;
+  l_lightTransform1.m_id = 3;
+  l_lightTransform1.m_transformType = Network::ObjectTransformType::LGHT_DIFFUSE;
+  l_lightTransform1.x = 1;
+  l_lightTransform1.y = 1;
+  l_lightTransform1.z = 1;
+  
+  Network::ObjTransformInfo l_lightTransform2;
+  l_lightTransform2.m_id = 3;
+  l_lightTransform2.m_transformType = Network::ObjectTransformType::OBJ_ROT;
+  l_lightTransform2.x = 0;
+  l_lightTransform2.y = 0;
+  l_lightTransform2.z = 180;
+
   
   Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
   l_msg->CreateSceneUpdateMsg(
   {glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
   // {l_sky, l_asteroid}, {}, {}, {l_skyText, l_asteroidText}, {}, {}, {});
   // {l_sky}, {}, {}, {l_skyText}, {}, {}, {});
-  {l_asteroid}, {}, {l_asteroidStartTransform}, {l_asteroidText}, {}, {}, {});
+  {l_asteroid}, {}, {l_asteroidStartTransform}, {l_asteroidText}, {l_light}, {}, {l_lightTransform1, l_lightTransform2});
 
 
   for( std::map<std::shared_ptr<asio::ip::tcp::socket>, unsigned int>::iterator l_iter = m_clients.begin(); l_iter != m_clients.end(); ++l_iter )

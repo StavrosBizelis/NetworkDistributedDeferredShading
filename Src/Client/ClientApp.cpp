@@ -456,7 +456,7 @@ ClientApp::TransformObject(const Network::ObjTransformInfo& a_info, bool a_isLig
       case Network::ObjectTransformType::OBJ_POS: 
       l_node->SetPos(glm::vec3(a_info.x,a_info.y,a_info.z));
       break;
-      case Network::ObjectTransformType::OBJ_ROT: 
+      case Network::ObjectTransformType::OBJ_ROT:
       l_node->SetEulerAngles(glm::vec3(a_info.x,a_info.y,a_info.z));
       break;
       case Network::ObjectTransformType::OBJ_SCALE: 

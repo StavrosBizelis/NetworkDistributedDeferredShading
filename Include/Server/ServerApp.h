@@ -8,6 +8,8 @@
 #include "Common/AGraphicsEngine.h"
 #include <windows.h>
 
+#include "Common/RenderControl/Camera.h"
+#include "Common/SceneControl/CameraSceneNode.h"
 
 class ServerApp
 {
@@ -19,6 +21,7 @@ public:
   LRESULT ProcessEvents(HWND window,UINT message, WPARAM w_param, LPARAM l_param);  
   void SetHinstance(HINSTANCE hinstance);
 	WPARAM Execute();
+  
   
 private:
   HINSTANCE m_hInstance;
@@ -40,6 +43,7 @@ private:
   // a preallocated data array for the raw decoded texture that is used to update the composition rectangles
   char* m_textureData;
   
+  SceneControl::CameraSceneNode* m_camera; /// use this camera in order to get updated movement values to send to the clients
   
   void Update();
   void UpdateScene();
