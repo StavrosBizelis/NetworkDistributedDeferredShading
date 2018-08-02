@@ -404,7 +404,6 @@ ClientApp::AddObject(const Network::ObjAddInfo& a_info, const std::vector<Networ
   if(l_mesh)
   {
     SceneControl::MeshSceneNode* l_meshNode = m_graphics->GetSceneManager()->AddMeshSceneNode( l_mesh );
-
     if( l_meshNode->SetID(a_info.m_id) )
     {
       // texture set before adding it to the renderpass 
@@ -414,6 +413,7 @@ ClientApp::AddObject(const Network::ObjAddInfo& a_info, const std::vector<Networ
           TextureChange(*l_textChange);
         }
       m_graphics->GetDeferredRenderPass()->AddRenderable(l_meshNode, (RenderControl::GeometryPassMaterialFlags)(a_info.m_materialFlags));
+      l_meshNode->SetPersistentUniform(0, "UEmissive", 1.f);
 
     }
     else // if bad id given remove it from the registry and detach it from the scene manager

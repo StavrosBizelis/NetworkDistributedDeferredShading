@@ -14,7 +14,7 @@ CCamera::CCamera()
 	m_position = glm::vec3(0.0f, 10.0f, 100.0f);
 	m_view = glm::vec3(0.0f, 0.0f, 0.0f);
 	m_upVector = glm::vec3(0.0f, 1.0f, 0.0f);
-	m_speed = 0.025f;
+	m_speed = 0.15f;
   m_dim = glm::vec2(0);
 }
 CCamera::~CCamera()

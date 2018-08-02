@@ -3,7 +3,7 @@
 in vec3 vEyeNorm;			// Interpolated normal
 
 
-uniform vec3 UDiffuse = vec3(0.);
+uniform vec3 UDiffuse = vec3(1);
 uniform vec3 USpecular = vec3(1.);
 uniform float UHardness = 0.5;
 uniform vec3 UEmissive = vec3(0.);

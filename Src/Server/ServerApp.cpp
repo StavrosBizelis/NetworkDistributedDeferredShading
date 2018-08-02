@@ -262,9 +262,10 @@ ServerApp::Update()
   // we remove this - find a better way
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	if ( (int)m_elapsedTime % 30 < 2 )
+	if (m_elapsedTime > 30)
   {
     UpdateScene();
+    m_elapsedTime = 0;
   }  
   // Now we want to subtract the current time by the last time that was stored
 	// to see if the time elapsed has been over a second, which means we found our FPS.
@@ -286,23 +287,23 @@ void
 ServerApp::UpdateScene()
 {
   static float l_y = 0;
-  static float l_counter = 0;
 
   Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
-  if( l_y++ > 360 )
-    l_y = 0 ;
-  Network::ObjTransformInfo l_asteroidStartTransform;
-  l_asteroidStartTransform.m_id = 2;
-  l_asteroidStartTransform.m_transformType = Network::ObjectTransformType::OBJ_ROT;
-  l_asteroidStartTransform.x = 0;
-  l_asteroidStartTransform.y = l_y;
-  l_asteroidStartTransform.z = 0;
+  // if( l_y++ > 360 )
+    // l_y = 0 ;
+  // Network::ObjTransformInfo l_asteroidStartTransform;
+  // l_asteroidStartTransform.m_id = 2;
+  // l_asteroidStartTransform.m_transformType = Network::ObjectTransformType::OBJ_ROT;
+  // l_asteroidStartTransform.x = 0;
+  // l_asteroidStartTransform.y = l_y;
+  // l_asteroidStartTransform.z = 0;
   
 
   l_msg->CreateSceneUpdateMsg(
   // {glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
   {m_camera->GetCamera()->GetPosition(), m_camera->GetCamera()->GetView(), m_camera->GetCamera()->GetUpVector() },
-  {}, {}, {l_asteroidStartTransform}, {}, {}, {}, {});
+  // {}, {}, {l_asteroidStartTransform}, {}, {}, {}, {});
+  {}, {}, {}, {}, {}, {}, {});
 
   
   for( std::map<std::shared_ptr<asio::ip::tcp::socket>, unsigned int>::iterator l_iter = m_clients.begin(); l_iter != m_clients.end(); ++l_iter )
@@ -441,26 +442,48 @@ ServerApp::InitialiseScene()
   
   
   // asteroid
-  Network::ObjAddInfo l_asteroid;
-  l_asteroid.m_id = 2;
-  l_asteroid.m_objType = Network::ObjectType::MESH;
-  l_asteroid.m_materialFlags = RenderControl::GeometryPassMaterialFlags::DIFFUSE_MAP;
-  l_asteroid.m_meshPath = std::string("../Assets/Models/Asteroid/asteroid.obj");
+  // Network::ObjAddInfo l_asteroid;
+  // l_asteroid.m_id = 2;
+  // l_asteroid.m_objType = Network::ObjectType::MESH;
+  // l_asteroid.m_materialFlags = RenderControl::GeometryPassMaterialFlags::DIFFUSE_MAP;
+  // l_asteroid.m_meshPath = std::string("../Assets/Models/Asteroid/asteroid.obj");
   
+  // Network::ObjTransformInfo l_asteroidStartTransform;
+  // l_asteroidStartTransform.m_id = 2;
+  // l_asteroidStartTransform.m_transformType = Network::ObjectTransformType::OBJ_POS;
+  // l_asteroidStartTransform.x = 0;
+  // l_asteroidStartTransform.y = 0;
+  // l_asteroidStartTransform.z = -10;
+  
+  // Network::TextureChangeInfo l_asteroidText;
+  // l_asteroidText.m_id = 2;
+  // l_asteroidText.m_textureLayer = 0;
+  // l_asteroidText.m_cubeText = false;
+  // l_asteroidText.m_path[0] = std::string("../Assets/Models/Asteroid/diffuse.png");
+  
+
+  
+  Network::ObjAddInfo l_asteroid;
+  l_asteroid.m_id = 5;
+  l_asteroid.m_objType = Network::ObjectType::MESH;
+  l_asteroid.m_materialFlags = RenderControl::GeometryPassMaterialFlags::EMISSION_MAP;
+  l_asteroid.m_meshPath = std::string("../Assets/Models/sponza/sponza.obj");
+
   Network::ObjTransformInfo l_asteroidStartTransform;
-  l_asteroidStartTransform.m_id = 2;
+  l_asteroidStartTransform.m_id = 5;
   l_asteroidStartTransform.m_transformType = Network::ObjectTransformType::OBJ_POS;
   l_asteroidStartTransform.x = 0;
   l_asteroidStartTransform.y = 0;
   l_asteroidStartTransform.z = -10;
-  
+
   Network::TextureChangeInfo l_asteroidText;
-  l_asteroidText.m_id = 2;
+  l_asteroidText.m_id = 5;
   l_asteroidText.m_textureLayer = 0;
   l_asteroidText.m_cubeText = false;
-  l_asteroidText.m_path[0] = std::string("../Assets/Models/Asteroid/diffuse.png");
+  l_asteroidText.m_path[0] = std::string("../Assets/Models/sponza/textures/sponza_fabric_green_diff.tga");
   
-
+  
+  
   
   
   Network::ObjAddInfo l_light;
@@ -477,9 +500,9 @@ ServerApp::InitialiseScene()
   Network::ObjTransformInfo l_lightTransform2;
   l_lightTransform2.m_id = 3;
   l_lightTransform2.m_transformType = Network::ObjectTransformType::OBJ_ROT;
-  l_lightTransform2.x = 0;
+  l_lightTransform2.x = 140;
   l_lightTransform2.y = 0;
-  l_lightTransform2.z = 180;
+  l_lightTransform2.z = 0;
 
   
   Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
