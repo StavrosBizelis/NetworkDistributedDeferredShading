@@ -93,7 +93,7 @@ void main()
   //   vOutputColour = vec4(1,0,0,1);
   
 
-  vOutputColour = vec4( abs(vTexDepth.x), 0,0, 1);
+  //vOutputColour = vec4( abs(vTexDepth.x), 0,0, 1);
   //vOutputColour.a = 1;
   // vOutputColour = vec4(l_screenTextureCoord.xy, 0, 1);
   // vOutputColour = vec4( l_fragWorldSpacePoint.xyz ,1.0f ) ;

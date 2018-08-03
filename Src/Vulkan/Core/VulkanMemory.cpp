@@ -1341,7 +1341,7 @@ std::shared_ptr<VulkanImageMemoryChunk> VulkanMemory::CreateStencilDepthAttachme
   std::shared_ptr< VulkanImageMemoryChunk> l_imageMemory = m_imageMemoryPools[3]->AllocateMemory(a_width, a_height, l_selectedFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_VIEW_TYPE_2D);
   if(!l_imageMemory )
     throw std::runtime_error("VulkanMemory::CreateAttachmentTexture - Image Memory Pool could not allocate memory");
-  CreateImageView(l_imageMemory, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT  );
+  CreateImageView(l_imageMemory, VK_IMAGE_ASPECT_DEPTH_BIT  );
   
   TransitionImageLayout(l_imageMemory, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
   
