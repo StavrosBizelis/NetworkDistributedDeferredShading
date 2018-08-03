@@ -25,7 +25,7 @@ void main()
 	gl_Position = globalsMats.projMatrix * l_modelViewMat * vec4(inPosition, 1.0f);  
   
   
-  gl_Position.y = -gl_Position.y;
+  // gl_Position.y = -gl_Position.y;
   gl_Position.z = (gl_Position.z + gl_Position.w) / 2.0;
   
 }

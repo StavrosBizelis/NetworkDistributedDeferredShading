@@ -411,11 +411,11 @@ ClientApp::AddObject(const Network::ObjAddInfo& a_info, const std::vector<Networ
     if( l_meshNode->SetID(a_info.m_id) )
     {
       // texture set before adding it to the renderpass 
-      // for( std::vector<Network::TextureChangeInfo>::const_iterator l_textChange = a_textures.cbegin(); l_textChange != a_textures.cend(); ++l_textChange)
-        // if( l_textChange->m_id == a_info.m_id )
-        // {
-          // TextureChange(*l_textChange);
-        // }
+      for( std::vector<Network::TextureChangeInfo>::const_iterator l_textChange = a_textures.cbegin(); l_textChange != a_textures.cend(); ++l_textChange)
+        if( l_textChange->m_id == a_info.m_id )
+        {
+          TextureChange(*l_textChange);
+        }
       m_graphics->GetDeferredRenderPass()->AddRenderable(l_meshNode, (RenderControl::GeometryPassMaterialFlags)(a_info.m_materialFlags));
       
 
