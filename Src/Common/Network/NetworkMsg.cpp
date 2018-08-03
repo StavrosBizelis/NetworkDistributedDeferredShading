@@ -739,6 +739,7 @@ namespace Network
     for( unsigned int i = 0; i < l_outLightsToTransformSize; ++i)
     {
       a_outLightsToTransform[i].Deserialize(l_pos);
+      
       l_pos += a_outLightsToTransform[i].Size();
     }
 

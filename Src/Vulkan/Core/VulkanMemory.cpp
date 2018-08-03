@@ -33,7 +33,7 @@ VkFormat findSupportedFormat(VkPhysicalDevice a_physicalDevice, const std::vecto
 VkFormat findDepthFormat(VkPhysicalDevice a_physicalDevice) 
 {
   return findSupportedFormat( a_physicalDevice, 
-  {VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT},
+  {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT},
     VK_IMAGE_TILING_OPTIMAL,
     VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
   );
@@ -932,7 +932,7 @@ void VulkanMemory::CreateImageMemPools(const VkDeviceSize& a_shaderImagesSize, c
   m_imageMemoryPools[2]->Init();  
    
   m_imageMemoryPools[3] = std::make_shared<VulkanImageMemoryPool>( m_physicalDevice, m_logicalDevice, a_depthStencilAttachmentsSize, 
-   VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, 
+   VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   m_imageMemoryPools[3]->Init();
 }

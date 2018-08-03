@@ -445,12 +445,7 @@ VKLightPassPipeline::Init()
   m_descLayoutBindings = { l_vertexBindingGlobal, l_fragBindingGlobal, l_vertexBindingObject, l_fragBindingObject, l_sampler1, l_sampler2, l_sampler3, l_sampler4 };
   m_descriptorSetLayout = CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), m_descLayoutBindings ); 
 
-  // else if( a_type == 3 ) // stencil pass 
-  // {
-    // l_descriptorSetLayouts.push_back(  CreateDescriptorSetLayout( m_logicalDevice->GetDevice(), { l_vertexBinding } )  ); 
-  // }
-  
-  
+
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 1;

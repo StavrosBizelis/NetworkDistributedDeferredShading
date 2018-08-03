@@ -107,6 +107,7 @@ bool RenderControl::VKDeferredShadingPass::AddRenderable(RenderControl::IRendera
       else if ((a_geometryMaterialFlags & (DIFFUSE_MAP)) == (DIFFUSE_MAP))
 			{
         CreateDescriptorSet(m_pipelines[2], a_renderable);
+        l_cmdBuffers = m_pipelines[2]->GetSecondaryCommandBuffers();
       }
       else if ((a_geometryMaterialFlags & (EMISSION_MAP)) == (EMISSION_MAP))
 			{
@@ -196,7 +197,7 @@ bool RenderControl::VKDeferredShadingPass::Init()
   CreateCommandBuffers();
   
   m_camera->SetOrthographicProjectionMatrix((int)m_resolution.x, (int)m_resolution.y);
-  m_camera->SetPerspectiveProjectionMatrix(45.0f, m_resolution.x / m_resolution.y, 0.5f, 7000.0f);;
+  m_camera->SetPerspectiveProjectionMatrix(45.0f, m_resolution.x / m_resolution.y, 0.5f, 100.0f);;
 
   m_uboMemBuffer = m_memory->CreateUniformBuffer( sizeof(VertexViewProjMatrices) );
   m_uboMemBuffer2 = m_memory->CreateUniformBuffer( sizeof(FragLightGlobalVars) );
@@ -435,10 +436,15 @@ void RenderControl::VKDeferredShadingPass::VulkanUpdate( char* a_mappedBuffer )
   
   memcpy(a_mappedBuffer+m_uboMemBuffer->GetMemoryOffset(), &m_globalsUbo, sizeof(VertexViewProjMatrices) );
   
+  glutil::MatrixStack projModelViewMatrixStack;
+  projModelViewMatrixStack.SetIdentity();
+  projModelViewMatrixStack.ApplyMatrix(*m_camera->GetPerspectiveProjectionMatrix());
+  projModelViewMatrixStack.LookAt(m_camera->GetPosition(), m_camera->GetView(), m_camera->GetUpVector());
+
   
-  m_globalsUbo2.UInverseViewProjectionMatrix = glm::inverse(m_globalsUbo.projMatrix * m_globalsUbo.viewMatrix);
+  m_globalsUbo2.UInverseViewProjectionMatrix = glm::inverse(projModelViewMatrixStack.Top() );
   m_globalsUbo2.UCamPos = glm::vec4(m_camera->GetPosition(), 1);
-  m_globalsUbo2.UScreenResDiv = glm::vec4( glm::vec2( 1/m_resolutionPart.x, 1/m_resolutionPart.y), 0, 1);
+  m_globalsUbo2.UScreenResDiv = glm::vec4( glm::vec2( glm::vec2(1.0f) / GetResolution() ), 0, 1);
   
   memcpy(a_mappedBuffer+m_uboMemBuffer2->GetMemoryOffset(), &m_globalsUbo2, sizeof(FragLightGlobalVars) );
   
@@ -531,7 +537,7 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
   depthAttachment.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
   depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
@@ -569,8 +575,8 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   
   
   VkAttachmentReference inputColourAttachmentRef = {};
-  depthAttachmentRef.attachment = 0;
-  depthAttachmentRef.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  inputColourAttachmentRef.attachment = 0;
+  inputColourAttachmentRef.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   
   VkAttachmentReference inputColourAttachmentRef2 = {};
   inputColourAttachmentRef2.attachment = 1;
@@ -581,8 +587,8 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   inputColourAttachmentRef3.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   
   VkAttachmentReference inputDepthAttachmentRef = {};
-  depthAttachmentRef.attachment = 4;
-  depthAttachmentRef.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;  
+  inputDepthAttachmentRef.attachment = 4;
+  inputDepthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;  
   
   std::vector<VkAttachmentReference> l_lightColourAttachmentRefs = { colorAttachmentRef4};
   std::vector<VkAttachmentReference> l_lightInputAttachmentRefs = { inputColourAttachmentRef, inputColourAttachmentRef2, inputColourAttachmentRef3, inputDepthAttachmentRef};
@@ -1129,10 +1135,10 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSetLight(const std::s
   std::vector<VkDescriptorImageInfo> l_imageInfo(l_textureCount, {});
   std::vector<VkWriteDescriptorSet> extraDescriptorWrites(l_textureCount, {});
   
-  for( unsigned int i = 0; i < l_textureCount; ++i)
+  for( unsigned int i = 0; i < l_textureCount-1; ++i)
   {  
     l_imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
-    l_imageInfo[i].imageView = m_attachmentImages[i == 3 ? 4 : i]->m_imageView;  // VkImageView
+    l_imageInfo[i].imageView = m_attachmentImages[i]->m_imageView;  // VkImageView
     
     
     extraDescriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1145,5 +1151,20 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSetLight(const std::s
     l_descriptorSetWrites.push_back(extraDescriptorWrites[i]);
   }
 
+  // extra for depth
+  l_imageInfo.back().imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;   // VkImageLayout
+  l_imageInfo.back().imageView = m_attachmentImages.back()->m_imageView;  // VkImageView
+
+
+  extraDescriptorWrites.back().sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  extraDescriptorWrites.back().dstSet = l_descSet;
+  extraDescriptorWrites.back().dstBinding = l_bindings.back().binding;
+  extraDescriptorWrites.back().dstArrayElement = 0;
+  extraDescriptorWrites.back().descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+  extraDescriptorWrites.back().descriptorCount = 1;
+  extraDescriptorWrites.back().pImageInfo = &l_imageInfo.back();
+  l_descriptorSetWrites.push_back(extraDescriptorWrites.back());
+  
+  
   vkUpdateDescriptorSets(m_logicalDevice->GetDevice(), l_descriptorSetWrites.size(), l_descriptorSetWrites.data(), 0, nullptr);
 }

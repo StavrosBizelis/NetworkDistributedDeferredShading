@@ -71,7 +71,7 @@ VulkanPrimaryCommandBuffer::VulkanPrimaryCommandBuffer(const VkDevice& a_logical
 {
   for( unsigned int i = 0; i < a_attachmentsCount; ++i)
     m_clearValues[i].color = {1.0f, 0.0f, 0.0f, 1.0f};
-  m_clearValues[a_attachmentsCount - 1].depthStencil = {1.0f, 1};
+  m_clearValues[a_attachmentsCount - 1].depthStencil = {1.0f, 0};
 }
                             
 VulkanPrimaryCommandBuffer::~VulkanPrimaryCommandBuffer() {}

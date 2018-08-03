@@ -1,5 +1,6 @@
 #include "Common/SceneControl/PointLightSceneNode.h"
 #include <algorithm> 
+#include <iostream> 
 namespace SceneControl
 {
 
@@ -25,10 +26,11 @@ namespace SceneControl
 		if (!GetEnabled())
 			return;
 
-		std::shared_ptr<IShaderProgram> l_material0 = GetMaterial(1);	// null material
+		// std::shared_ptr<IShaderProgram> l_material0 = GetMaterial(1);	// null material
 		std::shared_ptr<IShaderProgram> l_material1 = GetMaterial(0);	// light material
 		// cannot render without the proper materials
-		if (!l_material0 || !l_material1)
+		// if (!l_material0 || !l_material1)
+		if (!l_material1)
 			return;
 
 
@@ -39,10 +41,10 @@ namespace SceneControl
 		
 		
 		// do the stencil test pass
-		l_material0->UseProgram();
-		l_material0->SetUniform("matrices.projModelViewMatrixStack", a_matrix.Top());
+		// // // // // // // // // // // // // // l_material0->UseProgram();
+		// // // // // // // // // // // // // // l_material0->SetUniform("matrices.projModelViewMatrixStack", a_matrix.Top());
 		
-    m_sphere->Render();
+    // // // // // // // // // // // // // // m_sphere->Render();
 
 
 
@@ -92,12 +94,12 @@ namespace SceneControl
 	void PointLightSceneNode::UpdateMesh()
 	{
 		float l_maxChannel = std::max(std::max(m_difCol.r, m_difCol.g), m_difCol.b);
-		float l_intensity = (m_difCol.r + m_difCol.g + m_difCol.b) ;
-		float ret = (-m_linearAtt + sqrtf( pow(m_linearAtt, 2) - 4 * m_quadraticAtt * (m_constantAtt - (256.f/3.f) * l_maxChannel * l_intensity/*intensity*/)) )
+		float l_intensity = 0.2126f * m_difCol.x + 0.7152f * m_difCol.y + 0.0722f * m_difCol.z;;// (m_difCol.r + m_difCol.g + m_difCol.b) ;
+		float ret = (-m_linearAtt + sqrtf( pow(m_linearAtt, 2) - 4 * m_quadraticAtt * (m_constantAtt - (256.f) * l_maxChannel * l_intensity/*intensity*/)) )
 			/
 			float(2 * m_quadraticAtt);
 
-		
+		std::cout << "POINT LIGHT SCALE: " << ret << std::endl;
 		if (ret > 0)
 			SetScale(glm::vec3(ret));
 		else

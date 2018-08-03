@@ -429,7 +429,8 @@ MaterialControl::GLMaterialManager::GetPointLightPassMaterial(const std::string 
       glEnable(GL_CULL_FACE);
       glCullFace(GL_FRONT);
       // stencil test set
-      glEnable(GL_STENCIL_TEST);
+      // glEnable(GL_STENCIL_TEST);
+      glDisable(GL_STENCIL_TEST);
       glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
       // depth test set
       glDisable(GL_DEPTH_TEST);
@@ -472,7 +473,7 @@ MaterialControl::GLMaterialManager::GetSpotLightPassMaterial(const std::string &
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
     // stencil test set
-    glEnable(GL_STENCIL_TEST);
+    glDisable(GL_STENCIL_TEST);
     glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
     // depth test set
     glDisable(GL_DEPTH_TEST);

@@ -293,11 +293,7 @@ ClientApp::Update()
       
       // objects to add
       for( std::vector<Network::ObjAddInfo>::iterator l_objsToAdd = m_outObjsToAdd.begin(); l_objsToAdd != m_outObjsToAdd.end(); ++l_objsToAdd)
-      {
-        system("pause");
         AddObject(*l_objsToAdd, m_outTextureChange);
-        system("pause");
-      }
       // objects to remove
       for( std::vector<uint32_t>::iterator l_objsToRemove = m_outObjsToRemove.begin(); l_objsToRemove != m_outObjsToRemove.end(); ++l_objsToRemove)
         RemoveObject(*l_objsToRemove, false);

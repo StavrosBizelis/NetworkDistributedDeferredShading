@@ -24,11 +24,11 @@ layout (std140, set = 0, binding = 3) uniform PointLight
 
 layout(location = 0) out vec4 vOutputColour;		// The output colour
 
-layout (set = 0, binding = 4) uniform sampler2D UColor;
-layout (set = 0, binding = 5) uniform sampler2D UNormal;
-layout (set = 0, binding = 6) uniform sampler2D USpecularIntensityPower;
-layout (set = 0, binding = 7) uniform sampler2D UDepth;
-
+// layout (set = 0, binding = 4) uniform sampler2D UColor;
+layout (set = 0, input_attachment_index = 0, binding = 4) uniform subpassInput UColor;
+layout (set = 0, input_attachment_index = 1, binding = 5) uniform subpassInput UNormal;
+layout (set = 0, input_attachment_index = 2, binding = 6) uniform subpassInput USpecularIntensityPower;
+layout (set = 0, input_attachment_index = 3, binding = 7) uniform subpassInput UDepth;
 
 
 
@@ -72,10 +72,11 @@ void main()
    // screen space texture coordinates
   vec2 l_screenTextureCoord = gl_FragCoord.xy * globalVars.UScreenResDiv.xy;
 
-  vec4 vTexColour = texture(UColor, l_screenTextureCoord);	
-  vec4 vTexNormal = texture(UNormal, l_screenTextureCoord);	
-  vec4 vTexSpecular = texture(USpecularIntensityPower, l_screenTextureCoord);	
-  vec4 vTexDepth = texture(UDepth, l_screenTextureCoord);	
+  vec4 vTexColour = subpassLoad(UColor).rgba;
+  vec4 vTexNormal = subpassLoad(UNormal).rgba;
+  vec4 vTexSpecular = subpassLoad(USpecularIntensityPower).rgba;	
+  vec4 vTexDepth = subpassLoad(UDepth).rgba;
+
   
   
   // screen space to world space
@@ -92,7 +93,7 @@ void main()
   //   vOutputColour = vec4(1,0,0,1);
   
 
-  //vOutputColour.xyz = vTexDepth.xyz;
+  vOutputColour = vec4( abs(vTexDepth.x), 0,0, 1);
   //vOutputColour.a = 1;
   // vOutputColour = vec4(l_screenTextureCoord.xy, 0, 1);
   // vOutputColour = vec4( l_fragWorldSpacePoint.xyz ,1.0f ) ;

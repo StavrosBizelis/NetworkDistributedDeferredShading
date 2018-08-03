@@ -80,7 +80,7 @@ void main()
   //vOutputColour = vec4( 0.5f); // test
   //vOutputColour = vec4( l_screenTextureCoord , 0, 1); // test coords
   //vOutputColour = vTexColour;
-  vOutputColour = l_fragWorldSpacePoint;
+  //vOutputColour = l_fragWorldSpacePoint;
 
   vec4 l_diffuse;
   vec4 l_specular; 
