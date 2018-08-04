@@ -38,7 +38,7 @@ void HandleDirectionalLight( in vec3 a_camPos, in vec3 a_fragmentNormal, in vec4
   
   vec3 l_lightDirection = ULightData.m_direction.xyz;
   vec3 l_normal = normalize(a_fragmentNormal);
-  float l_diffuseFactor = dot(l_normal, l_lightDirection);
+  float l_diffuseFactor = dot(l_normal, -l_lightDirection);
 
   if (l_diffuseFactor > 0) 
   {

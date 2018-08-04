@@ -58,9 +58,12 @@ namespace Network
   struct ObjAddInfo
   {
     uint32_t m_id;
+    // object data
     ObjectType m_objType;
     RenderControl::GeometryPassMaterialFlags m_materialFlags;
+    // light data 
     RenderControl::LightTypeFlags m_lightFlags;
+    // extra data
     std::string m_meshPath;
     
     void Serialize(char* a_arrOut) const;

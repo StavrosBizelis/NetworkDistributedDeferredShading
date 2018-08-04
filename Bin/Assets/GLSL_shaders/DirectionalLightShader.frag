@@ -4,6 +4,10 @@ in vec2 vTexCoord;			// Interpolated texture coordinate using texture coordinate
 
 uniform mat4 UInverseViewProjectionMatrix;
 uniform vec3 UCamPos;
+uniform vec2 UScreenResDiv;
+uniform vec2 UScreenResDiv2;
+uniform vec2 UOffset;
+
 
 uniform sampler2D UColor;
 uniform sampler2D UNormal;
@@ -32,7 +36,7 @@ void HandleDirectionalLight(in DirectionalLight a_lightSrc, in vec3 a_camPos, in
   
   vec3 l_lightDirection = a_lightSrc.m_direction;
   vec3 l_normal = normalize(a_fragmentNormal);
-  float l_diffuseFactor = dot(l_normal, l_lightDirection);
+  float l_diffuseFactor = dot(l_normal, -l_lightDirection);
 
   if (l_diffuseFactor > 0) 
   {
@@ -54,8 +58,9 @@ void HandleDirectionalLight(in DirectionalLight a_lightSrc, in vec3 a_camPos, in
 
 void main()
 {
-//	vec2 l_screenTextureCoord = gl_FragCoord.xy * UScreenResDiv.xy;
-	vec2 l_screenTextureCoord = vTexCoord;
+
+  vec2 l_screenTextureCoord = gl_FragCoord.xy * UScreenResDiv.xy;
+  vec2 l_screenTextureCoord2 = (gl_FragCoord.xy - UOffset) * UScreenResDiv2.xy;
 	
   vec4 vTexColour = texture(UColor, l_screenTextureCoord);	
   vec4 vTexNormal = texture(UNormal, l_screenTextureCoord);	
@@ -65,7 +70,7 @@ void main()
   // screen space to world space
 
 
-  vec4 l_fragWorldSpacePoint = UInverseViewProjectionMatrix *  vec4( vec3( l_screenTextureCoord, vTexDepth.x ) *2 - 1,  1);
+  vec4 l_fragWorldSpacePoint = UInverseViewProjectionMatrix *  vec4( vec3( l_screenTextureCoord2, vTexDepth.x ) *2 - 1,  1);
   l_fragWorldSpacePoint.w = 1/l_fragWorldSpacePoint.w;
   l_fragWorldSpacePoint.xyz *= l_fragWorldSpacePoint.w;
 
@@ -86,5 +91,10 @@ void main()
 //  else
 //    vOutputColour = vTexNormal;
 
-
+//  if( length( vTexNormal.xyz ) == 0)
+//	vOutputColour  = vec4( 1);
+//  else
+   // vOutputColour = vTexNormal;
+   // vOutputColour = vec4(l_screenTextureCoord.xy, 0, 1);
+   // vOutputColour = l_fragWorldSpacePoint;
 }

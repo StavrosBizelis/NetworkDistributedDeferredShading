@@ -197,7 +197,7 @@ bool RenderControl::VKDeferredShadingPass::Init()
   CreateCommandBuffers();
   
   m_camera->SetOrthographicProjectionMatrix((int)m_resolution.x, (int)m_resolution.y);
-  m_camera->SetPerspectiveProjectionMatrix(45.0f, m_resolution.x / m_resolution.y, 0.5f, 100.0f);;
+  m_camera->SetPerspectiveProjectionMatrix(45.0f, m_resolution.x / m_resolution.y, 0.5f, 7000.0f);;
 
   m_uboMemBuffer = m_memory->CreateUniformBuffer( sizeof(VertexViewProjMatrices) );
   m_uboMemBuffer2 = m_memory->CreateUniformBuffer( sizeof(FragLightGlobalVars) );

@@ -271,12 +271,16 @@ void RenderControl::GLDeferredShadingPass::LightPass()
 
     if (l_lightMaterial)
     {
-      glm::vec2 l_resDiv = glm::vec2(1.0f) / GetResolution();
+      glm::vec2 l_resDiv = glm::vec2(1.0f) / m_resolutionPart;
+      glm::vec2 l_resDiv2 = glm::vec2(1.0f) / m_resolution;
+      glm::vec2 l_offset = glm::vec2(m_viewPortSetting.x, m_viewPortSetting.y);
       glm::vec3 l_camPos = m_camera->GetPosition();
       l_lightMaterial->SetOnUse("LightPassUse",
-        [l_resDiv, l_camPos, l_invProjViewMat](IShaderProgram* l_me)
+        [l_resDiv, l_resDiv2, l_offset, l_camPos, l_invProjViewMat](IShaderProgram* l_me)
         {
           l_me->SetUniform("UScreenResDiv", l_resDiv);
+          l_me->SetUniform("UScreenResDiv2", l_resDiv2);
+          l_me->SetUniform("UOffset", l_offset);
           l_me->SetUniform("UCamPos", l_camPos);
           l_me->SetUniform("UInverseViewProjectionMatrix", l_invProjViewMat);
         }

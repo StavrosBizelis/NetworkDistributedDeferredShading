@@ -19,6 +19,8 @@ uniform struct SpotLight
 
 
 uniform vec2 UScreenResDiv;
+uniform vec2 UScreenResDiv2;
+uniform vec2 UOffset;
 
 out vec4 vOutputColour;		// The output colour
 
@@ -80,6 +82,7 @@ void main()
 {
    // screen space texture coordinates
   vec2 l_screenTextureCoord = gl_FragCoord.xy * UScreenResDiv.xy;
+  vec2 l_screenTextureCoord2 = (gl_FragCoord.xy - UOffset) * UScreenResDiv2.xy;
 
   vec4 vTexColour = texture(UColor, l_screenTextureCoord);	
   vec4 vTexNormal = texture(UNormal, l_screenTextureCoord);	
@@ -88,7 +91,7 @@ void main()
   
   
   // screen space to world space
-  vec4 l_fragWorldSpacePoint = UInverseViewProjectionMatrix *  vec4( vec3( l_screenTextureCoord, vTexDepth.x ) *2 - 1,  1);
+  vec4 l_fragWorldSpacePoint = UInverseViewProjectionMatrix *  vec4( vec3( l_screenTextureCoord2, vTexDepth.x ) *2 - 1,  1);
   l_fragWorldSpacePoint.w = 1/l_fragWorldSpacePoint.w;
   l_fragWorldSpacePoint.xyz *= l_fragWorldSpacePoint.w;
   

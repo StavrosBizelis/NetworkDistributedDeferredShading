@@ -51,9 +51,9 @@ void ACube::Create()
   // top face
   m_vertices.push_back( Vertex( glm::vec3(l_edgeHalfLength,l_edgeHalfLength,l_edgeHalfLength),glm::vec2(0,1), glm::vec3(.0f,1.0f,.0f), glm::vec3(0))  );
   m_vertices.push_back( Vertex( glm::vec3(l_edgeHalfLength,l_edgeHalfLength,-l_edgeHalfLength),glm::vec2(0,0), glm::vec3(.0f,1.0f,.0f), glm::vec3(0))  );
-  m_vertices.push_back( Vertex( glm::vec3(l_edgeHalfLength,l_edgeHalfLength,l_edgeHalfLength),glm::vec2(1,1), glm::vec3(.0f,1.0f,.0f), glm::vec3(0))  );
+  m_vertices.push_back( Vertex( glm::vec3(-l_edgeHalfLength,l_edgeHalfLength,l_edgeHalfLength),glm::vec2(1,1), glm::vec3(.0f,1.0f,.0f), glm::vec3(0))  );
   m_vertices.push_back( Vertex( glm::vec3(-l_edgeHalfLength,l_edgeHalfLength,-l_edgeHalfLength),glm::vec2(1,0), glm::vec3(.0f,1.0f,.0f), glm::vec3(0))  );
-
+  
 
   // back
   m_vertices.push_back( Vertex( glm::vec3(-l_edgeHalfLength,-l_edgeHalfLength,-l_edgeHalfLength),glm::vec2(0,1), glm::vec3(.0f,.0f,-1.0f), glm::vec3(0))  );
