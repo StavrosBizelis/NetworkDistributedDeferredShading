@@ -24,6 +24,7 @@ struct FragLightGlobalVars
   glm::mat4 UInverseViewProjectionMatrix;
   glm::vec4 UCamPos;
   glm::vec4 UScreenResDiv;
+  glm::vec4 UScreenResDiv2; // + vec2 resolution, vec2 ( offsets )
 };
 
 

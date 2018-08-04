@@ -444,7 +444,8 @@ void RenderControl::VKDeferredShadingPass::VulkanUpdate( char* a_mappedBuffer )
   
   m_globalsUbo2.UInverseViewProjectionMatrix = glm::inverse(projModelViewMatrixStack.Top() );
   m_globalsUbo2.UCamPos = glm::vec4(m_camera->GetPosition(), 1);
-  m_globalsUbo2.UScreenResDiv = glm::vec4( glm::vec2( glm::vec2(1.0f) / GetResolution() ), 0, 1);
+  m_globalsUbo2.UScreenResDiv = glm::vec4( glm::vec2( glm::vec2(1.0f) / m_resolutionPart ), 0, 1);
+  m_globalsUbo2.UScreenResDiv2 = glm::vec4( glm::vec2( glm::vec2(1.0f) / GetResolution() ), m_viewPortSetting.x, m_viewPortSetting.y);
   
   memcpy(a_mappedBuffer+m_uboMemBuffer2->GetMemoryOffset(), &m_globalsUbo2, sizeof(FragLightGlobalVars) );
   

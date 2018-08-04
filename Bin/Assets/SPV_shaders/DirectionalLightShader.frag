@@ -7,6 +7,7 @@ layout (std140, set = 0, binding = 0) uniform GlobalVars
   uniform mat4 UInverseViewProjectionMatrix;
   uniform vec4 UCamPos;
   uniform vec4 UScreenResDiv;
+  uniform vec4 UScreenResDiv2;
 } globalVars;
 
 
@@ -61,9 +62,11 @@ void HandleDirectionalLight( in vec3 a_camPos, in vec3 a_fragmentNormal, in vec4
 
 void main()
 {
-//	vec2 l_screenTextureCoord = gl_FragCoord.xy * UScreenResDiv.xy;
-	vec2 l_screenTextureCoord = vTexCoord;
-	
+
+  vec2 l_screenTextureCoord = gl_FragCoord.xy * globalVars.UScreenResDiv.xy;
+  vec2 l_screenTextureCoord2 = (gl_FragCoord.xy - globalVars.UScreenResDiv2.zw) * globalVars.UScreenResDiv2.xy;
+  
+  
   vec4 vTexColour = texture(UColor, l_screenTextureCoord);	
   vec4 vTexNormal = texture(UNormal, l_screenTextureCoord);	
   vec4 vTexSpecular = texture(USpecularIntensityPower, l_screenTextureCoord);	
@@ -72,7 +75,7 @@ void main()
   // screen space to world space
 
 
-  vec4 l_fragWorldSpacePoint = globalVars.UInverseViewProjectionMatrix *  vec4( vec3( l_screenTextureCoord, vTexDepth.x ) *2 - 1,  1);
+  vec4 l_fragWorldSpacePoint = globalVars.UInverseViewProjectionMatrix *  vec4( vec3( l_screenTextureCoord2, vTexDepth.x ) *2 - 1,  1);
   l_fragWorldSpacePoint.w = 1/l_fragWorldSpacePoint.w;
   l_fragWorldSpacePoint.xyz *= l_fragWorldSpacePoint.w;
 
