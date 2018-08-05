@@ -630,13 +630,10 @@ void RenderControl::VKDeferredShadingPass::CreatePipelines()
   CreateSingleGeometryPassPipeline(5, 4, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessShader.frag.spv");
   CreateSingleGeometryPassPipeline(6, 5, "..\\Assets\\SPV_shaders\\GeometryShader.vert.spv", "..\\Assets\\SPV_shaders\\GeometryColourNormalSpecHardnessEmissiveShader.frag.spv");
   
-  std::cout << "Created geometry pass pipelines\n";
   // light pass
   CreateSingleLightPassPipeline(7, "..\\Assets\\SPV_shaders\\DirectionalLightShader.vert.spv", "..\\Assets\\SPV_shaders\\DirectionalLightShader.frag.spv", LightTypeFlags::DIRECTIONAL_LIGHT);
-  std::cout << "done with directional one\n";
   CreateSingleLightPassPipeline(8, "..\\Assets\\SPV_shaders\\PointLightShader.vert.spv", "..\\Assets\\SPV_shaders\\PointLightShader.frag.spv", LightTypeFlags::POINT_LIGHT);
   CreateSingleLightPassPipeline(9, "..\\Assets\\SPV_shaders\\SpotLightShader.vert.spv", "..\\Assets\\SPV_shaders\\SpotLightShader.frag.spv", LightTypeFlags::SPOT_LIGHT);
-  std::cout << "Created light pass pipelines\n";
   
 }
 
@@ -703,19 +700,23 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
 {
   VkDescriptorPoolSize l_poolSize1 = {};
   l_poolSize1.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  l_poolSize1.descriptorCount = 256;
+  l_poolSize1.descriptorCount = 512;
 
   VkDescriptorPoolSize l_poolSize2 = {};
   l_poolSize2.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  l_poolSize2.descriptorCount = 256;
+  l_poolSize2.descriptorCount = 512;
+  
+  VkDescriptorPoolSize l_poolSize3 = {};
+  l_poolSize3.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+  l_poolSize3.descriptorCount = 512;
 
-  std::vector<VkDescriptorPoolSize> l_poolSizes = {l_poolSize1, l_poolSize2};
+  std::vector<VkDescriptorPoolSize> l_poolSizes = {l_poolSize1, l_poolSize2, l_poolSize3};
   
   VkDescriptorPoolCreateInfo l_poolInfo = {};
   l_poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   l_poolInfo.poolSizeCount = l_poolSizes.size();
   l_poolInfo.pPoolSizes = l_poolSizes.data();
-  l_poolInfo.maxSets = 128;
+  l_poolInfo.maxSets = 256;
 
   if (vkCreateDescriptorPool(m_logicalDevice->GetDevice(), &l_poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS) {
     throw std::runtime_error("VKDeferredShadingPass::CreateDescriptorPool() - failed to create descriptor pool!");

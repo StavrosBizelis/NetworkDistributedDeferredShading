@@ -280,7 +280,6 @@ ClientApp::Update()
   // update scene as appropriate
   m_hasUpdated[ m_hasUpdated[2] ] = false;
       
-  
   for( std::vector<Network::NetworkMsgPtr>::const_iterator l_iter = l_msgs.cbegin(); l_iter != l_msgs.cend(); ++l_iter)
   {
     if( (*l_iter)->GetType() == Network::MsgType::SRV_SCENE_UPDATE )
@@ -301,9 +300,11 @@ ClientApp::Update()
       for( std::vector<Network::ObjTransformInfo>::iterator l_objsToTrans = m_outObjsToTransform.begin(); l_objsToTrans != m_outObjsToTransform.end(); ++l_objsToTrans)
         TransformObject(*l_objsToTrans, false);
       
-      // lights to add
+      // // lights to add
       for( std::vector<Network::ObjAddInfo>::iterator l_lightsToAdd = m_outLightsToAdd.begin(); l_lightsToAdd != m_outLightsToAdd.end(); ++l_lightsToAdd)
+      {
         AddLight(*l_lightsToAdd);
+      }
       // lights to remove
       for( std::vector<uint32_t>::iterator l_lightsToRemove = m_outLightsToRemove.begin(); l_lightsToRemove != m_outLightsToRemove.end(); ++l_lightsToRemove)
         RemoveObject(*l_lightsToRemove, true);
@@ -547,7 +548,6 @@ void ClientApp::AddLight(const Network::ObjAddInfo& a_info)
   }
   if( l_light )
   {
-    
     if(  l_light->SetID(a_info.m_id))
       m_graphics->GetDeferredRenderPass()->AddLight(l_light, a_info.m_lightFlags);
     else // if bad id given remove it from the registry and detach it from the scene manager
