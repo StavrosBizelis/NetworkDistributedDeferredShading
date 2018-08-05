@@ -1,5 +1,5 @@
 #include "Vulkan/Core/VulkanUtilities.h"
-
+#include <iostream>
 VkShaderModule CreateShaderModule(const std::vector<char>& a_code, const VkDevice& a_device)
 {
   VkShaderModuleCreateInfo createInfo = {};
@@ -7,7 +7,7 @@ VkShaderModule CreateShaderModule(const std::vector<char>& a_code, const VkDevic
   createInfo.codeSize = a_code.size();
   createInfo.pCode = reinterpret_cast<const uint32_t*>(a_code.data());
 
-  VkShaderModule shaderModule;
+  VkShaderModule shaderModule = {};
   if (vkCreateShaderModule(a_device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
     throw std::runtime_error("failed to create shader module!");
 
@@ -28,7 +28,8 @@ std::vector<VkPipelineShaderStageCreateInfo> CreatePipelineShaderCreateInfo(VkSh
   fragShaderStageInfo.module = a_fragShaderModule;
   fragShaderStageInfo.pName = "main";
   
-  return {vertShaderStageInfo, fragShaderStageInfo};
+  std::vector<VkPipelineShaderStageCreateInfo> l_toRet = {vertShaderStageInfo, fragShaderStageInfo};
+  return l_toRet;
 }
 
 
@@ -79,7 +80,7 @@ VkDescriptorSetLayoutBinding GetInputAttachmentFragmentLayoutBinding(const unsig
 
 VkDescriptorSetLayout CreateDescriptorSetLayout(VkDevice a_device,  const std::vector<VkDescriptorSetLayoutBinding>& a_bindings)
 {
-  VkDescriptorSetLayout l_toReturn;
+  VkDescriptorSetLayout l_toReturn = {};
   VkDescriptorSetLayoutCreateInfo l_descLayout = {};
   l_descLayout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   l_descLayout.pNext = NULL;
@@ -87,7 +88,8 @@ VkDescriptorSetLayout CreateDescriptorSetLayout(VkDevice a_device,  const std::v
   l_descLayout.pBindings = a_bindings.data();
   
   if ( vkCreateDescriptorSetLayout(a_device, &l_descLayout, NULL, &l_toReturn) != VK_SUCCESS )
+  {
     throw std::runtime_error("GetDescriptorSetLayout - failed to create descriptor set layout!");
-  
+  }
   return l_toReturn;
 }

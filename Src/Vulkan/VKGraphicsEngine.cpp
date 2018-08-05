@@ -90,8 +90,14 @@ void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
                                                              m_sceneManager, m_shapeFactory, m_textureFactory, 1);
     IFDBG( std::cout << "m_deferredShadingPass Created \n"; );
 
-    m_deferredShadingPass->Init();
-    
+    try
+    {
+      m_deferredShadingPass->Init();
+    }
+    catch(std::runtime_error& e)
+    {
+      std::cout << e.what();
+    }
     IFDBG( std::cout << "m_deferredShadingPass Initialized \n"; );
 
     

@@ -33,18 +33,15 @@ namespace RenderControl
     SceneControl::SceneManager* m_scnManager;
   
   
-    std::shared_ptr<IShaderProgram> m_material;
     
     // VULKAN VARS
     std::vector< std::shared_ptr<VulkanImageMemoryChunk> > m_attachmentImages;
-    // swapchain images and image views
-    std::vector<VkImage> m_swapChainImages;
+    // swapchain image views
     std::vector<VkImageView> m_swapChainImageViews;
     
     std::shared_ptr<VulkanLogicalDeviceManager> m_logicalDevice;
     VkPhysicalDevice m_physicalDevice;
     VkRenderPass m_renderPass;
-    VkFormat m_swapChainImageFormat;
     
     std::shared_ptr<VulkanMemory> m_memory;
 

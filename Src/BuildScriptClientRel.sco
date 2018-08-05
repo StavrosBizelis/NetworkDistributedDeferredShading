@@ -5,7 +5,7 @@ import os
 env=Environment( ENV = {'PATH' : os.environ['PATH']}, TARGET_ARCH='x86' )
 
 # here we add the include folders
-env.Append(CCFLAGS='/DWIN32 /Zi /Gm /GR /EHsc /DNDEBUG /MT /O2 -D_WIN32_WINNT=0x0601 /I. /I"C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include" /I"C:\\VulkanSDK\\1.0.57.0\\Include" /I"../Include" /I"../Impt/"')
+env.Append(CCFLAGS='/DWIN32 /Zi /Gm /GR /EHsc /DNDEBUG /MT /Oi /Ot /Oy /Ob2 /Gs4096 /GF /Gy /GS- -D_WIN32_WINNT=0x0601 /I. /I"C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include" /I"C:\\VulkanSDK\\1.0.57.0\\Include" /I"../Include" /I"../Impt/"')
 # remember to change this for the various projects to the name you want
 env.Append(LINKFLAGS=' /PDB:NDDSClient.pdb')
 # in here we add the library folders

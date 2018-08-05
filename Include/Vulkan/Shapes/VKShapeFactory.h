@@ -44,21 +44,25 @@ public:
     std::array<VkVertexInputAttributeDescription, 4> l_attributeDescriptions = {};
     
     // pos
+    l_attributeDescriptions[0] = {};
     l_attributeDescriptions[0].binding = 0;
     l_attributeDescriptions[0].location = 0;
     l_attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
     l_attributeDescriptions[0].offset = offsetof(struct Vertex, m_pos);
     // texture coordinates
+    l_attributeDescriptions[1] = {};
     l_attributeDescriptions[1].binding = 0;
     l_attributeDescriptions[1].location = 1;
     l_attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
     l_attributeDescriptions[1].offset = offsetof(struct Vertex, m_tex);
     // normals
+    l_attributeDescriptions[2] = {};
     l_attributeDescriptions[2].binding = 0;
     l_attributeDescriptions[2].location = 2;
     l_attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
     l_attributeDescriptions[2].offset = offsetof(struct Vertex, m_normal);  
     // tangents
+    l_attributeDescriptions[3] = {};
     l_attributeDescriptions[3].binding = 0;
     l_attributeDescriptions[3].location = 3;
     l_attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
