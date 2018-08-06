@@ -26,6 +26,7 @@ ServerApp::ServerApp(const glm::vec2& a_dimensions, const ImplTech& a_implTech, 
   : m_appActive(true), m_elapsedTime(0), m_dt(0), m_frameCount(0), m_dimensions(a_dimensions), m_pHighResolutionTimer(nullptr), m_graphics(nullptr), m_serverCtrl(50001), m_implTech(a_implTech),
     m_clientsCount(a_clientsCount)
 {
+  m_clientsToCompleteFrame = 0;
   m_textureData = new char[m_dimensions.x * m_dimensions.y  * 4];
 }
 
@@ -215,7 +216,8 @@ ServerApp::Update()
   // 6) SERVER RENDERS THE RESULT ON SCREEN
   
   // SERVER SENDS SCENE UPDATE MESSAGE
-  
+  if( m_clientsToCompleteFrame == 0)
+    m_clientsToCompleteFrame = m_clientsCount;
   
   m_serverCtrl.Update();
   
@@ -232,6 +234,7 @@ ServerApp::Update()
     // IFDBG( std::cout << "Received Message of type" << *l_msg << std::endl; );
     if( l_msg->GetType() == Network::MsgType::CLNT_RENDER_RESULT )
     {
+      --m_clientsToCompleteFrame;
       uint32_t l_textureSize;
       glm::vec2 l_resolution;
       unsigned int l_colourType;
@@ -262,11 +265,8 @@ ServerApp::Update()
   // we remove this - find a better way
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	if (m_elapsedTime > 30)
-  {
+	if (m_clientsToCompleteFrame == 0)
     UpdateScene();
-    m_elapsedTime = 0;
-  }  
   // Now we want to subtract the current time by the last time that was stored
 	// to see if the time elapsed has been over a second, which means we found our FPS.
 	if (m_elapsedTime > 1000)
@@ -505,7 +505,7 @@ ServerApp::InitialiseScene()
   m_lightsToTransform.push_back(l_lightTransform);
   
   // point lights
-  for( int i = 0; i < 75; ++i)
+  for( int i = 0; i < 120; ++i)
   {
     ++m_nextID;
     
