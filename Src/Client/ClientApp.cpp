@@ -349,7 +349,7 @@ ClientApp::Update()
 	// to see if the time elapsed has been over a second, which means we found our FPS.
 	if (m_elapsedTime > 1000)
   {
-		printf( "FPS: %f\n", (m_frameCount*1000)/m_elapsedTime );
+		printf( "%f\n", (m_frameCount*1000)/m_elapsedTime );
 		m_elapsedTime = 0;
 		// Reset the frames per second
 		m_frameCount = 0;

@@ -16,15 +16,18 @@
 
 #include <vulkan/vulkan.h>
 
+#include "Server/SceneOne.h"
+#include "Server/SceneTwo.h"
+
 
 /***********************************************************************
  *  Method: ServerApp::ServerApp
  *  Params: 
  * Effects: 
  ***********************************************************************/
-ServerApp::ServerApp(const glm::vec2& a_dimensions, const ImplTech& a_implTech, const unsigned int& a_clientsCount)
-  : m_appActive(true), m_elapsedTime(0), m_dt(0), m_frameCount(0), m_dimensions(a_dimensions), m_pHighResolutionTimer(nullptr), m_graphics(nullptr), m_serverCtrl(50001), m_implTech(a_implTech),
-    m_clientsCount(a_clientsCount)
+ServerApp::ServerApp(const glm::vec2& a_dimensions, const unsigned int& a_port, const ImplTech& a_implTech, const unsigned int& a_clientsCount, const unsigned int& a_testIndex)
+  : m_appActive(true), m_elapsedTime(0), m_dt(0), m_frameCount(0), m_dimensions(a_dimensions), m_pHighResolutionTimer(nullptr), m_graphics(nullptr), m_serverCtrl(a_port), m_implTech(a_implTech),
+    m_clientsCount(a_clientsCount), m_testIndex(a_testIndex)
 {
   m_textureData = new char[m_dimensions.x * m_dimensions.y  * 4];
 }
@@ -273,7 +276,7 @@ ServerApp::Update()
 	// to see if the time elapsed has been over a second, which means we found our FPS.
 	if (m_elapsedTime > 1000)
   {
-		printf( "FPS: %f\n", (m_frameCount*1000)/m_elapsedTime );
+		printf( "%f\n", (m_frameCount*1000)/m_elapsedTime );
 		m_elapsedTime = 0;
 		// Reset the frames per second
 		m_frameCount = 0;
@@ -288,28 +291,7 @@ ServerApp::Update()
 void
 ServerApp::UpdateScene()
 {
-  static float l_y = 0;
-
-  Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
-  // if( l_y++ > 360 )
-    // l_y = 0 ;
-  // Network::ObjTransformInfo l_asteroidStartTransform;
-  // l_asteroidStartTransform.m_id = 2;
-  // l_asteroidStartTransform.m_transformType = Network::ObjectTransformType::OBJ_ROT;
-  // l_asteroidStartTransform.x = 0;
-  // l_asteroidStartTransform.y = l_y;
-  // l_asteroidStartTransform.z = 0;
-  
-
-  l_msg->CreateSceneUpdateMsg(
-  // {glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
-  {m_camera->GetCamera()->GetPosition(), m_camera->GetCamera()->GetView(), m_camera->GetCamera()->GetUpVector() },
-  // {}, {}, {l_asteroidStartTransform}, {}, {}, {}, {});
-  {}, {}, {}, {}, {}, {}, {});
-
-  
-  for( std::map<std::shared_ptr<asio::ip::tcp::socket>, unsigned int>::iterator l_iter = m_clients.begin(); l_iter != m_clients.end(); ++l_iter )
-    m_serverCtrl.PushMsg(l_iter->first, l_msg);
+  m_sceneController->Update(m_dt);
 }
 
 /***********************************************************************
@@ -417,258 +399,10 @@ ServerApp::Initialise()
   m_camera->SetPos( glm::vec3(0,0,0) );
   IFDBG( std::cout << "Camera ready." << std::endl; );
   
-  InitialiseScene();
+  
+  if( m_testIndex == 0)
+    m_sceneController = std::make_shared<SceneOne>(m_serverCtrl, m_graphics, l_sockets, m_camera);
+  else 
+    m_sceneController = std::make_shared<SceneTwo>(m_serverCtrl, m_graphics, l_sockets, m_camera);
+  m_sceneController->Init();
 }
-
-
-void 
-ServerApp::InitialiseScene()
-{
-  unsigned int m_nextID = 1;
-
-
-  std::vector<Network::ObjAddInfo> m_objectsToAdd;
-  std::vector<Network::ObjTransformInfo> m_objectsToTransform;
-  
-  std::vector<Network::ObjAddInfo> m_lightsToAdd;
-  std::vector<Network::ObjTransformInfo> m_lightsToTransform;
-  
-  
-  
-  Network::ObjAddInfo l_dragon;
-  l_dragon.m_id = m_nextID;
-  l_dragon.m_objType = Network::ObjectType::MESH;
-  l_dragon.m_materialFlags = RenderControl::GeometryPassMaterialFlags::SIMPLE_GEOMETRY;
-  l_dragon.m_meshPath = std::string("../Assets/Models/stanford_dragon/dragon.obj");
-  m_objectsToAdd.push_back(l_dragon);
-  
-  
-  Network::ObjTransformInfo l_dragTrans;
-  l_dragTrans.m_id = m_nextID;
-  l_dragTrans.m_transformType = Network::ObjectTransformType::OBJ_POS;
-  l_dragTrans.x = 0;
-  l_dragTrans.y = 0;
-  l_dragTrans.z = -10;
-  m_objectsToTransform.push_back(l_dragTrans);
-  
-  ++m_nextID;
-  Network::ObjAddInfo l_baseCube;
-  l_baseCube.m_id = m_nextID;
-  l_baseCube.m_objType = Network::ObjectType::CUBE;
-  l_baseCube.m_materialFlags = RenderControl::GeometryPassMaterialFlags::SIMPLE_GEOMETRY;
-  m_objectsToAdd.push_back(l_baseCube);
-  
-  
-  Network::ObjTransformInfo l_cubeTrans;
-  l_cubeTrans.m_id = m_nextID;
-  l_cubeTrans.m_transformType = Network::ObjectTransformType::OBJ_POS;
-  l_cubeTrans.x = 0;
-  l_cubeTrans.y = -10;
-  l_cubeTrans.z = 0;
-  m_objectsToTransform.push_back(l_cubeTrans);
-  
-  
-  l_cubeTrans.m_id = m_nextID;
-  l_cubeTrans.m_transformType = Network::ObjectTransformType::OBJ_SCALE;
-  l_cubeTrans.x = 1000;
-  l_cubeTrans.y = 20;
-  l_cubeTrans.z = 1000;
-  m_objectsToTransform.push_back(l_cubeTrans);
-  
-  
-  ++m_nextID; // 3
-  // directional light
-  Network::ObjAddInfo l_light;
-  l_light.m_id = m_nextID;
-  l_light.m_lightFlags = RenderControl::LightTypeFlags::DIRECTIONAL_LIGHT;
-  m_lightsToAdd.push_back(l_light);
-  
-  
-  Network::ObjTransformInfo l_lightTransform;
-  l_lightTransform.m_id = m_nextID;
-  l_lightTransform.m_transformType = Network::ObjectTransformType::LGHT_DIFFUSE;
-  l_lightTransform.x = 0.1;
-  l_lightTransform.y = 0.1;
-  l_lightTransform.z = 0.1;
-  m_lightsToTransform.push_back(l_lightTransform);
-  
-  l_lightTransform.m_id = m_nextID;
-  l_lightTransform.m_transformType = Network::ObjectTransformType::LGHT_AMBIENT;
-  l_lightTransform.x = 0.02;
-  l_lightTransform.y = 0.02;
-  l_lightTransform.z = 0.02;
-  m_lightsToTransform.push_back(l_lightTransform);
-  
-  l_lightTransform.m_id = m_nextID;
-  l_lightTransform.m_transformType = Network::ObjectTransformType::OBJ_ROT;
-  l_lightTransform.x = 30;
-  l_lightTransform.y = 0;
-  l_lightTransform.z = 0;
-  m_lightsToTransform.push_back(l_lightTransform);
-  
-  // point lights
-  for( int i = 0; i < 120; ++i)
-  {
-    ++m_nextID;
-    
-    l_light.m_id = m_nextID;
-    l_light.m_lightFlags = RenderControl::LightTypeFlags::POINT_LIGHT;
-    m_lightsToAdd.push_back(l_light);
-    
-    
-    l_lightTransform.m_id = m_nextID;
-    l_lightTransform.m_transformType = Network::ObjectTransformType::LGHT_DIFFUSE;
-    l_lightTransform.x = (double)rand() / RAND_MAX;
-    l_lightTransform.y = (double)rand() / RAND_MAX;
-    l_lightTransform.z = (double)rand() / RAND_MAX;
-    m_lightsToTransform.push_back(l_lightTransform);
-    
-    
-    l_lightTransform.m_id = m_nextID;
-    l_lightTransform.m_transformType = Network::ObjectTransformType::OBJ_POS;
-    l_lightTransform.x = rand() % 20 + 1 - 10;
-    l_lightTransform.y = rand() % 8 + 1;
-    l_lightTransform.z = rand() % 12 + 1 - 6 - 10;
-    m_lightsToTransform.push_back(l_lightTransform);
-  }
-  
-  
-  Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
-  l_msg->CreateSceneUpdateMsg(
-  {glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
-   m_objectsToAdd, {}, m_objectsToTransform, {}, 
-   m_lightsToAdd, {}, m_lightsToTransform );
-
-  
-
-  for( std::map<std::shared_ptr<asio::ip::tcp::socket>, unsigned int>::iterator l_iter = m_clients.begin(); l_iter != m_clients.end(); ++l_iter )
-    m_serverCtrl.PushMsg(l_iter->first, l_msg);
-  
-  
-  
-  
-
-  
-  
-  
-  // // asteroid
-  // Network::ObjAddInfo l_asteroid;
-  // l_asteroid.m_id = 2;
-  // l_asteroid.m_objType = Network::ObjectType::MESH;
-  // l_asteroid.m_materialFlags = RenderControl::GeometryPassMaterialFlags::DIFFUSE_MAP;
-  // l_asteroid.m_meshPath = std::string("../Assets/Models/Asteroid/asteroid.obj");
-  
-  // Network::ObjTransformInfo l_asteroidStartTransform;
-  // l_asteroidStartTransform.m_id = 2;
-  // l_asteroidStartTransform.m_transformType = Network::ObjectTransformType::OBJ_POS;
-  // l_asteroidStartTransform.x = 0;
-  // l_asteroidStartTransform.y = 0;
-  // l_asteroidStartTransform.z = -10;
-  
-  // Network::TextureChangeInfo l_asteroidText;
-  // l_asteroidText.m_id = 2;
-  // l_asteroidText.m_textureLayer = 0;
-  // l_asteroidText.m_cubeText = false;
-  // l_asteroidText.m_path[0] = std::string("../Assets/Models/Asteroid/diffuse.png");
-  
-
-  // Network::ObjAddInfo l_asteroid2;
-  // l_asteroid2.m_id = 1;
-  // l_asteroid2.m_objType = Network::ObjectType::MESH;
-  // l_asteroid2.m_materialFlags = RenderControl::GeometryPassMaterialFlags::DIFFUSE_MAP;
-  // l_asteroid2.m_meshPath = std::string("../Assets/Models/Asteroid/asteroid.obj");
-  
-  // Network::ObjTransformInfo l_asteroidStartTransform2;
-  // l_asteroidStartTransform2.m_id = 1;
-  // l_asteroidStartTransform2.m_transformType = Network::ObjectTransformType::OBJ_POS;
-  // l_asteroidStartTransform2.x = 3;
-  // l_asteroidStartTransform2.y = 0;
-  // l_asteroidStartTransform2.z = -13;
-  
-  // Network::TextureChangeInfo l_asteroidText2;
-  // l_asteroidText2.m_id = 1;
-  // l_asteroidText2.m_textureLayer = 0;
-  // l_asteroidText2.m_cubeText = false;
-  // l_asteroidText2.m_path[0] = std::string("../Assets/Models/Asteroid/diffuse.png");
-  
-  
-  
-  // // Network::ObjAddInfo l_asteroid;
-  // // l_asteroid.m_id = 5;
-  // // l_asteroid.m_objType = Network::ObjectType::MESH;
-  // // l_asteroid.m_materialFlags = RenderControl::GeometryPassMaterialFlags::DIFFUSE_MAP;
-  // // l_asteroid.m_meshPath = std::string("../Assets/Models/sponza/sponza.obj");
-
-  // // Network::ObjTransformInfo l_asteroidStartTransform;
-  // // l_asteroidStartTransform.m_id = 5;
-  // // l_asteroidStartTransform.m_transformType = Network::ObjectTransformType::OBJ_POS;
-  // // l_asteroidStartTransform.x = 0;
-  // // l_asteroidStartTransform.y = 0;
-  // // l_asteroidStartTransform.z = -10;
-
-  // // Network::TextureChangeInfo l_asteroidText;
-  // // l_asteroidText.m_id = 5;
-  // // l_asteroidText.m_textureLayer = 0;
-  // // l_asteroidText.m_cubeText = false;
-  // // l_asteroidText.m_path[0] = std::string("../Assets/Models/sponza/textures/sponza_fabric_green_diff.tga");
-  
-  
-  
-  
-  
-  // Network::ObjAddInfo l_light;
-  // l_light.m_id = 3;
-  // l_light.m_lightFlags = RenderControl::LightTypeFlags::DIRECTIONAL_LIGHT;
-
-  // Network::ObjTransformInfo l_lightTransform1;
-  // l_lightTransform1.m_id = 3;
-  // l_lightTransform1.m_transformType = Network::ObjectTransformType::LGHT_DIFFUSE;
-  // l_lightTransform1.x = 0;
-  // l_lightTransform1.y = 0;
-  // l_lightTransform1.z = 0;
-  
-  // Network::ObjTransformInfo l_lightTransform2;
-  // l_lightTransform2.m_id = 3;
-  // l_lightTransform2.m_transformType = Network::ObjectTransformType::OBJ_ROT;
-  // l_lightTransform2.x = 140;
-  // l_lightTransform2.y = 0;
-  // l_lightTransform2.z = 0;
-
-  
-  // Network::ObjAddInfo l_light2;
-  // l_light2.m_id = 4;
-  // l_light2.m_lightFlags = RenderControl::LightTypeFlags::POINT_LIGHT;
-
-  // Network::ObjTransformInfo l_lightTransform3;
-  // l_lightTransform3.m_id = 4;
-  // l_lightTransform3.m_transformType = Network::ObjectTransformType::LGHT_DIFFUSE;
-  // l_lightTransform3.x = 0;
-  // l_lightTransform3.y = 50;
-  // l_lightTransform3.z = 0;
-
-
-  // Network::ObjTransformInfo l_lightTransform4;
-  // l_lightTransform4.m_id = 4;
-  // l_lightTransform4.m_transformType = Network::ObjectTransformType::OBJ_POS;
-  // l_lightTransform4.x = 0;
-  // l_lightTransform4.y = 0;
-  // l_lightTransform4.z = 0;
-  
-  
-  
-  
-  // Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
-  // l_msg->CreateSceneUpdateMsg(
-  // {glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0) },
-  // // {l_sky, l_asteroid}, {}, {}, {l_skyText, l_asteroidText}, {}, {}, {});
-  // // {l_sky}, {}, {}, {l_skyText}, {}, {}, {});
-  // {l_asteroid,l_asteroid2}, {}, {l_asteroidStartTransform,l_asteroidStartTransform2}, {l_asteroidText,l_asteroidText2}, {l_light,l_light2}, {}, {l_lightTransform1, l_lightTransform2, l_lightTransform3, l_lightTransform4});
-
-
-  // for( std::map<std::shared_ptr<asio::ip::tcp::socket>, unsigned int>::iterator l_iter = m_clients.begin(); l_iter != m_clients.end(); ++l_iter )
-    // m_serverCtrl.PushMsg(l_iter->first, l_msg);
-  
-}
-
-
-

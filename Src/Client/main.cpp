@@ -10,33 +10,18 @@
 #include <windows.h>
 #include "Client/ClientApp.h"
 #include "Common/Core/Gamewindow.h"
-// int main(int argc, const char * argv[] ) 
-// {
-
-
-  // ClientApp l_app("localhost", 50000);
-  // l_app.Initialise();
-  
-  // for(;;)
-  // {
-    // l_app.Update();
-  // }
- 
-  
-  // l_gameWindow.Deinit();
-  // system("pause");
-  // return 0;
-
-// }
+#include "Common/Core/MyUtilities.h"
+#include <memory>
+#include <string>
 
 
 
-ClientApp g_app("192.168.1.2", 50001, ImplTech::OPENGL);
-// ClientApp g_app("localhost", 50001, ImplTech::OPENGL );
+
+std::shared_ptr<ClientApp> g_app;
 
 LRESULT CALLBACK WinProc(HWND window, UINT message, WPARAM w_param, LPARAM l_param)
 {
-  return g_app.ProcessEvents(window, message, w_param, l_param);
+  return g_app->ProcessEvents(window, message, w_param, l_param);
 }
 
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE, PSTR, int) 
@@ -44,7 +29,22 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE, PSTR, int)
   // create a console to print program output
   AllocConsole();
   freopen("CONOUT$", "w", stdout);
-  g_app.SetHinstance(hinstance); 
   
-  return g_app.Execute();
+  
+  
+  
+  
+  std::vector<std::string> l_setup = ReadFileLines("../Assets/ClientConfiguration.config");
+  std::string l_ip;
+  unsigned int l_port;
+  unsigned int l_numberOfClients;
+  ImplTech l_implTech;
+  glm::vec2 l_resolution;
+  unsigned int l_testIndex;
+  DecodeConfigFile(l_setup, l_ip, l_port, l_numberOfClients, l_implTech, l_resolution, l_testIndex);
+  
+  g_app = std::make_shared<ClientApp>(l_ip, l_port, l_implTech);
+  g_app->SetHinstance(hinstance); 
+  
+  return g_app->Execute();
 }

@@ -104,3 +104,139 @@ std::vector<char> ReadFile(const std::string& filename)
 
   return buffer;
 }
+
+std::vector<std::string> ReadFileLines(const std::string& filename)
+{
+  std::vector<std::string> l_toReturn;
+  std::ifstream l_file(filename);
+  if (l_file.is_open())
+  {
+    std::string l_line;
+    while ( std::getline (l_file,l_line) )
+    {
+      l_toReturn.push_back(l_line);
+    }
+    l_file.close();
+  }
+  return l_toReturn;
+}
+
+
+void DecodeConfigFile(const std::vector<std::string>& a_fileLines, std::string& a_ip, unsigned int& a_port, unsigned int& a_numberOfClients, ImplTech& a_implTech, glm::vec2& a_resolution, unsigned int& a_testIndex)
+{
+  a_ip = "localhost";
+  a_port = 50001;
+  a_numberOfClients = 2;
+  a_implTech = ImplTech::VULKAN;
+  a_resolution = glm::vec2(680, 420);
+  a_testIndex = 0;
+  
+    unsigned int l_currLine = 0;
+  // load ip
+  bool l_valueSet = false;
+  while( !l_valueSet && l_currLine < a_fileLines.size() )  
+  {
+    if( a_fileLines[l_currLine].size() > 0 )
+      if( a_fileLines[l_currLine].find("#") == std::string::npos )
+      {
+        a_ip = a_fileLines[l_currLine];
+        l_valueSet = true;
+      }
+    ++l_currLine;
+  }
+  // port
+  l_valueSet = false;
+  while( !l_valueSet && l_currLine < a_fileLines.size() )  
+  {
+    if( a_fileLines[l_currLine].size() > 0 )
+      if( a_fileLines[l_currLine].find("#") == std::string::npos )
+      {
+        a_port = std::stoi( a_fileLines[l_currLine] );  
+        l_valueSet = true;
+      }      
+    ++l_currLine;
+  }
+  
+  // a_numberOfClients
+  l_valueSet = false;
+  while( !l_valueSet && l_currLine < a_fileLines.size() )  
+  {
+    if( a_fileLines[l_currLine].size() > 0 )
+      if( a_fileLines[l_currLine].find("#") == std::string::npos )
+      {
+        a_numberOfClients = std::stoi( a_fileLines[l_currLine] );  
+        l_valueSet = true;
+      }      
+    ++l_currLine;
+  }
+  
+  // a_implTech
+  l_valueSet = false;
+  while( !l_valueSet && l_currLine < a_fileLines.size() )  
+  {
+    if( a_fileLines[l_currLine].size() > 0 )
+      if( a_fileLines[l_currLine].find("#") == std::string::npos )
+      {
+        if( a_fileLines[l_currLine].find("VULKAN") != std::string::npos )
+          a_implTech = ImplTech::VULKAN;
+        else if( a_fileLines[l_currLine].find("OPENGL") != std::string::npos )
+          a_implTech = ImplTech::OPENGL;
+        
+        l_valueSet = true;
+      }      
+    ++l_currLine;
+  }
+  
+  // a_resolution
+  l_valueSet = false;
+  while( !l_valueSet && l_currLine < a_fileLines.size() )  
+  {
+    if( a_fileLines[l_currLine].size() > 0 )
+      if( a_fileLines[l_currLine].find("#") == std::string::npos )
+      {
+        std::size_t l_spacePos = a_fileLines[l_currLine].find(" ");
+        if( l_spacePos != std::string::npos )
+        {
+          std::string l_width = a_fileLines[l_currLine].substr(0,l_spacePos);
+          std::string l_height = a_fileLines[l_currLine].substr(l_spacePos);
+          
+          a_resolution = glm::vec2(std::stoi( l_width ), std::stoi( l_height ) );
+        }
+        
+        l_valueSet = true;
+      }      
+    ++l_currLine;
+  }
+  
+  
+  // a_testIndex
+  l_valueSet = false;
+  while( !l_valueSet && l_currLine < a_fileLines.size() )  
+  {
+    if( a_fileLines[l_currLine].size() > 0 )
+      if( a_fileLines[l_currLine].find("#") == std::string::npos )
+      {
+        a_testIndex = std::stoi( a_fileLines[l_currLine] );  
+        l_valueSet = true;
+      }      
+    ++l_currLine;
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

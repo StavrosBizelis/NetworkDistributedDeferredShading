@@ -41,6 +41,7 @@ Vulkan/SceneControl/VKSceneManager.cpp Vulkan/SceneControl/VKPointLightSceneNode
 Vulkan/VKGraphicsEngine.cpp \
 \
 Server/main.cpp Server/ServerApp.cpp Server/ServerControl.cpp \
+Server/SceneOne.cpp Server/SceneTwo.cpp \
 \
 ../Impt/lz4/include/lz4.c')
 

@@ -11,10 +11,12 @@
 #include "Common/RenderControl/Camera.h"
 #include "Common/SceneControl/CameraSceneNode.h"
 
+#include "Server/IServerSceneController.h"
+
 class ServerApp
 {
 public:
-  ServerApp(const glm::vec2& a_dimensions, const ImplTech& a_implTech = ImplTech::OPENGL, const unsigned int& a_clientsCount = 1);
+  ServerApp(const glm::vec2& a_dimensions, const unsigned int& a_port, const ImplTech& a_implTech = ImplTech::OPENGL, const unsigned int& a_clientsCount = 1, const unsigned int& a_testIndex = 0);
   ~ServerApp();
   
   
@@ -38,6 +40,7 @@ private:
   AGraphicsEngine* m_graphics;
   ImplTech m_implTech;
   unsigned int m_clientsCount;
+  unsigned int m_testIndex;
   std::set<std::shared_ptr<asio::ip::tcp::socket> > m_sockets;
   std::set<std::shared_ptr<asio::ip::tcp::socket> > m_socketsToCompleteFrame;
   
@@ -47,9 +50,11 @@ private:
   
   SceneControl::CameraSceneNode* m_camera; /// use this camera in order to get updated movement values to send to the clients
   
+  
+  std::shared_ptr<IServerSceneController> m_sceneController;
+  
   void Update();
   void UpdateScene();
   void Initialise();
-  void InitialiseScene();
 
 };
