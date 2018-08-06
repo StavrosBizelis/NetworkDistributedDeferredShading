@@ -26,7 +26,6 @@ ServerApp::ServerApp(const glm::vec2& a_dimensions, const ImplTech& a_implTech, 
   : m_appActive(true), m_elapsedTime(0), m_dt(0), m_frameCount(0), m_dimensions(a_dimensions), m_pHighResolutionTimer(nullptr), m_graphics(nullptr), m_serverCtrl(50001), m_implTech(a_implTech),
     m_clientsCount(a_clientsCount)
 {
-  m_clientsToCompleteFrame = 0;
   m_textureData = new char[m_dimensions.x * m_dimensions.y  * 4];
 }
 
@@ -216,10 +215,11 @@ ServerApp::Update()
   // 6) SERVER RENDERS THE RESULT ON SCREEN
   
   // SERVER SENDS SCENE UPDATE MESSAGE
-  if( m_clientsToCompleteFrame == 0)
-    m_clientsToCompleteFrame = m_clientsCount;
   
   m_serverCtrl.Update();
+  
+  if( m_socketsToCompleteFrame.size() == 0 )
+    m_socketsToCompleteFrame = m_sockets;
   
   const std::vector< RenderControl::CompositionEntity >& l_compEntity = m_graphics->GetCompositionPass()->GetSubpartsSettings();
   std::vector< SceneControl::MeshSceneNode* >& l_rects = m_graphics->GetCompositionPass()->GetSubpartsRects();
@@ -227,14 +227,14 @@ ServerApp::Update()
   std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<Network::NetworkMsgPtr> > l_msgs = m_serverCtrl.GetMsgs();
   for( std::map< std::shared_ptr<asio::ip::tcp::socket>, std::vector<Network::NetworkMsgPtr> >::iterator l_iter = l_msgs.begin(); l_iter != l_msgs.end(); ++l_iter)
   {
-    
     // for each socket
     // check the last message
     Network::NetworkMsgPtr l_msg = l_iter->second.back();
     // IFDBG( std::cout << "Received Message of type" << *l_msg << std::endl; );
     if( l_msg->GetType() == Network::MsgType::CLNT_RENDER_RESULT )
     {
-      --m_clientsToCompleteFrame;
+      
+      m_socketsToCompleteFrame.erase(l_iter->first);
       uint32_t l_textureSize;
       glm::vec2 l_resolution;
       unsigned int l_colourType;
@@ -265,8 +265,10 @@ ServerApp::Update()
   // we remove this - find a better way
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	if (m_clientsToCompleteFrame == 0)
+	if (m_socketsToCompleteFrame.size() == 0)
+  {
     UpdateScene();
+  }
   // Now we want to subtract the current time by the last time that was stored
 	// to see if the time elapsed has been over a second, which means we found our FPS.
 	if (m_elapsedTime > 1000)
@@ -339,8 +341,8 @@ ServerApp::Initialise()
   while( m_serverCtrl.GetConnectedClientsCount() < m_clientsCount )
     m_serverCtrl.Update();
 
-  m_serverCtrl.StopAcceptingConnections();
-  
+  std::vector<std::shared_ptr<asio::ip::tcp::socket> > l_sockets = m_serverCtrl.StopAcceptingConnections();
+  m_sockets = std::set<std::shared_ptr<asio::ip::tcp::socket> >(l_sockets.begin(), l_sockets.end());
   
 
   m_serverCtrl.StartClientCommunication();

@@ -22,9 +22,7 @@ ClientApp::ClientApp( const std::string &a_hostName, const unsigned int &a_hostP
   // :m_implTech(a_implTech), m_graphics(nullptr), m_dt(0)
   :m_implTech(a_implTech), m_client(nullptr), m_graphics(nullptr), m_dt(0)
 {
-  m_hasUpdated[0] = true;
-  m_hasUpdated[1] = true;
-  m_hasUpdated[2] = false;
+  m_hasUpdated = true;
   
   m_client = new Network::ClientControl(a_hostName, a_hostPort);
 }
@@ -278,13 +276,13 @@ ClientApp::Update()
   m_client->Update();
   std::vector<Network::NetworkMsgPtr> l_msgs = m_client->GetMsgs();
   // update scene as appropriate
-  m_hasUpdated[ m_hasUpdated[2] ] = false;
+  m_hasUpdated = false;
       
   for( std::vector<Network::NetworkMsgPtr>::const_iterator l_iter = l_msgs.cbegin(); l_iter != l_msgs.cend(); ++l_iter)
   {
     if( (*l_iter)->GetType() == Network::MsgType::SRV_SCENE_UPDATE )
     {
-      m_hasUpdated[ m_hasUpdated[2] ] = true;
+      m_hasUpdated = true;
       (*l_iter)->DeserializeSceneUpdateMsg(m_outCameraSettings, m_outObjsToAdd, m_outObjsToRemove, m_outObjsToTransform,
                                            m_outTextureChange, m_outLightsToAdd, m_outLightsToRemove, m_outLightsToTransform);
       // std::cout << (**l_iter) << std::endl;
@@ -318,7 +316,7 @@ ClientApp::Update()
   
   // CLIENTS RENDER SCENE (GEOMETRY PASS)
   // CLIENTS RENDER LIGHTS
-  if( m_hasUpdated[ !m_hasUpdated[2] ] )
+  if( m_hasUpdated )
   {
     try
     {
@@ -340,7 +338,6 @@ ClientApp::Update()
       m_frameCount++;
     }
   }
-  m_hasUpdated[2] = !m_hasUpdated[2];
   // IFDBG( std::cout << "Send Render Result Update" << std::endl; );
   
   m_dt = m_pHighResolutionTimer->Elapsed();

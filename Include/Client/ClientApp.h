@@ -34,7 +34,7 @@ private:
   std::vector<uint32_t> m_outLightsToRemove;
   std::vector<Network::ObjTransformInfo> m_outLightsToTransform;
 
-  bool m_hasUpdated[3];
+  bool m_hasUpdated;
   
   void Initialise();
   void Update();

@@ -38,7 +38,8 @@ private:
   AGraphicsEngine* m_graphics;
   ImplTech m_implTech;
   unsigned int m_clientsCount;
-  unsigned int m_clientsToCompleteFrame;
+  std::set<std::shared_ptr<asio::ip::tcp::socket> > m_sockets;
+  std::set<std::shared_ptr<asio::ip::tcp::socket> > m_socketsToCompleteFrame;
   
   
   // a preallocated data array for the raw decoded texture that is used to update the composition rectangles
