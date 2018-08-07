@@ -93,8 +93,8 @@ RenderControl::ACompositionPass::UpdateSubpartsSettings()
       m_subpartsSettings[l_index] = std::move(l_entity);
       // set the position and scale of the current block rectangle
       m_subpartRects[l_index]->SetPos( glm::vec3( 
-                                            /*m_resolution.x */ ( (l_currentWidth/2)+l_shiftX),
-                                            /*m_resolution.y */ ( (l_currentHeight/2)+l_shiftY), 1 ) );
+                                            /*m_resolution.x */ ( ((float)l_currentWidth/2.f)+l_shiftX),
+                                            /*m_resolution.y */ ( ((float)l_currentHeight/2.f)+l_shiftY), 1 ) );
       
       m_subpartRects[l_index]->SetScale( glm::vec3(
                                             /*m_resolution.x */ ( (float)l_currentWidth/2.f/*m_resolution.x*/ ), 
