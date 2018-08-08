@@ -201,8 +201,8 @@ bool RenderControl::VKDeferredShadingPass::Init()
   m_uboMemBuffer = m_memory->CreateUniformBuffer( sizeof(VertexViewProjMatrices) );
   m_uboMemBuffer2 = m_memory->CreateUniformBuffer( sizeof(FragLightGlobalVars) );
   
-  std::cout << "m_subpartRects.size() " << m_subpartRects.size() << std::endl;
-  std::cout << "m_pipelines.size() " << m_pipelines.size() << std::endl;
+  // std::cout << "m_subpartRects.size() " << m_subpartRects.size() << std::endl;
+  // std::cout << "m_pipelines.size() " << m_pipelines.size() << std::endl;
   // add the rectancles to the appropriate pipelines
 
 
@@ -700,11 +700,11 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
 {
   VkDescriptorPoolSize l_poolSize1 = {};
   l_poolSize1.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  l_poolSize1.descriptorCount = 512;
+  l_poolSize1.descriptorCount = 2048;
 
   VkDescriptorPoolSize l_poolSize2 = {};
   l_poolSize2.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  l_poolSize2.descriptorCount = 512;
+  l_poolSize2.descriptorCount = 2048;
   
   VkDescriptorPoolSize l_poolSize3 = {};
   l_poolSize3.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
@@ -716,7 +716,7 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
   l_poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   l_poolInfo.poolSizeCount = l_poolSizes.size();
   l_poolInfo.pPoolSizes = l_poolSizes.data();
-  l_poolInfo.maxSets = 256;
+  l_poolInfo.maxSets = 2048;
 
   if (vkCreateDescriptorPool(m_logicalDevice->GetDevice(), &l_poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS) {
     throw std::runtime_error("VKDeferredShadingPass::CreateDescriptorPool() - failed to create descriptor pool!");
@@ -744,7 +744,6 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSet(const std::shared
   if (vkAllocateDescriptorSets(m_logicalDevice->GetDevice(), &allocInfo, &l_descSet ) != VK_SUCCESS) {
     throw std::runtime_error("VKDeferredShadingPass::CreateDescriptorSet() - failed to allocate descriptor sets!");
   }
-  
   // personal ubos here
   std::vector<size_t> l_uboSizes = a_pipeline->GetObjUboSizes();
   std::vector< std::shared_ptr<VulkanMemoryChunk> > l_uboMemBuffer = {nullptr,nullptr};

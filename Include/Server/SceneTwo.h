@@ -7,7 +7,10 @@ class SceneTwo : public IServerSceneController
 {
   protected:
   std::vector<Network::ObjAddInfo> m_objectsToAdd;
+  
   std::vector<Network::ObjTransformInfo> m_objectsToTransform;
+  std::vector<Network::ObjTransformInfo> m_torusesToRotate;
+  std::vector<Network::TextureChangeInfo> m_objectsTextures;
   
   std::vector<Network::ObjAddInfo> m_lightsToAdd;
   std::vector<Network::ObjTransformInfo> m_lightsToTransformPos;

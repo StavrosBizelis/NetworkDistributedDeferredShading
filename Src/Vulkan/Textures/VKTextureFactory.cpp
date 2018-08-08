@@ -43,6 +43,7 @@ VKTextureFactory::GetTexture(std::string a_path)
   
   std::shared_ptr<VKTexture> l_text = std::make_shared<VKTexture>(m_memory);
   l_text->Load(a_path, true);
+  m_textures[a_path] = l_text;
   return l_text;
 }
 

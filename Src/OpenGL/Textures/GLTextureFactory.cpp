@@ -18,6 +18,7 @@ std::shared_ptr<ITexture> GLTextureFactory::GetTexture(std::string a_path)
   
   std::shared_ptr<GLTexture> l_text = std::make_shared<GLTexture>();
   l_text->Load(a_path, true);
+  m_textures[a_path] = l_text;
   return l_text;
 }
 std::shared_ptr<ITexture> GLTextureFactory::GetCubemap(std::string sPositiveX, std::string sNegativeX, std::string sPositiveY, std::string sNegativeY, std::string sPositiveZ, std::string sNegativeZ)

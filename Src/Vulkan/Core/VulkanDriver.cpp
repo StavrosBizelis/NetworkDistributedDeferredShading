@@ -67,8 +67,8 @@ void VulkanDriver::Init(const glm::vec2& a_windowSize )
   m_logicalDeviceMan->Init(m_chosenPhysicalDevice, m_surface, m_physicalDeviceMan.FindQueueFamilies(m_chosenPhysicalDevice, m_surface) , l_features, m_physicalDeviceMan.GetDeviceExtensions());
   // setup memory
   VkDeviceSize l_stagingMemorySize = 1048576 * 200; // 200mb
-  VkDeviceSize l_vertexMemorySize = 1048576 * 40; // 4mb
-  VkDeviceSize l_indexMemorySize = 1048576 * 40; // 4mb
+  VkDeviceSize l_vertexMemorySize = 1048576 * 40; // 40mb
+  VkDeviceSize l_indexMemorySize = 1048576 * 40; // 40mb
   VkDeviceSize l_uniformBufferMemorySize = 1048576 * 30; // 30mb
   VkDeviceSize l_mixBufferMemorySize = 1048576 * 4; // 4mb
   VkDeviceSize l_shaderImagesSize = 1048576 * 200; // 200mb

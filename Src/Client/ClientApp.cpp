@@ -401,6 +401,7 @@ ClientApp::AddObject(const Network::ObjAddInfo& a_info, const std::vector<Networ
   
   if(l_mesh)
   {
+    
     SceneControl::MeshSceneNode* l_meshNode = m_graphics->GetSceneManager()->AddMeshSceneNode( l_mesh );
     if( l_meshNode->SetID(a_info.m_id) )
     {
@@ -411,6 +412,7 @@ ClientApp::AddObject(const Network::ObjAddInfo& a_info, const std::vector<Networ
           TextureChange(*l_textChange);
         }
       m_graphics->GetDeferredRenderPass()->AddRenderable(l_meshNode, (RenderControl::GeometryPassMaterialFlags)(a_info.m_materialFlags));
+
       
 
     }
@@ -420,6 +422,7 @@ ClientApp::AddObject(const Network::ObjAddInfo& a_info, const std::vector<Networ
       l_meshNode->GetRoot()->DetachDescendant(l_meshNode);
     }
   }
+
 }
 
 void 
