@@ -12,28 +12,28 @@ void SceneTwo::Init()
   unsigned int m_nextID = 1;
 
   
-  // Network::ObjAddInfo l_baseCube;
-  // l_baseCube.m_id = m_nextID;
-  // l_baseCube.m_objType = Network::ObjectType::CUBE;
-  // l_baseCube.m_materialFlags = RenderControl::GeometryPassMaterialFlags::SIMPLE_GEOMETRY;
-  // m_objectsToAdd.push_back(l_baseCube);
+  Network::ObjAddInfo l_baseCube;
+  l_baseCube.m_id = m_nextID;
+  l_baseCube.m_objType = Network::ObjectType::CUBE;
+  l_baseCube.m_materialFlags = RenderControl::GeometryPassMaterialFlags::SIMPLE_GEOMETRY;
+  m_objectsToAdd.push_back(l_baseCube);
   
   
-  // Network::ObjTransformInfo l_cubeTrans;
-  // l_cubeTrans.m_id = m_nextID;
-  // l_cubeTrans.m_transformType = Network::ObjectTransformType::OBJ_POS;
-  // l_cubeTrans.x = 0;
-  // l_cubeTrans.y = -10;
-  // l_cubeTrans.z = 0;
-  // m_objectsToTransform.push_back(l_cubeTrans);
+  Network::ObjTransformInfo l_cubeTrans;
+  l_cubeTrans.m_id = m_nextID;
+  l_cubeTrans.m_transformType = Network::ObjectTransformType::OBJ_POS;
+  l_cubeTrans.x = 250;
+  l_cubeTrans.y = -30;
+  l_cubeTrans.z = 250;
+  m_objectsToTransform.push_back(l_cubeTrans);
   
   
-  // l_cubeTrans.m_id = m_nextID;
-  // l_cubeTrans.m_transformType = Network::ObjectTransformType::OBJ_SCALE;
-  // l_cubeTrans.x = 1000;
-  // l_cubeTrans.y = 20;
-  // l_cubeTrans.z = 1000;
-  // m_objectsToTransform.push_back(l_cubeTrans);
+  l_cubeTrans.m_id = m_nextID;
+  l_cubeTrans.m_transformType = Network::ObjectTransformType::OBJ_SCALE;
+  l_cubeTrans.x = 1000;
+  l_cubeTrans.y = 1;
+  l_cubeTrans.z = 1000;
+  m_objectsToTransform.push_back(l_cubeTrans);
   
   
   //  add toruses
@@ -112,6 +112,8 @@ void SceneTwo::Init()
       l_sphereTrans.y = 0;
       l_sphereTrans.z = j * 50;
       m_objectsToTransform.push_back(l_sphereTrans);
+      m_spheresToMove.push_back(l_sphereTrans);
+      
       
       l_sphereTrans.m_id = m_nextID;
       l_sphereTrans.m_transformType = Network::ObjectTransformType::OBJ_ROT;
@@ -119,6 +121,7 @@ void SceneTwo::Init()
       l_sphereTrans.y = 0;
       l_sphereTrans.z = 0;
       m_objectsToTransform.push_back(l_sphereTrans);  
+      m_spheresToRotate.push_back(l_sphereTrans);  
       
       
       l_sphereTrans.m_id = m_nextID;
@@ -200,19 +203,20 @@ void SceneTwo::Init()
     l_lightTransform.m_id = m_nextID;
     l_lightTransform.m_transformType = Network::ObjectTransformType::LGHT_ATTENUATION;
     l_lightTransform.x = (double)0;
-    l_lightTransform.y = (double)0.01;
-    l_lightTransform.z = (double)0.01;
+    l_lightTransform.y = (double)0.001;
+    l_lightTransform.z = (double)0.04;
     m_lightsToTransform.push_back(l_lightTransform);
     
     
     l_lightTransform.m_id = m_nextID;
     l_lightTransform.m_transformType = Network::ObjectTransformType::OBJ_POS;
-    l_lightTransform.x = rand() % 500;
-    l_lightTransform.y = rand() % 2 + 1;
-    l_lightTransform.z = rand() % 500;
+    l_lightTransform.x = rand() % 600 - 100;
+    l_lightTransform.y = rand() % 40 - 20;
+    l_lightTransform.z = rand() % 600 - 100;
     m_lightsToTransform.push_back(l_lightTransform);
     m_lightsToTransformPos.push_back(l_lightTransform);
     m_lightSourceSpeeds.push_back( glm::vec3(0) );
+    m_lightTargets.push_back(glm::vec3( rand() % 500, rand() % 2+1, rand() % 500) );
     // l_offset of light in order not to all be at the center at the same time
     // unsigned int l_offset = rand() % 100;
     // for( unsigned int j = 0; j < l_offset; ++j)
@@ -235,18 +239,68 @@ void SceneTwo::Init()
 
 void SceneTwo::Update(double a_dt)
 {
-  
+  m_elapsedTime += a_dt;
+  if( 10*m_elapsedTime/1000 >= 360 )
+    m_elapsedTime = 0;
   for( unsigned int i = 0; i < m_torusesToRotate.size(); ++i)
-    m_torusesToRotate[i].y += ( (float)a_dt/1000.f ) * 1000;
+    m_torusesToRotate[i].y += ( (float)a_dt/1000.f ) * 10;
   
+  for( unsigned int i = 0; i < m_spheresToRotate.size(); ++i)
+    m_spheresToRotate[i].y -= ( (float)a_dt/1000.f ) * 10;
+
+  
+  float l_toRads = 3.14159265/180;
+  float l_seconds = m_elapsedTime/10;
+  for( unsigned int i = 0; i < m_spheresToMove.size(); ++i)
+  {
+    unsigned int l_offset = (i*360/9);
+    m_spheresToMove[i].y = sin( (l_offset+l_seconds)*l_toRads) * 20;
+  }
+  
+  std::vector<Network::ObjTransformInfo> l_toTrans = m_torusesToRotate;
+  l_toTrans.insert(l_toTrans.end(), m_spheresToRotate.begin(), m_spheresToRotate.end() ); 
+  l_toTrans.insert(l_toTrans.end(), m_spheresToMove.begin(), m_spheresToMove.end() );
+  
+  LightMoveHelper();
   
   Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
 
   l_msg->CreateSceneUpdateMsg(
   {m_camera->GetCamera()->GetPosition(), m_camera->GetCamera()->GetView(), m_camera->GetCamera()->GetUpVector() },
-  {}, {}, m_torusesToRotate, {}, {}, {}, {});
+  {}, {}, l_toTrans, {}, {}, {}, {m_lightsToTransformPos});
 
   
   for( std::vector<std::shared_ptr<asio::ip::tcp::socket> >::iterator l_iter = m_clients.begin(); l_iter != m_clients.end(); ++l_iter )
     m_serverCtrl.PushMsg(*l_iter, l_msg);
+}
+
+
+void SceneTwo::LightMoveHelper()
+{
+  float l_speedMag = 2.f;
+  for( unsigned int i = 0; i < m_lightsToTransformPos.size(); ++i)
+  {
+    glm::vec3 l_currPos( m_lightsToTransformPos[i].x, m_lightsToTransformPos[i].y, m_lightsToTransformPos[i].z);
+    glm::vec3 l_targetPos = m_lightTargets[i];
+    glm::vec3 l_currDir = l_targetPos - l_currPos;
+    
+    
+    while( glm::length( l_currDir ) < l_speedMag )
+    {
+      l_targetPos.x = rand() % 600 - 100;
+      l_targetPos.y = rand() % 40 - 20;
+      l_targetPos.z = rand() % 600 - 100;
+      
+      l_currDir = l_targetPos - l_currPos;
+    }
+    
+    m_lightTargets[i] = l_targetPos;
+    
+    l_currDir = l_speedMag * glm::normalize ( l_currDir  );
+    
+    m_lightsToTransformPos[i].x += l_currDir.x;
+    m_lightsToTransformPos[i].y += l_currDir.y;
+    m_lightsToTransformPos[i].z += l_currDir.z;
+
+  }
 }

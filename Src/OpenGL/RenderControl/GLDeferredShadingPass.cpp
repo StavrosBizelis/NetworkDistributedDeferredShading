@@ -188,7 +188,7 @@ void RenderControl::GLDeferredShadingPass::GeometryPass()
 
 
 
-  glClearColor(1, 0, 0, 1);
+  glClearColor(0, 0, 0, 1);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glDepthMask(GL_TRUE);
   glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);

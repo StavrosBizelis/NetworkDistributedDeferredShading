@@ -31,6 +31,7 @@ private:
   CHighResolutionTimer *m_pHighResolutionTimer;
   double m_dt;  ///< last frame time
   double m_elapsedTime;   ///< used to count frames per second
+  double m_elapsedTime2;   ///< used to consistently update the clients
   unsigned int m_frameCount;
   bool m_appActive;
   glm::vec2 m_dimensions;

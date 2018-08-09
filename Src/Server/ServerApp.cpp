@@ -26,7 +26,7 @@
  * Effects: 
  ***********************************************************************/
 ServerApp::ServerApp(const glm::vec2& a_dimensions, const unsigned int& a_port, const ImplTech& a_implTech, const unsigned int& a_clientsCount, const unsigned int& a_testIndex)
-  : m_appActive(true), m_elapsedTime(0), m_dt(0), m_frameCount(0), m_dimensions(a_dimensions), m_pHighResolutionTimer(nullptr), m_graphics(nullptr), m_serverCtrl(a_port), m_implTech(a_implTech),
+  : m_appActive(true), m_elapsedTime(0), m_elapsedTime2(0), m_dt(0), m_frameCount(0), m_dimensions(a_dimensions), m_pHighResolutionTimer(nullptr), m_graphics(nullptr), m_serverCtrl(a_port), m_implTech(a_implTech),
     m_clientsCount(a_clientsCount), m_testIndex(a_testIndex)
 {
   m_textureData = new char[m_dimensions.x * m_dimensions.y  * 4];
@@ -261,6 +261,7 @@ ServerApp::Update()
   // framerate output
   m_frameCount++;
   m_elapsedTime += m_dt;
+  m_elapsedTime2 += m_dt;
   
   
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -291,7 +292,8 @@ ServerApp::Update()
 void
 ServerApp::UpdateScene()
 {
-  m_sceneController->Update(m_dt);
+  m_sceneController->Update(m_elapsedTime2);
+  m_elapsedTime2 = 0;
 }
 
 /***********************************************************************
