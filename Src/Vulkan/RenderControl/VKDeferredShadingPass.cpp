@@ -400,7 +400,7 @@ void RenderControl::VKDeferredShadingPass::CreateSemaphores()
 void RenderControl::VKDeferredShadingPass::CreateRenderPass()
 {
 
-    // first colour attachment
+  // first colour attachment
   m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R8G8B8A8_UNORM ) );
   m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R16G16B16A16_SFLOAT ) );
   m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R8G8B8A8_UNORM ) );
@@ -935,10 +935,10 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSetDirLight(const std
   std::vector<VkDescriptorImageInfo> l_imageInfo(l_textureCount, {});
   std::vector<VkWriteDescriptorSet> extraDescriptorWrites(l_textureCount, {});
   
-  for( unsigned int i = 0; i < l_textureCount; ++i)
+  for( unsigned int i = 0; i < l_textureCount-1; ++i)
   {  
     l_imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;   // VkImageLayout
-    l_imageInfo[i].imageView = m_attachmentImages[i == 3 ? 4 : i]->m_imageView;  // VkImageView
+    l_imageInfo[i].imageView = m_attachmentImages[i]->m_imageView;  // VkImageView
     
     
     extraDescriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -950,6 +950,20 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorSetDirLight(const std
     extraDescriptorWrites[i].pImageInfo = &l_imageInfo[i];
     l_descriptorSetWrites.push_back(extraDescriptorWrites[i]);
   }
+
+  // extra for depth
+  l_imageInfo.back().imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;   // VkImageLayout
+  l_imageInfo.back().imageView = m_attachmentImages.back()->m_imageView;  // VkImageView
+
+
+  extraDescriptorWrites.back().sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  extraDescriptorWrites.back().dstSet = l_descSet;
+  extraDescriptorWrites.back().dstBinding = l_bindings.back().binding;
+  extraDescriptorWrites.back().dstArrayElement = 0;
+  extraDescriptorWrites.back().descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+  extraDescriptorWrites.back().descriptorCount = 1;
+  extraDescriptorWrites.back().pImageInfo = &l_imageInfo.back();
+  l_descriptorSetWrites.push_back(extraDescriptorWrites.back());
 
   vkUpdateDescriptorSets(m_logicalDevice->GetDevice(), l_descriptorSetWrites.size(), l_descriptorSetWrites.data(), 0, nullptr);
 }
