@@ -399,12 +399,15 @@ void RenderControl::VKDeferredShadingPass::CreateSemaphores()
 
 void RenderControl::VKDeferredShadingPass::CreateRenderPass()
 {
+  m_swapChainImageViews = m_logicalDevice->GetSwapChainImageViews();
+  size_t l_count = m_swapChainImageViews.size();
 
   // first colour attachment
   m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R8G8B8A8_UNORM ) );
   m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R16G16B16A16_SFLOAT ) );
   m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_R8G8B8A8_UNORM ) );
-  m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_B8G8R8A8_UNORM ) );
+  for( unsigned int i = 0; i < l_count; ++i)
+    m_attachmentImages.push_back( m_memory->CreateAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y, VK_FORMAT_B8G8R8A8_UNORM ) );
   m_attachmentImages.push_back( m_memory->CreateStencilDepthAttachmentTexture(m_resolutionPart.x, m_resolutionPart.y ) );
   VkAttachmentDescription colorAttachment = {};
   // colorAttachment.format = m_logicalDevice->GetSwapChainImageFormat();
@@ -453,7 +456,7 @@ void RenderControl::VKDeferredShadingPass::CreateRenderPass()
   
   // stencil depth attachment
   VkAttachmentDescription depthAttachment = {};
-  depthAttachment.format = m_attachmentImages[4]->m_format;
+  depthAttachment.format = m_attachmentImages[3+l_count]->m_format;
   depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -600,12 +603,11 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
   for (size_t i = 0; i < l_count; i++) 
   {
     std::vector<VkImageView> attachments = {
-      // m_swapChainImageViews[i],
       m_attachmentImages[0]->m_imageView,
       m_attachmentImages[1]->m_imageView,
       m_attachmentImages[2]->m_imageView,
-      m_attachmentImages[3]->m_imageView,
-      m_attachmentImages[4]->m_imageView
+      m_attachmentImages[3+i]->m_imageView,
+      m_attachmentImages[3+l_count]->m_imageView
     };
 
     VkFramebufferCreateInfo framebufferInfo = {};
