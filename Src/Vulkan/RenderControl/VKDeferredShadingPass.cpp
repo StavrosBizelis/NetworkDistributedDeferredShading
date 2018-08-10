@@ -341,14 +341,17 @@ bool RenderControl::VKDeferredShadingPass::PackTexture(Network::NetworkMsgPtr& a
 }
 
 
-void RenderControl::VKDeferredShadingPass::VulkanUpdate( char* a_mappedBuffer )
+void RenderControl::VKDeferredShadingPass::VulkanUpdate( std::vector<char>& a_mappedBuffer )
 {
   // copy global camera matrices and screen resolution for lights fragments shaders
   // m_globalsUbo.projMatrix = *m_camera->GetOrthographicProjectionMatrix();
   m_globalsUbo.projMatrix = *m_camera->GetPerspectiveProjectionMatrix();
   m_globalsUbo.viewMatrix = m_camera->GetViewMatrix(); 
   
-  memcpy(a_mappedBuffer+m_uboMemBuffer->GetMemoryOffset(), &m_globalsUbo, sizeof(VertexViewProjMatrices) );
+  if( a_mappedBuffer.size() < m_uboMemBuffer->GetMemoryOffset() + sizeof(VertexViewProjMatrices) )
+      a_mappedBuffer.resize(m_uboMemBuffer->GetMemoryOffset() + sizeof(VertexViewProjMatrices));
+  
+  memcpy(&a_mappedBuffer[0]+m_uboMemBuffer->GetMemoryOffset(), &m_globalsUbo, sizeof(VertexViewProjMatrices) );
   
   glutil::MatrixStack projModelViewMatrixStack;
   projModelViewMatrixStack.SetIdentity();
@@ -361,7 +364,10 @@ void RenderControl::VKDeferredShadingPass::VulkanUpdate( char* a_mappedBuffer )
   m_globalsUbo2.UScreenResDiv = glm::vec4( glm::vec2( glm::vec2(1.0f) / m_resolutionPart ), 0, 1);
   m_globalsUbo2.UScreenResDiv2 = glm::vec4( glm::vec2( glm::vec2(1.0f) / GetResolution() ), m_viewPortSetting.x, m_viewPortSetting.y);
   
-  memcpy(a_mappedBuffer+m_uboMemBuffer2->GetMemoryOffset(), &m_globalsUbo2, sizeof(FragLightGlobalVars) );
+  if( a_mappedBuffer.size() < m_uboMemBuffer2->GetMemoryOffset() + sizeof(FragLightGlobalVars) )
+      a_mappedBuffer.resize(m_uboMemBuffer2->GetMemoryOffset() + sizeof(FragLightGlobalVars));
+  
+  memcpy(&a_mappedBuffer[0]+m_uboMemBuffer2->GetMemoryOffset(), &m_globalsUbo2, sizeof(FragLightGlobalVars) );
   
 }
 

@@ -40,7 +40,7 @@ class VulkanRenderable
   
   std::shared_ptr< std::vector<VulkanRenderable*> > GetUpdateRegistry();
   
-  virtual void VulkanUpdate(char* a_mappedUBO) = 0;
+  virtual void VulkanUpdate(std::vector<char>& a_mappedUBO) = 0;
 };
 
 
@@ -52,7 +52,7 @@ class VulkanMeshRenderable : public VulkanRenderable
   
   VulkanMeshRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry);
     
-  void VulkanUpdate(char* a_mappedUBO);
+  void VulkanUpdate(std::vector<char>& a_mappedUBO);
 };
 
 
@@ -64,7 +64,7 @@ class VulkanDirLightRenderable : public VulkanRenderable
   
   VulkanDirLightRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry);
     
-  void VulkanUpdate(char* a_mappedUBO);
+  void VulkanUpdate(std::vector<char>& a_mappedUBO);
 };
 
 class VulkanPointLightRenderable : public VulkanRenderable
@@ -75,7 +75,7 @@ class VulkanPointLightRenderable : public VulkanRenderable
   
   VulkanPointLightRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry);
     
-  void VulkanUpdate(char* a_mappedUBO);
+  void VulkanUpdate(std::vector<char>& a_mappedUBO);
 };
 
 class VulkanSpotLightRenderable : public VulkanRenderable
@@ -86,5 +86,5 @@ class VulkanSpotLightRenderable : public VulkanRenderable
   
   VulkanSpotLightRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry);
     
-  void VulkanUpdate(char* a_mappedUBO);
+  void VulkanUpdate(std::vector<char>& a_mappedUBO);
 };

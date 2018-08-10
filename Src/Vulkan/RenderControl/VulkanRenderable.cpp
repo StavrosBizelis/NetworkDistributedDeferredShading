@@ -42,17 +42,21 @@ std::shared_ptr< std::vector<VulkanRenderable*> > VulkanRenderable::GetUpdateReg
 VulkanMeshRenderable::VulkanMeshRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry)
   : VulkanRenderable(a_shape, a_updateRegistry){}
   
-void VulkanMeshRenderable::VulkanUpdate(char* a_mappedUBO)
+void VulkanMeshRenderable::VulkanUpdate(std::vector<char>& a_mappedUBO)
 {
   if( m_uniformBuffer )
   {
+    if( a_mappedUBO.size() < m_uniformBuffer->GetMemoryOffset() + sizeof(VertexObjectMatrices) )
+      a_mappedUBO.resize(m_uniformBuffer->GetMemoryOffset() + sizeof(VertexObjectMatrices));
     // map the model matrix
-    memcpy(a_mappedUBO+m_uniformBuffer->GetMemoryOffset(), &m_lastAbsoluteTrans, sizeof(VertexObjectMatrices));
+    memcpy(&a_mappedUBO[0]+m_uniformBuffer->GetMemoryOffset(), &m_lastAbsoluteTrans, sizeof(VertexObjectMatrices));
   }
   if( m_uniformBuffer2 )
   {
+    if( a_mappedUBO.size() < m_uniformBuffer2->GetMemoryOffset() + sizeof(FragMaterialData) )
+      a_mappedUBO.resize(m_uniformBuffer2->GetMemoryOffset() + sizeof(FragMaterialData));
     // map the material data
-    memcpy(a_mappedUBO+m_uniformBuffer2->GetMemoryOffset(), &m_ubo2, sizeof(FragMaterialData));
+    memcpy(&a_mappedUBO[0]+m_uniformBuffer2->GetMemoryOffset(), &m_ubo2, sizeof(FragMaterialData));
   }
 }
 
@@ -60,17 +64,21 @@ void VulkanMeshRenderable::VulkanUpdate(char* a_mappedUBO)
 VulkanDirLightRenderable::VulkanDirLightRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry)
   : VulkanRenderable(a_shape, a_updateRegistry){}
   
-void VulkanDirLightRenderable::VulkanUpdate(char* a_mappedUBO)
+void VulkanDirLightRenderable::VulkanUpdate(std::vector<char>& a_mappedUBO)
 {
   if( m_uniformBuffer )
   {
+    if( a_mappedUBO.size() < m_uniformBuffer->GetMemoryOffset() + sizeof(VertexObjectMatrices) )
+      a_mappedUBO.resize(m_uniformBuffer->GetMemoryOffset() + sizeof(VertexObjectMatrices));
     // map the model matrix
-    memcpy(a_mappedUBO+m_uniformBuffer->GetMemoryOffset(), &m_ubo, sizeof(VertexObjectMatrices));
+    memcpy(&a_mappedUBO[0]+m_uniformBuffer->GetMemoryOffset(), &m_ubo, sizeof(VertexObjectMatrices));
   }
   if( m_uniformBuffer2 )
   {
+    if( a_mappedUBO.size() < m_uniformBuffer2->GetMemoryOffset() + sizeof(FragDirectionalLight) )
+      a_mappedUBO.resize(m_uniformBuffer2->GetMemoryOffset() + sizeof(FragDirectionalLight));
     // map the material data
-    memcpy(a_mappedUBO+m_uniformBuffer2->GetMemoryOffset(), &m_ubo2, sizeof(FragDirectionalLight));
+    memcpy(&a_mappedUBO[0]+m_uniformBuffer2->GetMemoryOffset(), &m_ubo2, sizeof(FragDirectionalLight));
   }
 }
 
@@ -78,17 +86,21 @@ void VulkanDirLightRenderable::VulkanUpdate(char* a_mappedUBO)
 VulkanPointLightRenderable::VulkanPointLightRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry)
   : VulkanRenderable(a_shape, a_updateRegistry){}
   
-void VulkanPointLightRenderable::VulkanUpdate(char* a_mappedUBO)
+void VulkanPointLightRenderable::VulkanUpdate(std::vector<char>& a_mappedUBO)
 {
   if( m_uniformBuffer )
   {
+    if( a_mappedUBO.size() < m_uniformBuffer->GetMemoryOffset() + sizeof(VertexObjectMatrices) )
+      a_mappedUBO.resize(m_uniformBuffer->GetMemoryOffset() + sizeof(VertexObjectMatrices));
     // map the model matrix
-    memcpy(a_mappedUBO+m_uniformBuffer->GetMemoryOffset(), &m_ubo, sizeof(VertexObjectMatrices));
+    memcpy(&a_mappedUBO[0]+m_uniformBuffer->GetMemoryOffset(), &m_ubo, sizeof(VertexObjectMatrices));
   }
   if( m_uniformBuffer2 )
   {
+    if( a_mappedUBO.size() < m_uniformBuffer2->GetMemoryOffset() + sizeof(FragPointLight) )
+      a_mappedUBO.resize(m_uniformBuffer2->GetMemoryOffset() + sizeof(FragPointLight));
     // map the material data
-    memcpy(a_mappedUBO+m_uniformBuffer2->GetMemoryOffset(), &m_ubo2, sizeof(FragPointLight));
+    memcpy(&a_mappedUBO[0]+m_uniformBuffer2->GetMemoryOffset(), &m_ubo2, sizeof(FragPointLight));
   }
 }
 
@@ -97,17 +109,21 @@ void VulkanPointLightRenderable::VulkanUpdate(char* a_mappedUBO)
 VulkanSpotLightRenderable::VulkanSpotLightRenderable(std::shared_ptr<IMesh> a_shape, std::shared_ptr< std::vector<VulkanRenderable*> > a_updateRegistry)
   : VulkanRenderable(a_shape, a_updateRegistry){}
   
-void VulkanSpotLightRenderable::VulkanUpdate(char* a_mappedUBO)
+void VulkanSpotLightRenderable::VulkanUpdate(std::vector<char>& a_mappedUBO)
 {
   if( m_uniformBuffer )
   {
+    if( a_mappedUBO.size() < m_uniformBuffer->GetMemoryOffset() + sizeof(VertexObjectMatrices) )
+      a_mappedUBO.resize(m_uniformBuffer->GetMemoryOffset() + sizeof(VertexObjectMatrices));
     // map the model matrix
-    memcpy(a_mappedUBO+m_uniformBuffer->GetMemoryOffset(), &m_ubo, sizeof(VertexObjectMatrices));
+    memcpy(&a_mappedUBO[0]+m_uniformBuffer->GetMemoryOffset(), &m_ubo, sizeof(VertexObjectMatrices));
   }
   if( m_uniformBuffer2 )
   {
+    if( a_mappedUBO.size() < m_uniformBuffer2->GetMemoryOffset() + sizeof(FragSpotLight) )
+      a_mappedUBO.resize(m_uniformBuffer2->GetMemoryOffset() + sizeof(FragSpotLight));
     // map the material data
-    memcpy(a_mappedUBO+m_uniformBuffer2->GetMemoryOffset(), &m_ubo2, sizeof(FragPointLight));
+    memcpy(&a_mappedUBO[0]+m_uniformBuffer2->GetMemoryOffset(), &m_ubo2, sizeof(FragSpotLight));
   }
 }
 

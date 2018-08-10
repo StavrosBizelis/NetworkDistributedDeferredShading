@@ -21,7 +21,7 @@ private:
   
   std::unique_ptr<VulkanDriver> m_driver;
   
-  
+  std::vector<char> m_DataToUpdate;
 public:
   VKGraphicsEngine(const glm::vec2& a_resolution = glm::vec2(0) );
   VKGraphicsEngine(const glm::vec2& a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings);

@@ -88,7 +88,7 @@ namespace RenderControl
 		virtual void Render() override;
 		virtual void OutputOnScreen() override;
     
-    void VulkanUpdate( char* a_mappedBuffer );
+    void VulkanUpdate( std::vector<char>& a_mappedBuffer );
 	};
 
 }

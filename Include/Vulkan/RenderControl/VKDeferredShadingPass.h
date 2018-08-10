@@ -115,7 +115,7 @@ namespace RenderControl
     void UpdateViewportSettings(const glm::vec2 &,const glm::vec4 &){}
     bool PackTexture(Network::NetworkMsgPtr& a_msg);
     
-    void VulkanUpdate( char* a_mappedBuffer );
+    void VulkanUpdate( std::vector<char>& a_mappedBuffer );
 	};
 
 }

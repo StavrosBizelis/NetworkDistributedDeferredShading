@@ -177,13 +177,16 @@ if( m_descriptorPool )
     vkDestroyRenderPass(m_logicalDevice->GetDevice(), m_renderPass, nullptr);
 }
 
-void RenderControl::VKCompositionPass::VulkanUpdate( char* a_mappedBuffer )
+void RenderControl::VKCompositionPass::VulkanUpdate( std::vector<char>&  a_mappedBuffer )
 {
   // copy global camera matrices and screen resolution for lights fragments shaders
   m_globalsUbo.projMatrix = *m_camera->GetOrthographicProjectionMatrix();
   m_globalsUbo.viewMatrix = glm::mat4(); // always identity matrix
   
-  memcpy(a_mappedBuffer+m_uboMemBuffer->GetMemoryOffset(), &m_globalsUbo, sizeof(VertexViewProjMatrices) );
+  if( a_mappedBuffer.size() < m_uboMemBuffer->GetMemoryOffset() + sizeof(VertexViewProjMatrices) )
+      a_mappedBuffer.resize(m_uboMemBuffer->GetMemoryOffset() + sizeof(VertexViewProjMatrices));
+  
+  memcpy(&a_mappedBuffer[0]+m_uboMemBuffer->GetMemoryOffset(), &m_globalsUbo, sizeof(VertexViewProjMatrices) );
 }
 
 
