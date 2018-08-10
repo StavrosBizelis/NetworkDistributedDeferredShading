@@ -310,9 +310,8 @@ if( m_descriptorPool )
 bool RenderControl::VKDeferredShadingPass::PackTexture(Network::NetworkMsgPtr& a_msg)
 {
   // write attachment to file
-  //unsigned int l_indexToWrite = 1;
   unsigned int l_indexToWrite = 3;
-  std::shared_ptr<VulkanMemoryChunk> l_buf = m_memory->CreateBufferFromImage( m_attachmentImages[l_indexToWrite] );
+  std::shared_ptr<VulkanMemoryChunk> l_buf = m_memory->CreateBufferFromImage( m_attachmentImages[l_indexToWrite + m_primaryCmdBuffer->GetLastUpdatedIndex()] );
   // FIBITMAP* bitmap = FreeImage_Allocate(m_attachmentImages[l_indexToWrite]->m_width, m_attachmentImages[l_indexToWrite]->m_height, 24);
   // RGBQUAD color;
   

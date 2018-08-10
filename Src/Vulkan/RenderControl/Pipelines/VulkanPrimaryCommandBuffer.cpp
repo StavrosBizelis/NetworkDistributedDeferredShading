@@ -156,7 +156,18 @@ void VulkanPrimaryCommandBuffer::Update()
   m_dirty = false;
 }
 
-
+unsigned int VulkanPrimaryCommandBuffer::GetLastUpdatedIndex()
+{
+  return m_index;
+}
+unsigned int VulkanPrimaryCommandBuffer::GetNextIndex()
+{
+  unsigned int l_index = m_index+1;
+  if( l_index >= m_cmdBuffers.size() )
+    l_index = 0;
+  return l_index;
+  
+}
 VkCommandBuffer VulkanPrimaryCommandBuffer::GetNextCommandBufferHandle()
 {
   // increment command buffer index and check if out of bounds

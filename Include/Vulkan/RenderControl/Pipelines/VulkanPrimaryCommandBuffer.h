@@ -51,7 +51,8 @@ struct VulkanPrimaryCommandBuffer
   void RemovePipeline(const std::shared_ptr< VKPipeline >& a_pipeline);
   
   void Update();    ///< called periodically - if pipelines are added of deleted - and if anything is not ready it reinitializes them
-  
+  unsigned int GetLastUpdatedIndex();
+  unsigned int GetNextIndex();
   
   VkCommandBuffer GetNextCommandBufferHandle();   ///< returns the next command buffer (many command buffers - each one for each swapchain framebuffer)
   
