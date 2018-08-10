@@ -104,16 +104,13 @@ void SceneOne::Init()
     
     l_lightTransform.m_id = m_nextID;
     l_lightTransform.m_transformType = Network::ObjectTransformType::OBJ_POS;
-    l_lightTransform.x = rand() % 40 - 20;
+    l_lightTransform.x = rand() % 30 - 15;
     l_lightTransform.y = rand() % 8 + 1;
-    l_lightTransform.z = rand() % 15 - 20;
+    l_lightTransform.z = -(rand() % 20);
     m_lightsToTransform.push_back(l_lightTransform);
     m_lightsToTransformPos.push_back(l_lightTransform);
+    m_lightTargets.push_back( glm::vec3(0) );
     m_lightSourceSpeeds.push_back( glm::vec3(0) );
-    // l_offset of light in order not to all be at the center at the same time
-    unsigned int l_offset = rand() % 100;
-    for( unsigned int j = 0; j < l_offset; ++j)
-      LightPosStep(m_lightSourceSpeeds.size()-1, 10);
   }
   
   
@@ -135,8 +132,7 @@ void SceneOne::Update(double a_dt)
 
   
   
-  for( unsigned int i = 0; i < m_lightsToTransformPos.size(); ++i)
-    LightPosStep(i, a_dt);
+  LightPosStep();
 
   l_msg->CreateSceneUpdateMsg(
   {m_camera->GetCamera()->GetPosition(), m_camera->GetCamera()->GetView(), m_camera->GetCamera()->GetUpVector() },
@@ -148,15 +144,33 @@ void SceneOne::Update(double a_dt)
 }
 
 
-void SceneOne::LightPosStep(const unsigned int& a_lightIndex, float a_dt )
+void SceneOne::LightPosStep()
 {
-  glm::vec3 l_balancePoint(0,m_lightsToTransformPos[a_lightIndex].y,-10);
-  glm::vec3 l_currPos = glm::vec3(m_lightsToTransformPos[a_lightIndex].x, m_lightsToTransformPos[a_lightIndex].y, m_lightsToTransformPos[a_lightIndex].z);
-  glm::vec3 l_currSpeed = m_lightSourceSpeeds[a_lightIndex];
-  m_lightSourceSpeeds[a_lightIndex] += ( a_dt / 1000.f * (l_balancePoint - l_currPos) );
-  glm::vec3 l_newPos = l_currPos + m_lightSourceSpeeds[a_lightIndex];
-  m_lightsToTransformPos[a_lightIndex].x = l_newPos.x;
-  // m_lightsToTransformPos[a_lightIndex].y = l_newPos.y;
-  m_lightsToTransformPos[a_lightIndex].z = l_newPos.z;
+  float l_speedMag = 1.f;
+  for( unsigned int i = 0; i < m_lightsToTransformPos.size(); ++i)
+  {
+    glm::vec3 l_currPos( m_lightsToTransformPos[i].x, m_lightsToTransformPos[i].y, m_lightsToTransformPos[i].z);
+    glm::vec3 l_targetPos = m_lightTargets[i];
+    glm::vec3 l_currDir = l_targetPos - l_currPos;
+    
+    
+    while( glm::length( l_currDir ) < l_speedMag )
+    {
+      l_targetPos.x = rand() % 30 - 15;
+      l_targetPos.y = rand() % 8 + 1;
+      l_targetPos.z = -(rand() % 20);
+      
+      l_currDir = l_targetPos - l_currPos;
+    }
+    
+    m_lightTargets[i] = l_targetPos;
+    
+    l_currDir = l_speedMag * glm::normalize ( l_currDir  );
+    
+    m_lightsToTransformPos[i].x += l_currDir.x;
+    m_lightsToTransformPos[i].y += l_currDir.y;
+    m_lightsToTransformPos[i].z += l_currDir.z;
+
+  }
 }
 

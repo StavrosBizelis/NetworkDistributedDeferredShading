@@ -82,7 +82,11 @@ void main()
   
   
   // screen space to world space
-  vec4 l_fragWorldSpacePoint = globalVars.UInverseViewProjectionMatrix *  vec4( vec3( l_screenTextureCoord2, vTexDepth.x ) *2 - 1,  1);
+
+  vec4 l_pos = vec4( vec3( l_screenTextureCoord2, vTexDepth.x ) *2 - 1,  1);
+  
+  vec4 l_fragWorldSpacePoint = globalVars.UInverseViewProjectionMatrix * l_pos;
+  
   l_fragWorldSpacePoint.w = 1/l_fragWorldSpacePoint.w;
   l_fragWorldSpacePoint.xyz *= l_fragWorldSpacePoint.w;
    
@@ -98,7 +102,7 @@ void main()
   //vOutputColour = vec4( abs(vTexDepth.x), 0,0, 1);
   //vOutputColour.a = 1;
   // vOutputColour = vec4(l_screenTextureCoord.xy, 0, 1);
-  // vOutputColour = vec4( l_fragWorldSpacePoint.xyz ,1.0f ) ;
-  //vOutputColour = vec4(1.0);
+  // vOutputColour = vec4( vTexNormal.xyz ,1.0f ) ;
+  // vOutputColour = vec4(0.2,0,0,1.0);
 
 }

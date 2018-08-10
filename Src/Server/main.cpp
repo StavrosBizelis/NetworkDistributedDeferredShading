@@ -38,8 +38,9 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE, PSTR, int)
   unsigned int l_testIndex;
   DecodeConfigFile(l_setup, l_ip, l_port, l_numberOfClients, l_implTech, l_resolution, l_testIndex);
   
+
   
-  
+
   g_serverApp = std::make_shared<ServerApp>( l_resolution, l_port, l_implTech, l_numberOfClients, l_testIndex);
   g_serverApp->SetHinstance(hinstance); 
   return g_serverApp->Execute();

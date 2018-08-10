@@ -140,7 +140,7 @@ void VKGraphicsEngine::Update(const double& a_deltaTime)
     void* l_data = l_memory->GetMemoryPool(3)->MapMemory();
     memcpy(l_data, &m_DataToUpdate[0], m_DataToUpdate.size() );
     l_memory->GetMemoryPool(3)->UnMapMemory();
-    m_DataToUpdate.resize(0);
+    // m_DataToUpdate.resize(0);
     l_registry->clear();
   }
   

@@ -50,9 +50,9 @@ void main()
   gl_Position.z = (gl_Position.z + gl_Position.w) / 2.0;
   
   
-  vEyeTan = normalize(inverse(transpose(l_modelViewMat) ) * vec4(inTangent,1) ).xyz;
-  vEyeNorm = normalize(inverse(transpose(l_modelViewMat) ) * vec4(inNormal,1) ).xyz;
-
+  vEyeTan = normalize(transpose(inverse(objectMats.modelMatrix) ) * vec4(inTangent,1) ).xyz;
+  vEyeNorm = normalize(transpose(inverse(objectMats.modelMatrix) ) * vec4(inNormal,1) ).xyz;
+  
 	// Pass through the texture coordinate
 	vTexCoord = inCoord;
 } 
