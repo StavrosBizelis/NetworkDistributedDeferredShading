@@ -5,6 +5,7 @@
 #include <Vulkan/Core/VulkanMemory.h>
 #include <Vulkan/Core/VulkanLogicalDeviceManager.h>
 #include <Vulkan/Core/VulkanSwapChainDetails.h>
+#include <Vulkan/Core/VulkanTexturePacker.h>
 #include "Vulkan/RenderControl/UniformBufferObjects.h"
 #include "Vulkan/RenderControl/Pipelines/VKPipeline.h"
 
@@ -13,7 +14,6 @@
 #include "Common/SceneControl/SceneManager.h"
 #include "Common/Shapes/IShapeFactory.h"
 #include "Common/Textures/ITextureFactory.h"
-
 #include "Vulkan/RenderControl/Pipelines/VulkanPrimaryCommandBuffer.h"
 namespace RenderControl
 {
@@ -36,6 +36,7 @@ namespace RenderControl
     
     // VULKAN VARS
     std::vector< std::shared_ptr<VulkanImageMemoryChunk> > m_attachmentImages;
+    std::vector< VkFence > m_fences;
     // swapchain image views
     std::vector<VkImageView> m_swapChainImageViews;
     
@@ -67,7 +68,7 @@ namespace RenderControl
     
     // VulkanFramebuffer m_frameBuffer;
     std::shared_ptr<VulkanPrimaryCommandBuffer> m_primaryCmdBuffer;
-    
+    std::shared_ptr<VulkanTexturePacker> m_texturePacker;
     void CreateCommandPool();
     void CreateSemaphores();
     void CreateRenderPass();

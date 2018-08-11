@@ -30,7 +30,7 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
                                                     ITextureFactory* a_textFactory, const unsigned int &a_subparts)
   :ADeferredShadingPass(a_resolution, a_resolutionPart, a_viewportSettings ),
     m_logicalDevice(a_device), m_physicalDevice(a_physicalDevice), m_memory(a_memory), m_graphicsQueue(a_graphicsQueue), m_presentQueue(a_presentQueue), m_indices(a_indices), m_currentFrame(0), 
-    m_scnManager(a_scnManager), m_textFactory(a_textFactory), m_shapeFactory(a_shapeFactory), m_attachmentImages(0)
+    m_scnManager(a_scnManager), m_textFactory(a_textFactory), m_shapeFactory(a_shapeFactory), m_attachmentImages(0), m_texturePacker(nullptr)
 {
   m_renderPass = NULL;
   std::cout<< a_resolution.x << " " << a_resolution.y << " " << a_subparts << std::endl;
@@ -212,82 +212,31 @@ bool RenderControl::VKDeferredShadingPass::Init()
 
 void RenderControl::VKDeferredShadingPass::Render()
 {
+  vkWaitForFences(m_logicalDevice->GetDevice(), 1, &m_fences[m_primaryCmdBuffer->GetNextIndex() ], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
-  // uint32_t l_imageIndex;
-  // VkResult result = vkAcquireNextImageKHR(m_logicalDevice->GetDevice(), m_logicalDevice->GetSwapChain(), std::numeric_limits<uint64_t>::max(), m_imageAvailableSemaphore[m_currentFrame], VK_NULL_HANDLE, &l_imageIndex);
-  // if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-       // std::cout << "VKDeferredShadingPass::Render() - requires reinitialization\n";
-      // // ReInit();
-      // // return;
-  // }
-  // else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-    // throw std::runtime_error("VKDeferredShadingPass::Render() - failed to acquire swap chain image!");
-  // }
   
+  m_primaryCmdBuffer->Update();
   VkSubmitInfo submitInfo = {};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-  // VkSemaphore waitSemaphores[] = { m_imageAvailableSemaphore[m_currentFrame] };
-  // VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-  // submitInfo.waitSemaphoreCount = 1;
-  // submitInfo.pWaitSemaphores = waitSemaphores;
-  // submitInfo.pWaitDstStageMask = waitStages;
-
-
-  m_primaryCmdBuffer->Update();
-  
   submitInfo.commandBufferCount = 1;
   VkCommandBuffer l_cmdBuffer[] = { m_primaryCmdBuffer->GetNextCommandBufferHandle() };
   submitInfo.pCommandBuffers = l_cmdBuffer;
-
-  // VkSemaphore signalSemaphores[] = { m_renderFinishedSemaphore[m_currentFrame] };
-  // submitInfo.signalSemaphoreCount = 1;
-  // submitInfo.pSignalSemaphores = signalSemaphores;
-
-  VkResult l_res = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+  
+  
+  while( m_texturePacker->IsPacking( m_primaryCmdBuffer->GetLastUpdatedIndex() ) ){}
+  vkResetFences(m_logicalDevice->GetDevice(), 1, &m_fences[m_primaryCmdBuffer->GetLastUpdatedIndex()] );
+  
+  VkResult l_res = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_fences[m_primaryCmdBuffer->GetLastUpdatedIndex()] );
   if ( l_res != VK_SUCCESS )
   {  
     std::cout << "Test fail " << l_res << std::endl;
     throw std::runtime_error("VKDeferredShadingPass::Render() - failed to submit draw command buffer!");
   }
   
-  // VkPresentInfoKHR presentInfo = {};
-  // presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
-  // presentInfo.waitSemaphoreCount = 1;
-  // presentInfo.pWaitSemaphores = signalSemaphores;
-
-  // VkSwapchainKHR swapChains[] = {m_logicalDevice->GetSwapChain()};
-  // presentInfo.swapchainCount = 1;
-  // presentInfo.pSwapchains = swapChains;
-
-  // presentInfo.pImageIndices = &l_imageIndex;
-
-  // result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
-
-  // if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
-  // {
-      // //ReInit();
-    // std::cout << "VKDeferredShadingPass::Render() - requires reinitialization\n";
-  // } 
-  // else if (result != VK_SUCCESS) 
-    // throw std::runtime_error("VKDeferredShadingPass::Render() - failed to present swap chain image!");
-  
-  
-  // vkQueueWaitIdle(m_presentQueue);
-  vkQueueWaitIdle(m_graphicsQueue);
   m_currentFrame = (m_currentFrame + 1) % m_maxFramesInFlight;
   
   
-  
-  
-
-  
-  // static bool l_first = true;
-  // if(first)
-  // {
-    // first = false;
-  // }
   
 }
 
@@ -310,32 +259,26 @@ if( m_descriptorPool )
 bool RenderControl::VKDeferredShadingPass::PackTexture(Network::NetworkMsgPtr& a_msg)
 {
   // write attachment to file
-  unsigned int l_indexToWrite = 3;
-  std::shared_ptr<VulkanMemoryChunk> l_buf = m_memory->CreateBufferFromImage( m_attachmentImages[l_indexToWrite + m_primaryCmdBuffer->GetLastUpdatedIndex()] );
-  // FIBITMAP* bitmap = FreeImage_Allocate(m_attachmentImages[l_indexToWrite]->m_width, m_attachmentImages[l_indexToWrite]->m_height, 24);
-  // RGBQUAD color;
+  if( m_texturePacker)
+  {
+    unsigned int l_indexToGet = m_primaryCmdBuffer->GetNextIndex();
+    unsigned int l_indexToPack = m_primaryCmdBuffer->GetLastUpdatedIndex();
+    m_texturePacker->Pack(l_indexToPack);
+    m_texturePacker->Get(l_indexToGet, a_msg);
+  }
+  
+  // unsigned int l_indexToWrite = 3 + m_primaryCmdBuffer->GetNextIndex();
+  // std::shared_ptr<VulkanMemoryChunk> l_buf = m_memory->CreateBufferFromImage( m_attachmentImages[l_indexToWrite] );
+  
+  // void* data;
+  // vkMapMemory(m_logicalDevice->GetDevice(), l_buf->m_memorySpace, l_buf->GetMemoryOffset(), l_buf->m_size, 0, &data);
+  
+  // a_msg->CreateRenderResultMsg( (char*)data, glm::vec2(m_attachmentImages[l_indexToWrite]->m_width, m_attachmentImages[l_indexToWrite]->m_height), 0, 8, true);
+  
+  // vkUnmapMemory(m_logicalDevice->GetDevice(), l_buf->m_memorySpace);
+  // l_buf->Free();
   
   
-  void* data;
-  vkMapMemory(m_logicalDevice->GetDevice(), l_buf->m_memorySpace, l_buf->GetMemoryOffset(), l_buf->m_size, 0, &data);
-  
-  a_msg->CreateRenderResultMsg( (char*)data, glm::vec2(m_attachmentImages[l_indexToWrite]->m_width, m_attachmentImages[l_indexToWrite]->m_height), 0, 8, true);
-  
-  // for( int i = 0; i < m_attachmentImages[l_indexToWrite]->m_height; ++i)
-    // for( int j = 0; j < m_attachmentImages[l_indexToWrite]->m_width; ++j)
-    // {
-      // color.rgbRed = *l_curr; l_curr++;
-      // color.rgbGreen = *l_curr; l_curr++;
-      // color.rgbBlue = *l_curr; l_curr++;
-      // color.rgbReserved = 0; l_curr++;
-      // FreeImage_SetPixelColor(bitmap, j,i, &color);
-    // }
-  
-  vkUnmapMemory(m_logicalDevice->GetDevice(), l_buf->m_memorySpace);
-  l_buf->Free();
-  
-  // if( FreeImage_Save(FIF_PNG, bitmap, "test.png", 0 ) )
-    // std::cout << "SUCCEED IN SAVING A SCREENSHOT\n";  
   return true;
 }
 
@@ -599,6 +542,11 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
   m_swapChainImageViews = m_logicalDevice->GetSwapChainImageViews();
 
   size_t l_count = m_swapChainImageViews.size();
+  
+  VkFenceCreateInfo fenceInfo = {};
+  fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+  m_fences.resize(l_count);
   for (size_t i = 0; i < l_count; i++) 
   {
     std::vector<VkImageView> attachments = {
@@ -621,7 +569,15 @@ void RenderControl::VKDeferredShadingPass::CreateFramebuffer()
     if (vkCreateFramebuffer(m_logicalDevice->GetDevice(), &framebufferInfo, nullptr, &m_frameBuffers[i]) != VK_SUCCESS) {
       throw std::runtime_error("failed to create framebuffer!");
     }
+    
+    vkCreateFence(m_logicalDevice->GetDevice(), &fenceInfo, nullptr, &m_fences[i]);
   }
+  
+  std::vector< std::shared_ptr<VulkanImageMemoryChunk> > l_imagesToPack;
+  for (size_t i = 0; i < l_count; i++) 
+    l_imagesToPack.push_back( m_attachmentImages[3+i] );
+  m_texturePacker = std::make_shared<VulkanTexturePacker>(m_logicalDevice, m_memory, l_imagesToPack, m_fences);
+  
 }
 
 void RenderControl::VKDeferredShadingPass::CreatePipelines()
