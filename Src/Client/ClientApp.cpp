@@ -331,7 +331,6 @@ ClientApp::Update()
     // CLIENTS SEND BACK THE RENDERED TEXTURES
     
     Network::NetworkMsgPtr l_test = std::make_shared<Network::NetworkMsg>();
-    
     if( m_graphics->GetDeferredRenderPass()->PackTexture(l_test) )
     {
       m_client->PushMsg(l_test);

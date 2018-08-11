@@ -213,9 +213,11 @@ bool RenderControl::VKDeferredShadingPass::Init()
 void RenderControl::VKDeferredShadingPass::Render()
 {
   vkWaitForFences(m_logicalDevice->GetDevice(), 1, &m_fences[m_primaryCmdBuffer->GetNextIndex() ], VK_TRUE, std::numeric_limits<uint64_t>::max());
+  m_texturePacker->BlockTillPacked( m_primaryCmdBuffer->GetNextIndex() );
+  // vkWaitForFences is covered by IsPacking
 
-  
   m_primaryCmdBuffer->Update();
+  
   VkSubmitInfo submitInfo = {};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.commandBufferCount = 1;
@@ -223,19 +225,14 @@ void RenderControl::VKDeferredShadingPass::Render()
   submitInfo.pCommandBuffers = l_cmdBuffer;
   
   
-  while( m_texturePacker->IsPacking( m_primaryCmdBuffer->GetLastUpdatedIndex() ) ){}
   vkResetFences(m_logicalDevice->GetDevice(), 1, &m_fences[m_primaryCmdBuffer->GetLastUpdatedIndex()] );
-  
   VkResult l_res = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_fences[m_primaryCmdBuffer->GetLastUpdatedIndex()] );
+  
   if ( l_res != VK_SUCCESS )
   {  
     std::cout << "Test fail " << l_res << std::endl;
     throw std::runtime_error("VKDeferredShadingPass::Render() - failed to submit draw command buffer!");
   }
-  
-
-  m_currentFrame = (m_currentFrame + 1) % m_maxFramesInFlight;
-  
   
   
 }

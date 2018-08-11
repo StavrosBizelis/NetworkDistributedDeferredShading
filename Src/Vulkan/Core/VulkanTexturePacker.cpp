@@ -8,8 +8,6 @@ VulkanTexturePacker::VulkanTexturePacker(const std::shared_ptr<VulkanLogicalDevi
                     const std::vector< std::shared_ptr<VulkanImageMemoryChunk> >& a_imagesToPack, const std::vector< VkFence >& a_fences)
   : m_device(a_device), m_memory(a_memory), m_imagesToPack(a_imagesToPack), m_fences(a_fences)
 {
-  
-  m_mutexes.resize( m_imagesToPack.size() );
   m_messages.resize( m_imagesToPack.size(), std::make_shared<Network::NetworkMsg>() );
   m_threads.resize(m_imagesToPack.size(), nullptr );
 }                    
@@ -21,8 +19,9 @@ void VulkanTexturePacker::Get(const unsigned int& a_index, Network::NetworkMsgPt
 {
   if( m_threads[a_index] )
   {
-    m_threads[a_index]->join();
-    a_msg = m_messages[a_index];
+    if( m_threads[a_index]->joinable() )
+      m_threads[a_index]->join();
+    a_msg = std::make_shared<Network::NetworkMsg>( *m_messages[a_index] );
   }
   else
   {
@@ -37,20 +36,17 @@ void VulkanTexturePacker::Get(const unsigned int& a_index, Network::NetworkMsgPt
 }
 
 
-bool VulkanTexturePacker::IsPacking(const unsigned int& a_index)
+void VulkanTexturePacker::BlockTillPacked(const unsigned int& a_index)
 {
-  if( m_mutexes[a_index].try_lock() )
-  {
-    m_mutexes[a_index].unlock();
-    return false;
-  }
-  else if( !m_threads[a_index] )
-    return false;
-  return true;
+  if( !m_threads[a_index] )
+    return;
+  
+  if( m_threads[a_index]->joinable() )
+    m_threads[a_index]->join();
+  
 }
 void VulkanTexturePacker::PackThread(const unsigned int& a_index)
 {
-  m_mutexes[a_index].lock();
   vkWaitForFences(m_device->GetDevice(), 1, &m_fences[a_index], VK_TRUE, std::numeric_limits<uint64_t>::max());
   
   std::shared_ptr<VulkanMemoryChunk> l_buf = m_memory->CreateBufferFromImage( m_imagesToPack[a_index] );
@@ -63,5 +59,5 @@ void VulkanTexturePacker::PackThread(const unsigned int& a_index)
 
   vkUnmapMemory(m_device->GetDevice(), l_buf->m_memorySpace);
   l_buf->Free();
-  m_mutexes[a_index].unlock();
+  
 }

@@ -5,6 +5,7 @@
 #include <deque>
 #include <mutex>
 #include <thread>
+#include <future>
 #include <vulkan/vulkan.hpp>
 #include <Vulkan/Core/VulkanLogicalDeviceManager.h>
 #include <Vulkan/Core/VulkanMemory.h>
@@ -19,7 +20,7 @@ class VulkanTexturePacker
   std::vector< std::shared_ptr<VulkanImageMemoryChunk> > m_imagesToPack;
   std::vector< VkFence > m_fences;
   
-  std::deque<std::mutex> m_mutexes;
+  
   std::vector<Network::NetworkMsgPtr> m_messages;
   
   std::vector< std::shared_ptr< std::thread > > m_threads;
@@ -31,6 +32,6 @@ class VulkanTexturePacker
                       const std::vector< std::shared_ptr<VulkanImageMemoryChunk> >& a_imagesToPack, const std::vector< VkFence >& a_fences);
                       
   void Pack(const unsigned int& a_index);
-  bool IsPacking(const unsigned int& a_index);
+  void BlockTillPacked(const unsigned int& a_index);
   void Get(const unsigned int& a_index, Network::NetworkMsgPtr& a_msg);
 };
