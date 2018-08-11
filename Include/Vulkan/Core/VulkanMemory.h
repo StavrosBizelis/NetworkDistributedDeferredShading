@@ -285,6 +285,7 @@ class VulkanMemory
   
   VkCommandBuffer BeginSingleTimeCommands();
   void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
+  VkFence m_singleTimeCommandFence;
   
   bool HasStencilComponent(VkFormat format);
   
@@ -321,6 +322,7 @@ class VulkanMemory
   
   // utility helpers
   size_t SizeOfPixel(VkFormat a_format);
+  
   
   public:
   /**

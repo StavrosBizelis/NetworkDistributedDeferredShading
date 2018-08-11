@@ -212,8 +212,6 @@ bool RenderControl::VKDeferredShadingPass::Init()
 
 void RenderControl::VKDeferredShadingPass::Render()
 {
-  
-  // vkWaitForFences is covered by IsPacking
   m_lastSubmittedQueueIndex = m_primaryCmdBuffer->GetLastUpdatedIndex();
   
   m_primaryCmdBuffer->Update();
@@ -242,7 +240,6 @@ void RenderControl::VKDeferredShadingPass::Render()
   if( m_texturePacker)
   {
     m_texturePacker->Pack( m_primaryCmdBuffer->GetLastUpdatedIndex() );
-    
   }
 }
 

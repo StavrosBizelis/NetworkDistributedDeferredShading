@@ -869,9 +869,11 @@ void VulkanMemory::EndSingleTimeCommands(VkCommandBuffer a_commandBuffer)
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &a_commandBuffer;
 
-  vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-  vkQueueWaitIdle(m_graphicsQueue);
-
+  vkResetFences(m_logicalDevice, 1, &m_singleTimeCommandFence );
+  vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_singleTimeCommandFence);
+  vkWaitForFences(m_logicalDevice, 1, &m_singleTimeCommandFence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+  
+  // vkQueueWaitIdle(m_graphicsQueue);
   vkFreeCommandBuffers(m_logicalDevice, m_commandPool, 1, &a_commandBuffer);
 }
 
@@ -981,6 +983,11 @@ VulkanMemory::VulkanMemory(const VkPhysicalDevice& a_physicalDevice, const VkDev
     m_memoryPools( { {NULL, NULL} } )
 {
   CreateCommandPool();
+  
+  VkFenceCreateInfo fenceInfo = {};
+  fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+  vkCreateFence(m_logicalDevice, &fenceInfo, nullptr, &m_singleTimeCommandFence );
 }
 
 bool VulkanMemory::Init(const VkDeviceSize& a_stagingMemorySize, const VkDeviceSize& a_vertexMemorySize, const VkDeviceSize& a_indexMemorySize, 
