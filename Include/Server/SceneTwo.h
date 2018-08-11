@@ -24,8 +24,9 @@ class SceneTwo : public IServerSceneController
   float m_elapsedTime;
   
   void LightMoveHelper();
+  
   public:
-  SceneTwo(Network::ServerControl& a_serverCtrl, AGraphicsEngine* a_graphics, const std::vector<std::shared_ptr<asio::ip::tcp::socket> >& a_clients, SceneControl::CameraSceneNode* a_camera);
+  SceneTwo(Network::ServerControl& a_serverCtrl, AGraphicsEngine* a_graphics, const std::vector<std::shared_ptr<asio::ip::tcp::socket> >& a_clients, SceneControl::CameraSceneNode* a_camera, const unsigned int& a_numberOfLight);
   
   virtual void Init();
   virtual void Update(double a_dt);

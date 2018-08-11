@@ -6,7 +6,7 @@
 
 #include "Common/Core/Gamewindow.h"
 #include "Common/Core/HighResolutionTimer.h"
-
+#include <sstream>
 class ClientApp
 {
 private:
@@ -51,8 +51,10 @@ private:
   void TextureChange(const Network::TextureChangeInfo& a_info);
   void AddLight(const Network::ObjAddInfo& a_info);
   
+  std::ostringstream m_output;
+  std::string m_outFile;
 public:
-  ClientApp( const std::string &a_hostName, const unsigned int &a_hostPort, const ImplTech& a_implTech = ImplTech::OPENGL);
+  ClientApp( const std::string &a_hostName, const unsigned int &a_hostPort, const ImplTech& a_implTech = ImplTech::OPENGL, const std::string& a_outFile = "");
   ~ClientApp();
   
   LRESULT ProcessEvents(HWND window,UINT message, WPARAM w_param, LPARAM l_param);

@@ -122,7 +122,8 @@ std::vector<std::string> ReadFileLines(const std::string& filename)
 }
 
 
-void DecodeConfigFile(const std::vector<std::string>& a_fileLines, std::string& a_ip, unsigned int& a_port, unsigned int& a_numberOfClients, ImplTech& a_implTech, glm::vec2& a_resolution, unsigned int& a_testIndex)
+void DecodeConfigFile(const std::vector<std::string>& a_fileLines, std::string& a_ip, unsigned int& a_port, unsigned int& a_numberOfClients, ImplTech& a_implTech, glm::vec2& a_resolution, unsigned int& a_testIndex, std::string& a_fileName,
+                      unsigned int& a_numberOfLights)
 {
   a_ip = "localhost";
   a_port = 50001;
@@ -130,8 +131,10 @@ void DecodeConfigFile(const std::vector<std::string>& a_fileLines, std::string& 
   a_implTech = ImplTech::VULKAN;
   a_resolution = glm::vec2(680, 420);
   a_testIndex = 0;
+  a_fileName = "test1.txt";
+  a_numberOfLights = 10;
   
-    unsigned int l_currLine = 0;
+  unsigned int l_currLine = 0;
   // load ip
   bool l_valueSet = false;
   while( !l_valueSet && l_currLine < a_fileLines.size() )  
@@ -222,6 +225,32 @@ void DecodeConfigFile(const std::vector<std::string>& a_fileLines, std::string& 
     ++l_currLine;
   }
 
+  // file type
+  l_valueSet = false;
+  while( !l_valueSet && l_currLine < a_fileLines.size() )  
+  {
+    if( a_fileLines[l_currLine].size() > 0 )
+      if( a_fileLines[l_currLine].find("#") == std::string::npos )
+      {
+        a_fileName = a_fileLines[l_currLine];
+        l_valueSet = true;
+      }
+    ++l_currLine;
+  }
+  
+  // lights number
+  l_valueSet = false;
+  while( !l_valueSet && l_currLine < a_fileLines.size() )  
+  {
+    if( a_fileLines[l_currLine].size() > 0 )
+      if( a_fileLines[l_currLine].find("#") == std::string::npos )
+      {
+        a_numberOfLights = std::stoi( a_fileLines[l_currLine] );  
+        l_valueSet = true;
+      }      
+    ++l_currLine;
+  }
+  
 }
 
 

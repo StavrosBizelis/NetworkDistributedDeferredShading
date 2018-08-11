@@ -20,7 +20,7 @@ class SceneOne : public IServerSceneController
   void LightPosStep();
   
   public:
-  SceneOne(Network::ServerControl& a_serverCtrl, AGraphicsEngine* a_graphics, const std::vector<std::shared_ptr<asio::ip::tcp::socket> >& a_clients, SceneControl::CameraSceneNode* a_camera);
+  SceneOne(Network::ServerControl& a_serverCtrl, AGraphicsEngine* a_graphics, const std::vector<std::shared_ptr<asio::ip::tcp::socket> >& a_clients, SceneControl::CameraSceneNode* a_camera, const unsigned int& a_numberOfLight);
   
   virtual void Init();
   virtual void Update(double a_dt);

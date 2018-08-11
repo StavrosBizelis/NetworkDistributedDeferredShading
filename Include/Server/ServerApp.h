@@ -12,11 +12,12 @@
 #include "Common/SceneControl/CameraSceneNode.h"
 
 #include "Server/IServerSceneController.h"
-
+#include <sstream>
 class ServerApp
 {
 public:
-  ServerApp(const glm::vec2& a_dimensions, const unsigned int& a_port, const ImplTech& a_implTech = ImplTech::OPENGL, const unsigned int& a_clientsCount = 1, const unsigned int& a_testIndex = 0);
+  ServerApp(const glm::vec2& a_dimensions, const unsigned int& a_port, const ImplTech& a_implTech = ImplTech::OPENGL, const unsigned int& a_clientsCount = 1, const unsigned int& a_testIndex = 0, 
+            const std::string& a_outFile = "", const unsigned int& a_numberOfLights = 10);
   ~ServerApp();
   
   
@@ -58,4 +59,7 @@ private:
   void UpdateScene();
   void Initialise();
 
+  std::ostringstream m_output;
+  std::string m_outFile;
+  unsigned int m_numberOfLights;
 };

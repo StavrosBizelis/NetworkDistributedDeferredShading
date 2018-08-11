@@ -39,4 +39,5 @@ std::vector<char> ReadFile(const std::string& filename);
 std::vector<std::string> ReadFileLines(const std::string& filename);
 
 
-void DecodeConfigFile(const std::vector<std::string>& a_fileLines, std::string& a_ip, unsigned int& a_port, unsigned int& a_numberOfClients, ImplTech& a_implTech, glm::vec2& a_resolution, unsigned int& a_testIndex);
+void DecodeConfigFile(const std::vector<std::string>& a_fileLines, std::string& a_ip, unsigned int& a_port, unsigned int& a_numberOfClients, ImplTech& a_implTech, glm::vec2& a_resolution, unsigned int& a_testIndex, 
+                      std::string& a_fileName, unsigned int& a_numberOfLights);

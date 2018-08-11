@@ -19,15 +19,16 @@
 #include "Server/SceneOne.h"
 #include "Server/SceneTwo.h"
 
-
+#include <fstream>
 /***********************************************************************
  *  Method: ServerApp::ServerApp
  *  Params: 
  * Effects: 
  ***********************************************************************/
-ServerApp::ServerApp(const glm::vec2& a_dimensions, const unsigned int& a_port, const ImplTech& a_implTech, const unsigned int& a_clientsCount, const unsigned int& a_testIndex)
+ServerApp::ServerApp(const glm::vec2& a_dimensions, const unsigned int& a_port, const ImplTech& a_implTech, const unsigned int& a_clientsCount, const unsigned int& a_testIndex, 
+                     const std::string& a_outFile, const unsigned int& a_numberOfLights)
   : m_appActive(true), m_elapsedTime(0), m_elapsedTime2(0), m_dt(0), m_frameCount(0), m_dimensions(a_dimensions), m_pHighResolutionTimer(nullptr), m_graphics(nullptr), m_serverCtrl(a_port), m_implTech(a_implTech),
-    m_clientsCount(a_clientsCount), m_testIndex(a_testIndex)
+    m_clientsCount(a_clientsCount), m_testIndex(a_testIndex), m_outFile(a_outFile), m_numberOfLights(a_numberOfLights)
 {
   m_textureData = new char[m_dimensions.x * m_dimensions.y  * 4];
 }
@@ -40,12 +41,20 @@ ServerApp::ServerApp(const glm::vec2& a_dimensions, const unsigned int& a_port, 
  ***********************************************************************/
 ServerApp::~ServerApp()
 {
- if( m_pHighResolutionTimer)
-   delete m_pHighResolutionTimer;
- if( m_graphics )
-   delete m_graphics;
- if( m_textureData )
-   delete[] m_textureData;
+  std::fstream fs;
+  fs.open (m_outFile, std::fstream::out | std::fstream::app);
+  fs << m_outFile << std::endl;
+  fs << m_output.str();
+  fs.close();
+  
+  
+  if( m_pHighResolutionTimer)
+    delete m_pHighResolutionTimer;
+  if( m_graphics )
+    delete m_graphics;
+  if( m_textureData )
+    delete[] m_textureData;
+ 
 }
 
 
@@ -263,7 +272,6 @@ ServerApp::Update()
   m_elapsedTime += m_dt;
   m_elapsedTime2 += m_dt;
   
-  
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // we remove this - find a better way
@@ -278,7 +286,9 @@ ServerApp::Update()
 	if (m_elapsedTime > 1000)
   {
 		printf( "%f\n", (m_frameCount*1000)/m_elapsedTime );
-		m_elapsedTime = 0;
+		m_output << m_frameCount/m_elapsedTime << std::endl;
+    
+    m_elapsedTime = 0;
 		// Reset the frames per second
 		m_frameCount = 0;
   }
@@ -403,8 +413,8 @@ ServerApp::Initialise()
   
   
   if( m_testIndex == 0)
-    m_sceneController = std::make_shared<SceneOne>(m_serverCtrl, m_graphics, l_sockets, m_camera);
+    m_sceneController = std::make_shared<SceneOne>(m_serverCtrl, m_graphics, l_sockets, m_camera, m_numberOfLights);
   else 
-    m_sceneController = std::make_shared<SceneTwo>(m_serverCtrl, m_graphics, l_sockets, m_camera);
+    m_sceneController = std::make_shared<SceneTwo>(m_serverCtrl, m_graphics, l_sockets, m_camera, m_numberOfLights);
   m_sceneController->Init();
 }

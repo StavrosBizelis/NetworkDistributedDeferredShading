@@ -1,8 +1,8 @@
 #include "Server/SceneOne.h"
 
 
-SceneOne::SceneOne(Network::ServerControl& a_serverCtrl, AGraphicsEngine* a_graphics, const std::vector<std::shared_ptr<asio::ip::tcp::socket> >& a_clients, SceneControl::CameraSceneNode* a_camera)
-  : IServerSceneController(a_serverCtrl, a_graphics, a_clients, a_camera)
+SceneOne::SceneOne(Network::ServerControl& a_serverCtrl, AGraphicsEngine* a_graphics, const std::vector<std::shared_ptr<asio::ip::tcp::socket> >& a_clients, SceneControl::CameraSceneNode* a_camera, const unsigned int& a_numberOfLight)
+  : IServerSceneController(a_serverCtrl, a_graphics, a_clients, a_camera, a_numberOfLight)
 {
   
 }
@@ -84,7 +84,7 @@ void SceneOne::Init()
   m_lightsToTransform.push_back(l_lightTransform);
   
   // point lights
-  unsigned int l_pointLightCount = 120;
+  unsigned int l_pointLightCount = m_numberOfLight;
   for( int i = 0; i < l_pointLightCount; ++i)
   {
     ++m_nextID;

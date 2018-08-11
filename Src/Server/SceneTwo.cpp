@@ -1,8 +1,8 @@
 #include "Server/SceneTwo.h"
 
 
-SceneTwo::SceneTwo(Network::ServerControl& a_serverCtrl, AGraphicsEngine* a_graphics, const std::vector<std::shared_ptr<asio::ip::tcp::socket> >& a_clients, SceneControl::CameraSceneNode* a_camera)
-  : IServerSceneController(a_serverCtrl, a_graphics, a_clients, a_camera)
+SceneTwo::SceneTwo(Network::ServerControl& a_serverCtrl, AGraphicsEngine* a_graphics, const std::vector<std::shared_ptr<asio::ip::tcp::socket> >& a_clients, SceneControl::CameraSceneNode* a_camera, const unsigned int& a_numberOfLight)
+  : IServerSceneController(a_serverCtrl, a_graphics, a_clients, a_camera, a_numberOfLight)
 {
   
 }
@@ -183,7 +183,7 @@ void SceneTwo::Init()
 
 
       // point lights
-  unsigned int l_pointLightCount = 400;
+  unsigned int l_pointLightCount = m_numberOfLight;
   for( int i = 0; i < l_pointLightCount; ++i)
   {
     ++m_nextID;

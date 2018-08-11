@@ -12,15 +12,15 @@
 #include "OpenGL/GLGraphicsEngine.h"
 #include "Vulkan/VKGraphicsEngine.h"
 
-
+#include <fstream>
 /***********************************************************************
  *  Method: ClientApp::ClientApp
  *  Params: 
  * Effects: 
  ***********************************************************************/
-ClientApp::ClientApp( const std::string &a_hostName, const unsigned int &a_hostPort, const ImplTech& a_implTech)
+ClientApp::ClientApp( const std::string &a_hostName, const unsigned int &a_hostPort, const ImplTech& a_implTech, const std::string& a_outFile )
   // :m_implTech(a_implTech), m_graphics(nullptr), m_dt(0)
-  :m_implTech(a_implTech), m_client(nullptr), m_graphics(nullptr), m_dt(0)
+  :m_implTech(a_implTech), m_client(nullptr), m_graphics(nullptr), m_dt(0), m_outFile(a_outFile)
 {
   m_hasUpdated = true;
   
@@ -38,10 +38,17 @@ ClientApp::ClientApp( const std::string &a_hostName, const unsigned int &a_hostP
  ***********************************************************************/
 ClientApp::~ClientApp()
 {
+  std::fstream fs;
+  fs.open (m_outFile, std::fstream::out | std::fstream::app);
+  fs << m_outFile << std::endl;
+  fs << m_output.str();
+  fs.close();
+
   if( m_client)
     delete m_client;
   if( m_graphics )
    delete m_graphics;
+ 
 }
 
 
@@ -346,11 +353,16 @@ ClientApp::Update()
   // framerate output
   
   m_elapsedTime += m_dt;
+  
+    
   // Now we want to subtract the current time by the last time that was stored
 	// to see if the time elapsed has been over a second, which means we found our FPS.
 	if (m_elapsedTime > 1000)
   {
 		printf( "%f\n", (m_frameCount*1000)/m_elapsedTime );
+    
+    m_output << m_frameCount/m_elapsedTime << std::endl;
+    
 		m_elapsedTime = 0;
 		// Reset the frames per second
 		m_frameCount = 0;
