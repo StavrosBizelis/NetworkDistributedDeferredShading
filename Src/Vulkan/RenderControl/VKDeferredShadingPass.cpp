@@ -30,7 +30,7 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
                                                     ITextureFactory* a_textFactory, const unsigned int &a_subparts)
   :ADeferredShadingPass(a_resolution, a_resolutionPart, a_viewportSettings ),
     m_logicalDevice(a_device), m_physicalDevice(a_physicalDevice), m_memory(a_memory), m_graphicsQueue(a_graphicsQueue), m_presentQueue(a_presentQueue), m_indices(a_indices), m_currentFrame(0), 
-    m_scnManager(a_scnManager), m_textFactory(a_textFactory), m_shapeFactory(a_shapeFactory), m_attachmentImages(0), m_texturePacker(nullptr)
+    m_scnManager(a_scnManager), m_textFactory(a_textFactory), m_shapeFactory(a_shapeFactory), m_attachmentImages(0), m_texturePacker(nullptr), m_lastSubmittedQueueIndex(0)
 {
   m_renderPass = NULL;
   std::cout<< a_resolution.x << " " << a_resolution.y << " " << a_subparts << std::endl;
@@ -212,10 +212,10 @@ bool RenderControl::VKDeferredShadingPass::Init()
 
 void RenderControl::VKDeferredShadingPass::Render()
 {
-  vkWaitForFences(m_logicalDevice->GetDevice(), 1, &m_fences[m_primaryCmdBuffer->GetNextIndex() ], VK_TRUE, std::numeric_limits<uint64_t>::max());
-  m_texturePacker->BlockTillPacked( m_primaryCmdBuffer->GetNextIndex() );
+  
   // vkWaitForFences is covered by IsPacking
-
+  m_lastSubmittedQueueIndex = m_primaryCmdBuffer->GetLastUpdatedIndex();
+  
   m_primaryCmdBuffer->Update();
   
   VkSubmitInfo submitInfo = {};
@@ -225,7 +225,12 @@ void RenderControl::VKDeferredShadingPass::Render()
   submitInfo.pCommandBuffers = l_cmdBuffer;
   
   
+  m_texturePacker->BlockTillPacked( m_lastSubmittedQueueIndex );
+  
+  m_texturePacker->BlockTillPacked( m_primaryCmdBuffer->GetLastUpdatedIndex() );
+  vkWaitForFences(m_logicalDevice->GetDevice(), 1, &m_fences[m_primaryCmdBuffer->GetLastUpdatedIndex() ], VK_TRUE, std::numeric_limits<uint64_t>::max());
   vkResetFences(m_logicalDevice->GetDevice(), 1, &m_fences[m_primaryCmdBuffer->GetLastUpdatedIndex()] );
+  // std::cout << "submit queue " << m_primaryCmdBuffer->GetLastUpdatedIndex() << std::endl;
   VkResult l_res = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_fences[m_primaryCmdBuffer->GetLastUpdatedIndex()] );
   
   if ( l_res != VK_SUCCESS )
@@ -234,7 +239,11 @@ void RenderControl::VKDeferredShadingPass::Render()
     throw std::runtime_error("VKDeferredShadingPass::Render() - failed to submit draw command buffer!");
   }
   
-  
+  if( m_texturePacker)
+  {
+    m_texturePacker->Pack( m_primaryCmdBuffer->GetLastUpdatedIndex() );
+    
+  }
 }
 
 void RenderControl::VKDeferredShadingPass::OutputOnScreen(){}
@@ -256,11 +265,10 @@ if( m_descriptorPool )
 bool RenderControl::VKDeferredShadingPass::PackTexture(Network::NetworkMsgPtr& a_msg)
 {
   // write attachment to file
-  if( m_texturePacker)
+  if( m_texturePacker )
   {
     unsigned int l_indexToGet = m_primaryCmdBuffer->GetNextIndex();
-    unsigned int l_indexToPack = m_primaryCmdBuffer->GetLastUpdatedIndex();
-    m_texturePacker->Pack(l_indexToPack);
+    //unsigned int l_indexToGet = m_primaryCmdBuffer->GetLastUpdatedIndex();
     m_texturePacker->Get(l_indexToGet, a_msg);
   }
   

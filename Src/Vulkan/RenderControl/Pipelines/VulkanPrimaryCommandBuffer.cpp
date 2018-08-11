@@ -162,11 +162,7 @@ unsigned int VulkanPrimaryCommandBuffer::GetLastUpdatedIndex()
 }
 unsigned int VulkanPrimaryCommandBuffer::GetNextIndex()
 {
-  unsigned int l_index = m_index+1;
-  if( l_index >= m_cmdBuffers.size() )
-    l_index = 0;
-  return l_index;
-  
+  return (m_index+1)%m_cmdBuffers.size();  
 }
 VkCommandBuffer VulkanPrimaryCommandBuffer::GetNextCommandBufferHandle()
 {

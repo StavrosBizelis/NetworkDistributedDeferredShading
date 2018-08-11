@@ -19,10 +19,9 @@ void VulkanTexturePacker::Get(const unsigned int& a_index, Network::NetworkMsgPt
 {
   if( m_threads[a_index] )
   {
-    if( m_threads[a_index]->joinable() )
-      m_threads[a_index]->join();
-    m_threads[a_index] = nullptr;
-    a_msg = std::make_shared<Network::NetworkMsg>( *m_messages[a_index] );
+    BlockTillPacked(a_index);
+    // a_msg = std::make_shared<Network::NetworkMsg>( *m_messages[a_index] );
+    a_msg = m_messages[a_index];
   }
   else
   {
@@ -43,9 +42,9 @@ void VulkanTexturePacker::BlockTillPacked(const unsigned int& a_index)
   {
     if( m_threads[a_index]->joinable() )
       m_threads[a_index]->join();
-    m_threads[a_index] = nullptr;
   }    
 }
+
 void VulkanTexturePacker::PackThread(const unsigned int& a_index)
 {
   vkWaitForFences(m_device->GetDevice(), 1, &m_fences[a_index], VK_TRUE, std::numeric_limits<uint64_t>::max());

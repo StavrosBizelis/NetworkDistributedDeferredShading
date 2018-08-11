@@ -34,6 +34,9 @@ private:
   std::vector<uint32_t> m_outLightsToRemove;
   std::vector<Network::ObjTransformInfo> m_outLightsToTransform;
 
+  std::vector<Network::NetworkMsgPtr> m_networkMsgs;
+  unsigned int m_indexNetworkMsgsIndex;
+  
   bool m_hasUpdated;
   
   void Initialise();

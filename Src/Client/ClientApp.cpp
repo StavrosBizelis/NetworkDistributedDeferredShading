@@ -25,6 +25,9 @@ ClientApp::ClientApp( const std::string &a_hostName, const unsigned int &a_hostP
   m_hasUpdated = true;
   
   m_client = new Network::ClientControl(a_hostName, a_hostPort);
+  
+  m_indexNetworkMsgsIndex = 0;
+  m_networkMsgs.resize( 3, std::make_shared<Network::NetworkMsg>() );
 }
 
 
@@ -329,11 +332,10 @@ ClientApp::Update()
     // IFDBG( std::cout << "Render Update" << std::endl; );
     
     // CLIENTS SEND BACK THE RENDERED TEXTURES
-    
-    Network::NetworkMsgPtr l_test = std::make_shared<Network::NetworkMsg>();
-    if( m_graphics->GetDeferredRenderPass()->PackTexture(l_test) )
+    m_indexNetworkMsgsIndex = (++m_indexNetworkMsgsIndex)%m_networkMsgs.size();
+    if( m_graphics->GetDeferredRenderPass()->PackTexture( m_networkMsgs[m_indexNetworkMsgsIndex] ) )
     {
-      m_client->PushMsg(l_test);
+      m_client->PushMsg(m_networkMsgs[m_indexNetworkMsgsIndex]);
       m_frameCount++;
     }
   }
