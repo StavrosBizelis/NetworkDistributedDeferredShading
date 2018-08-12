@@ -286,7 +286,8 @@ ServerApp::Update()
 	if (m_elapsedTime > 1000)
   {
 		printf( "%f\n", (m_frameCount*1000)/m_elapsedTime );
-		m_output << m_frameCount/m_elapsedTime << std::endl;
+    if( m_frameCount )
+      m_output << m_elapsedTime/m_frameCount << std::endl;
     
     m_elapsedTime = 0;
 		// Reset the frames per second
