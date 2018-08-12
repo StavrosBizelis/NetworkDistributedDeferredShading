@@ -133,7 +133,8 @@ void SceneOne::Update(double a_dt)
   
   
   LightPosStep();
-
+  m_camera->GetCamera()->Set(glm::vec3(0,15,10), m_camera->GetCamera()->GetView(), glm::vec3(0,1,0));
+  
   l_msg->CreateSceneUpdateMsg(
   {m_camera->GetCamera()->GetPosition(), m_camera->GetCamera()->GetView(), m_camera->GetCamera()->GetUpVector() },
   {}, {}, {}, {}, {}, {}, m_lightsToTransformPos);

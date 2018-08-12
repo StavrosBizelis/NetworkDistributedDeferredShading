@@ -45,7 +45,8 @@ def zipdir(path, ziph):
 
 if __name__ == '__main__':
 
-    l_ip = "192.168.1.2"
+    # l_ip = "192.168.1.2"
+    l_ip = "localhost"
     l_port = "50000"
     l_numbersOfClients = [1,2,3,4]
     l_implementationTechs = ["OPENGL", "VULKAN"]

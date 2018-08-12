@@ -265,6 +265,8 @@ void SceneTwo::Update(double a_dt)
   
   Network::NetworkMsgPtr l_msg = std::make_shared<Network::NetworkMsg>();
 
+
+  m_camera->GetCamera()->Set(glm::vec3(-100,100,600), m_camera->GetCamera()->GetView(), glm::vec3(0,1,0));
   l_msg->CreateSceneUpdateMsg(
   {m_camera->GetCamera()->GetPosition(), m_camera->GetCamera()->GetView(), m_camera->GetCamera()->GetUpVector() },
   {}, {}, l_toTrans, {}, {}, {}, {m_lightsToTransformPos});
