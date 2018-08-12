@@ -38,12 +38,6 @@ ClientApp::ClientApp( const std::string &a_hostName, const unsigned int &a_hostP
  ***********************************************************************/
 ClientApp::~ClientApp()
 {
-  std::fstream fs;
-  fs.open (m_outFile, std::fstream::out | std::fstream::app);
-  fs << m_outFile << std::endl;
-  fs << m_output.str();
-  fs.close();
-
   if( m_client)
     delete m_client;
   if( m_graphics )
@@ -162,6 +156,13 @@ ClientApp::ProcessEvents(HWND window, UINT message, WPARAM w_param, LPARAM l_par
 	case WM_KEYDOWN:
 		switch(w_param) {
 		case VK_ESCAPE:
+      {
+        std::fstream fs;
+        fs.open (m_outFile, std::fstream::out | std::fstream::app);
+        fs << m_outFile << std::endl;
+        fs << m_output.str();
+        fs.close();
+      }
 			PostQuitMessage(0);
 			break;
 		}
@@ -175,6 +176,13 @@ ClientApp::ProcessEvents(HWND window, UINT message, WPARAM w_param, LPARAM l_par
 		}
 		break;
 	case WM_DESTROY:
+    { 
+      std::fstream fs;
+      fs.open (m_outFile, std::fstream::out | std::fstream::app);
+      fs << m_outFile << std::endl;
+      fs << m_output.str();
+      fs.close();
+    }
 		PostQuitMessage(0);
 		break;
 

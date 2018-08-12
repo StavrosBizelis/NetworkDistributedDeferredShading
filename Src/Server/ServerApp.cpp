@@ -41,13 +41,7 @@ ServerApp::ServerApp(const glm::vec2& a_dimensions, const unsigned int& a_port, 
  ***********************************************************************/
 ServerApp::~ServerApp()
 {
-  std::fstream fs;
-  fs.open (m_outFile, std::fstream::out | std::fstream::app);
-  fs << m_outFile << std::endl;
-  fs << m_output.str();
-  fs.close();
-  
-  
+
   if( m_pHighResolutionTimer)
     delete m_pHighResolutionTimer;
   if( m_graphics )
@@ -104,6 +98,13 @@ ServerApp::ProcessEvents(HWND window, UINT message, WPARAM w_param, LPARAM l_par
 	case WM_KEYDOWN:
 		switch(w_param) {
 		case VK_ESCAPE:
+      {
+        std::fstream fs;
+        fs.open (m_outFile, std::fstream::out);
+        fs << m_outFile << std::endl;
+        fs << m_output.str();
+        fs.close();
+      }
 			PostQuitMessage(0);
 			break;
 		}
@@ -117,7 +118,14 @@ ServerApp::ProcessEvents(HWND window, UINT message, WPARAM w_param, LPARAM l_par
 		}
 		break;
 	case WM_DESTROY:
-		PostQuitMessage(0);
+    {
+      std::fstream fs;
+      fs.open (m_outFile, std::fstream::out);
+      fs << m_outFile << std::endl;
+      fs << m_output.str();
+      fs.close();
+    }
+    PostQuitMessage(0);
 		break;
 
     default:

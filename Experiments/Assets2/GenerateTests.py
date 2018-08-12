@@ -27,12 +27,12 @@ def GenOutput(a_ip, a_port, a_numberOfClients, a_renderingTech, a_xDim, a_yDim, 
 def GenerateFiles(a_ip, a_port, a_numberOfClients, a_renderingTech, a_xDim, a_yDim, a_testIndex, a_outputFileName, a_numberOfLights, a_compressImage):
   
   
-  l_output = GenOutput(a_ip, a_port, a_numberOfClients, a_renderingTech, a_xDim, a_yDim, a_testIndex, "Client_" + a_outputFileName + ".txt", a_numberOfLights, a_compressImage)
+  l_output = GenOutput(a_ip, a_port, a_numberOfClients, a_renderingTech, a_xDim, a_yDim, a_testIndex, "Server_" + a_outputFileName + ".txt", a_numberOfLights, a_compressImage)
   text_file = open("Scripts/ServerConfiguration.config", "w")
   text_file.write(l_output)
   text_file.close()
   
-  l_output = GenOutput(a_ip, a_port, a_numberOfClients, a_renderingTech, a_xDim, a_yDim, a_testIndex, "Server_" + a_outputFileName + ".txt", a_numberOfLights, a_compressImage)
+  l_output = GenOutput(a_ip, a_port, a_numberOfClients, a_renderingTech, a_xDim, a_yDim, a_testIndex, "Client_" + a_outputFileName + ".txt", a_numberOfLights, a_compressImage)
   text_file = open("Scripts/ClientConfiguration.config", "w")
   text_file.write(l_output)
   text_file.close()
@@ -45,7 +45,7 @@ def zipdir(path, ziph):
 
 if __name__ == '__main__':
 
-    l_ip = "192.168.2.1"
+    l_ip = "192.168.1.2"
     l_port = "50000"
     l_numbersOfClients = [1,2,3,4]
     l_implementationTechs = ["OPENGL", "VULKAN"]
