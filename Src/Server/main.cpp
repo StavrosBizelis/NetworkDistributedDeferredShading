@@ -29,7 +29,7 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE, PSTR, int)
   
   
   
-  std::vector<std::string> l_setup = ReadFileLines("../Assets/ServerConfiguration.config");
+  std::vector<std::string> l_setup = ReadFileLines("../Assets2/Scripts/ServerConfiguration.config");
   std::string l_ip;
   unsigned int l_port;
   unsigned int l_numberOfClients;
