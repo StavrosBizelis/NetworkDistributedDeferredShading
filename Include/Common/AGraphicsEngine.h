@@ -32,7 +32,7 @@ public:
   /**
   *  @param a_composite : if true, it will work as a compositor, false as a deferred renderer
   */
-  virtual void Init(bool a_composite = false, unsigned int a_subpartsCount = 0) 
+  virtual void Init(bool a_composite = false, unsigned int a_subpartsCount = 0, unsigned int a_compressResult = 0) 
   {
     m_renderPassPipeline = new RenderControl::RenderPassPipeline();
     m_sceneManager = new SceneControl::SceneManager();

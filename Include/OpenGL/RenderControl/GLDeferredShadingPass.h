@@ -20,7 +20,7 @@ namespace RenderControl
     void Clear();
     
 	public:
-		GLDeferredShadingPass(const glm::vec2& a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings);
+		GLDeferredShadingPass(const glm::vec2& a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings, const unsigned int& a_compressPacked);
 		virtual ~GLDeferredShadingPass();
 
 		virtual bool Init() override;

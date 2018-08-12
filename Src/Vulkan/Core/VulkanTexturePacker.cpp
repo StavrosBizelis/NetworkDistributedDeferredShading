@@ -11,9 +11,9 @@ VulkanTexturePacker::VulkanTexturePacker(const std::shared_ptr<VulkanLogicalDevi
   m_messages.resize( m_imagesToPack.size(), std::make_shared<Network::NetworkMsg>() );
   m_threads.resize(m_imagesToPack.size(), nullptr );
 }
-void VulkanTexturePacker::Pack(const unsigned int& a_index)
+void VulkanTexturePacker::Pack(const unsigned int& a_index, bool a_compress)
 {
-  m_threads[a_index] = std::make_shared<std::thread>(&VulkanTexturePacker::PackThread, this, a_index);  
+  m_threads[a_index] = std::make_shared<std::thread>(&VulkanTexturePacker::PackThread, this, a_index, a_compress);  
 }
 void VulkanTexturePacker::Get(const unsigned int& a_index, Network::NetworkMsgPtr& a_msg)
 {
@@ -45,7 +45,7 @@ void VulkanTexturePacker::BlockTillPacked(const unsigned int& a_index)
   }    
 }
 
-void VulkanTexturePacker::PackThread(const unsigned int& a_index)
+void VulkanTexturePacker::PackThread(const unsigned int& a_index, bool a_compress)
 {
   vkWaitForFences(m_device->GetDevice(), 1, &m_fences[a_index], VK_TRUE, std::numeric_limits<uint64_t>::max());
   
@@ -53,7 +53,7 @@ void VulkanTexturePacker::PackThread(const unsigned int& a_index)
   void* data;
   vkMapMemory(m_device->GetDevice(), l_buf->m_memorySpace, l_buf->GetMemoryOffset(), l_buf->m_size, 0, &data);
   
-  m_messages[a_index]->CreateRenderResultMsg( (char*)data, glm::vec2(m_imagesToPack[a_index]->m_width, m_imagesToPack[a_index]->m_height), 0, 8, false);
+  m_messages[a_index]->CreateRenderResultMsg( (char*)data, glm::vec2(m_imagesToPack[a_index]->m_width, m_imagesToPack[a_index]->m_height), 0, 8, a_compress);
 
 
   vkUnmapMemory(m_device->GetDevice(), l_buf->m_memorySpace);

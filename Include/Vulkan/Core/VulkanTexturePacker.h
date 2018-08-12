@@ -25,13 +25,13 @@ class VulkanTexturePacker
   
   std::vector< std::shared_ptr< std::thread > > m_threads;
   
-  void PackThread(const unsigned int& a_index);
+  void PackThread(const unsigned int& a_index, bool a_compress = false);
   
   public:
   VulkanTexturePacker(const std::shared_ptr<VulkanLogicalDeviceManager>& a_device, const std::shared_ptr<VulkanMemory>& a_memory, 
                       const std::vector< std::shared_ptr<VulkanImageMemoryChunk> >& a_imagesToPack, const std::vector< VkFence >& a_fences);
                       
-  void Pack(const unsigned int& a_index);
+  void Pack(const unsigned int& a_index, bool a_compress);
   void BlockTillPacked(const unsigned int& a_index);
   void Get(const unsigned int& a_index, Network::NetworkMsgPtr& a_msg);
 };

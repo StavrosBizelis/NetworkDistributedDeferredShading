@@ -44,9 +44,9 @@ namespace RenderControl
 
     glm::vec2 m_resolutionPart;
     glm::vec4 m_viewPortSetting;
-
+    unsigned int m_compressPacked;
 	public:
-		ADeferredShadingPass(const glm::vec2& a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings);
+		ADeferredShadingPass(const glm::vec2& a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings, const unsigned int& a_compressPacked);
 		virtual ~ADeferredShadingPass();
 
     

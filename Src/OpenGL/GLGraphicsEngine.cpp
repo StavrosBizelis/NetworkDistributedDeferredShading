@@ -26,7 +26,7 @@ GLGraphicsEngine::~GLGraphicsEngine()
     delete m_textureFactory;
 }
 
-void GLGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
+void GLGraphicsEngine::Init(bool a_composite, unsigned int a_subparts, unsigned int a_compressResult)
 {
 
   AGraphicsEngine::Init(a_composite, a_subparts);  
@@ -48,7 +48,7 @@ void GLGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
   }
   else
   {
-    m_deferredShadingPass = new RenderControl::GLDeferredShadingPass( m_resolution, m_resolutionPart, m_viewPortSettings );
+    m_deferredShadingPass = new RenderControl::GLDeferredShadingPass( m_resolution, m_resolutionPart, m_viewPortSettings, a_compressResult );
     m_deferredShadingPass->Init();
     m_deferredShadingPass->SetSceenOutputAttachment(3);
     m_renderPassPipeline->PushBack(m_deferredShadingPass);    

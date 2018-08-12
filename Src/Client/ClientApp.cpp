@@ -18,9 +18,9 @@
  *  Params: 
  * Effects: 
  ***********************************************************************/
-ClientApp::ClientApp( const std::string &a_hostName, const unsigned int &a_hostPort, const ImplTech& a_implTech, const std::string& a_outFile )
+ClientApp::ClientApp( const std::string &a_hostName, const unsigned int &a_hostPort, const ImplTech& a_implTech, const std::string& a_outFile, const unsigned int &a_compressImage )
   // :m_implTech(a_implTech), m_graphics(nullptr), m_dt(0)
-  :m_implTech(a_implTech), m_client(nullptr), m_graphics(nullptr), m_dt(0), m_outFile(a_outFile)
+  :m_implTech(a_implTech), m_client(nullptr), m_graphics(nullptr), m_dt(0), m_outFile(a_outFile), m_compressImage(a_compressImage)
 {
   m_hasUpdated = true;
   
@@ -240,7 +240,7 @@ ClientApp::Initialise()
   m_graphics->SetResolution(l_res);
   m_graphics->SetPartRes(l_partialRes);
   m_graphics->SetViewportSettings(l_viewport);
-  m_graphics->Init(false); 
+  m_graphics->Init(false, 0, m_compressImage); 
   
   // CLIENT SEND CLIENT READY SIGNAL
   l_msg = std::make_shared<Network::NetworkMsg>();

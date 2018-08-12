@@ -27,7 +27,7 @@ public:
   VKGraphicsEngine(const glm::vec2& a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings);
   virtual ~VKGraphicsEngine();
   
-  virtual void Init(bool a_composite = false, unsigned int a_subparts = 0);
+  virtual void Init(bool a_composite = false, unsigned int a_subparts = 0, unsigned int a_compressResult = 0);
   virtual void Update(const double& a_deltaTime);
 
   virtual RenderControl::ADeferredShadingPass* GetDeferredRenderPass()  const;

@@ -27,13 +27,13 @@ RenderControl::VKDeferredShadingPass::VKDeferredShadingPass(const std::shared_pt
                                                     const VkQueue& a_graphicsQueue, const VkQueue& a_presentQueue, const QueueFamilyIndices& a_indices,
                                                     const glm::vec2 &a_resolution, const glm::vec2& a_resolutionPart, const glm::vec4& a_viewportSettings,
                                                     SceneControl::SceneManager *a_scnManager, IShapeFactory *a_shapeFactory, 
-                                                    ITextureFactory* a_textFactory, const unsigned int &a_subparts)
-  :ADeferredShadingPass(a_resolution, a_resolutionPart, a_viewportSettings ),
+                                                    ITextureFactory* a_textFactory, const unsigned int& a_compressPacked)
+  :ADeferredShadingPass(a_resolution, a_resolutionPart, a_viewportSettings, a_compressPacked ),
     m_logicalDevice(a_device), m_physicalDevice(a_physicalDevice), m_memory(a_memory), m_graphicsQueue(a_graphicsQueue), m_presentQueue(a_presentQueue), m_indices(a_indices), m_currentFrame(0), 
     m_scnManager(a_scnManager), m_textFactory(a_textFactory), m_shapeFactory(a_shapeFactory), m_attachmentImages(0), m_texturePacker(nullptr), m_lastSubmittedQueueIndex(0)
 {
   m_renderPass = NULL;
-  std::cout<< a_resolution.x << " " << a_resolution.y << " " << a_subparts << std::endl;
+  std::cout<< a_resolution.x << " " << a_resolution.y << " " << 1 << std::endl;
   
   
 }
@@ -239,7 +239,7 @@ void RenderControl::VKDeferredShadingPass::Render()
   
   if( m_texturePacker)
   {
-    m_texturePacker->Pack( m_primaryCmdBuffer->GetLastUpdatedIndex() );
+    m_texturePacker->Pack( m_primaryCmdBuffer->GetLastUpdatedIndex(), m_compressPacked == 0 ? false : true);
   }
 }
 

@@ -4,8 +4,8 @@
 
 namespace RenderControl
 {
-	ADeferredShadingPass::ADeferredShadingPass(const glm::vec2& a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings)
-		:IRenderPass(a_resolution), m_resolutionPart(a_partialResolution), m_viewPortSetting(a_viewportSettings)
+	ADeferredShadingPass::ADeferredShadingPass(const glm::vec2& a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings, const unsigned int& a_compressPacked)
+		:IRenderPass(a_resolution), m_resolutionPart(a_partialResolution), m_viewPortSetting(a_viewportSettings), m_compressPacked(a_compressPacked)
     {
       GetCamera()->SetDimentsions(a_resolution);
     }

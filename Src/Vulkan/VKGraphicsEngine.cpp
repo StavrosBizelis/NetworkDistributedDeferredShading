@@ -36,7 +36,7 @@ VKGraphicsEngine::~VKGraphicsEngine()
     delete m_textureFactory;
 }
 
-void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
+void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts, unsigned int a_compressResult)
 {
   // AGraphicsEngine::Init(a_composite, a_subparts);  
   
@@ -87,7 +87,7 @@ void VKGraphicsEngine::Init(bool a_composite, unsigned int a_subparts)
     m_deferredShadingPass = new RenderControl::VKDeferredShadingPass(m_driver->GetLogicalDeviceManager(), m_driver->GetSelectedPhysicalDevice(), m_driver->GetLogicalDeviceManager()->GetMemoryManager(),
                                                              m_driver->GetLogicalDeviceManager()->GetGraphicsQueue(),m_driver->GetLogicalDeviceManager()->GetPresentQueue(), m_driver->GetLogicalDeviceManager()->GetQueueFamilyIndices(),
                                                              m_resolution, m_resolutionPart, m_viewPortSettings,
-                                                             m_sceneManager, m_shapeFactory, m_textureFactory, 1);
+                                                             m_sceneManager, m_shapeFactory, m_textureFactory, a_compressResult);
     IFDBG( std::cout << "m_deferredShadingPass Created \n"; );
 
     try

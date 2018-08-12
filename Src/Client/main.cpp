@@ -43,11 +43,12 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE, PSTR, int)
   unsigned int l_testIndex;
   std::string l_fileName;
   unsigned int l_numberOfLights;
+  unsigned int l_compressImage;
   
-  DecodeConfigFile(l_setup, l_ip, l_port, l_numberOfClients, l_implTech, l_resolution, l_testIndex, l_fileName, l_numberOfLights);
+  DecodeConfigFile(l_setup, l_ip, l_port, l_numberOfClients, l_implTech, l_resolution, l_testIndex, l_fileName, l_numberOfLights, l_compressImage);
   
   
-  g_app = std::make_shared<ClientApp>(l_ip, l_port, l_implTech, l_fileName);
+  g_app = std::make_shared<ClientApp>(l_ip, l_port, l_implTech, l_fileName, l_compressImage);
   g_app->SetHinstance(hinstance); 
   
   return g_app->Execute();

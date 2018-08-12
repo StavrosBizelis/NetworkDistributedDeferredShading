@@ -15,8 +15,8 @@
  *  Params: const glm::vec2 &a_resolution
  * Effects: 
  */
-RenderControl::GLDeferredShadingPass::GLDeferredShadingPass(const glm::vec2 &a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings)
-  : ADeferredShadingPass(a_resolution, a_partialResolution, a_viewportSettings), m_fbo(0), m_pboIndex(false)
+RenderControl::GLDeferredShadingPass::GLDeferredShadingPass(const glm::vec2 &a_resolution, const glm::vec2 &a_partialResolution, const glm::vec4& a_viewportSettings, const unsigned int& a_compressPacked)
+  : ADeferredShadingPass(a_resolution, a_partialResolution, a_viewportSettings, a_compressPacked), m_fbo(0), m_pboIndex(false)
 {
   m_pbos[0] = 0;
   m_pbos[1] = 0;
@@ -446,7 +446,7 @@ bool RenderControl::GLDeferredShadingPass::PackTexture( Network::NetworkMsgPtr& 
   if(l_ptr)
   {
     // IFDBG( std::cout << "Packed Actual Texture " << std::endl; );
-    a_outMsg->CreateRenderResultMsg(l_ptr, m_resolutionPart, 0, 8, false );
+    a_outMsg->CreateRenderResultMsg(l_ptr, m_resolutionPart, 0, 8, m_compressPacked == 0 ? false : true );
     glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
   }
   else

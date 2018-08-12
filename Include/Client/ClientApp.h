@@ -53,8 +53,9 @@ private:
   
   std::ostringstream m_output;
   std::string m_outFile;
+  unsigned int m_compressImage;
 public:
-  ClientApp( const std::string &a_hostName, const unsigned int &a_hostPort, const ImplTech& a_implTech = ImplTech::OPENGL, const std::string& a_outFile = "");
+  ClientApp( const std::string &a_hostName, const unsigned int &a_hostPort, const ImplTech& a_implTech = ImplTech::OPENGL, const std::string& a_outFile = "", const unsigned int &a_compressImage = 0);
   ~ClientApp();
   
   LRESULT ProcessEvents(HWND window,UINT message, WPARAM w_param, LPARAM l_param);
