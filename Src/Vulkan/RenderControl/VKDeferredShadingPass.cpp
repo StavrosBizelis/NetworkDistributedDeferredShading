@@ -665,15 +665,15 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
 {
   VkDescriptorPoolSize l_poolSize1 = {};
   l_poolSize1.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  l_poolSize1.descriptorCount = 2048*2;
+  l_poolSize1.descriptorCount = 2048*4;
 
   VkDescriptorPoolSize l_poolSize2 = {};
   l_poolSize2.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  l_poolSize2.descriptorCount = 2048*2;
+  l_poolSize2.descriptorCount = 2048*4;
   
   VkDescriptorPoolSize l_poolSize3 = {};
   l_poolSize3.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-  l_poolSize3.descriptorCount = 2048*2;
+  l_poolSize3.descriptorCount = 2048*4;
 
   std::vector<VkDescriptorPoolSize> l_poolSizes = {l_poolSize1, l_poolSize2, l_poolSize3};
   
@@ -681,7 +681,7 @@ void RenderControl::VKDeferredShadingPass::CreateDescriptorPool()
   l_poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   l_poolInfo.poolSizeCount = l_poolSizes.size();
   l_poolInfo.pPoolSizes = l_poolSizes.data();
-  l_poolInfo.maxSets = 2048*2;
+  l_poolInfo.maxSets = 2048*4;
 
   if (vkCreateDescriptorPool(m_logicalDevice->GetDevice(), &l_poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS) {
     throw std::runtime_error("VKDeferredShadingPass::CreateDescriptorPool() - failed to create descriptor pool!");
