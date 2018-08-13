@@ -1,0 +1,4 @@
+DELL
+i7-7500U @ 2.7Ghz
+Radeon (TM) R7 M445 4GB
+16GB @ 2400MHz

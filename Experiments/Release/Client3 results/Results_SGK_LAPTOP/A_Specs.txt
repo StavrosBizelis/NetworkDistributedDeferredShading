@@ -1,0 +1,4 @@
+HP Pavilion
+i7-6700HQ @ 2.6Ghz
+Nvidia 960M 4GB
+8GB @ 2400MHz
